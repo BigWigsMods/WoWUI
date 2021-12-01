@@ -861,15 +861,26 @@ function GarrisonFollowerAlertFrame_OnClick(self, button, down)
 	ShowGarrisonLandingPage(GarrisonFollowerOptions[self.followerInfo.followerTypeID].garrisonType);
 end
 
+-- Trees that override behaviors associated with their tree type
+local talentAlertOverrides =
+{
+	[474] = -- 9.2 Cypher Talents tree
+	{
+		suppressClick = true,
+		toastTitle = CYPHER_RESEARCH_TOAST,
+	},
+};
 function GarrisonAlertFrame_OnClick(self, button, down)
 	if( AlertFrame_OnClick(self, button, down) ) then
 		return;
 	end
 	self:Hide();
-	if (not GarrisonLandingPage) then
-		Garrison_LoadUI();
-	end
-	if (self.garrisonType) then
+	local overrideInfo = talentAlertOverrides[self.treeID];
+	local suppressClick = overrideInfo ~= nil and overrideInfo.suppressClick;
+	if (self.garrisonType and not suppressClick) then
+		if (not GarrisonLandingPage) then
+			Garrison_LoadUI();
+		end
 		ShowGarrisonLandingPage(self.garrisonType);
 	end
 end
@@ -878,9 +889,11 @@ end
 function GarrisonTalentAlertFrame_SetUp(frame, garrisonType, talent)
 	local garrisonFollowerType = GetPrimaryGarrisonFollowerType(garrisonType);
     frame.Icon:SetTexture(talent.icon);
-	local toastTitle = GarrisonFollowerOptions[garrisonFollowerType].strings.TALENT_COMPLETE_TOAST_TITLE;
+	local overrideInfo = talentAlertOverrides[talent.treeID];
+	local toastTitle = overrideInfo ~= nil and overrideInfo.toastTitle or GarrisonFollowerOptions[garrisonFollowerType].strings.TALENT_COMPLETE_TOAST_TITLE;
 	frame.Title:SetText(toastTitle);
 	frame.garrisonType = garrisonType;
+	frame.treeID = talent.treeID;
 	PlaySound(SOUNDKIT.UI_ORDERHALL_TALENT_READY_TOAST);
 end
 
