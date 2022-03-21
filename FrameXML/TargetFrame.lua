@@ -206,8 +206,7 @@ function TargetFrame_OnEvent (self, event, ...)
 		end
 	elseif ( event == "UNIT_AURA" ) then
 		if ( arg1 == self.unit ) then
-			local isFullUpdate, updatedAuraInfos = select(2, ...);
-			TargetFrame_UpdateAuras(self, isFullUpdate, updatedAuraInfos);
+			TargetFrame_UpdateAuras(self);
 		end
 	elseif ( event == "PLAYER_FLAGS_CHANGED" ) then
 		if ( arg1 == self.unit ) then
@@ -494,27 +493,11 @@ local function ShouldAuraBeLarge(caster)
 	end
 end
 
-local function AuraCouldShow(auraInfo, ...)
-	local self = ...;
-	if auraInfo.isHelpful then
-		return not auraInfo.isNameplateOnly;
-	end
-
-	if auraInfo.isHarmful then
-		return TargetFrame_ShouldShowDebuffs(self.unit, auraInfo.sourceUnit, auraInfo.nameplateShowAll, auraInfo.isFromPlayerOrPlayerPet);
-	end
-
-	return false;
-end
-
-function TargetFrame_UpdateAuras(self, isFullUpdate, updatedAuraInfos)
+function TargetFrame_UpdateAuras (self)
 	local numBuffs = 0;
 	local playerIsTarget = UnitIsUnit(PlayerFrame.unit, self.unit);
+	local canAssist = UnitCanAssist("player", self.unit);
 	local selfName = self:GetName();
-
-	if AuraUtil.ShouldSkipAuraUpdate(isFullUpdate, updatedAuraInfos, AuraCouldShow, self) then
-		return;
-	end
 
 	local index = 1;
 	local maxBuffs = math.min(self.maxBuffs or MAX_TARGET_BUFFS, MAX_TARGET_BUFFS);
