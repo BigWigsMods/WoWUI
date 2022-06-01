@@ -1171,6 +1171,27 @@ function UIMenuButtonStretchMixin:OnLeave()
 	end
 end
 
+UIResettableDropdownButtonMixin = {};
+
+function UIResettableDropdownButtonMixin:OnLoad()
+	self.ResetButton:SetScript("OnClick", function(button, buttonName, down)
+		if self.resetFunction then
+			 self.resetFunction();
+		end
+
+		self.ResetButton:Hide();
+	end);
+end
+
+function UIResettableDropdownButtonMixin:OnMouseDown()
+	UIMenuButtonStretchMixin.OnMouseDown(self, button);
+	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+end
+
+function UIResettableDropdownButtonMixin:SetResetFunction(resetFunction)
+	self.resetFunction = resetFunction;
+end
+
 DialogHeaderMixin = {};
 
 function DialogHeaderMixin:OnLoad()
@@ -2134,13 +2155,14 @@ function DisabledTooltipButtonMixin:OnEnter()
 	if not self:IsEnabled() then
 		local disabledTooltip, disabledTooltipAnchor = self:GetDisabledTooltip();
 		if disabledTooltip ~= nil then
-			GameTooltip_ShowDisabledTooltip(GameTooltip, self, disabledTooltip, disabledTooltipAnchor);
+			GameTooltip_ShowDisabledTooltip(GetAppropriateTooltip(), self, disabledTooltip, disabledTooltipAnchor);
 		end
 	end
 end
 
 function DisabledTooltipButtonMixin:OnLeave()
-	GameTooltip_Hide();
+	local tooltip = GetAppropriateTooltip();
+	tooltip:Hide();
 end
 
 function DisabledTooltipButtonMixin:SetDisabledTooltip(disabledTooltip, disabledTooltipAnchor)
