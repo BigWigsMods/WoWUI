@@ -20,8 +20,6 @@ BATTLEFIELD_FRAME_FADE_TIME = 0.15
 
 function BattlefieldFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
-	self:RegisterEvent("BATTLEFIELDS_SHOW");
-	self:RegisterEvent("BATTLEFIELDS_CLOSED");
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS");
 	self:RegisterEvent("PARTY_LEADER_CHANGED");
 	self:RegisterEvent("GROUP_ROSTER_UPDATE");
@@ -31,15 +29,7 @@ function BattlefieldFrame_OnLoad(self)
 end
 
 function BattlefieldFrame_OnEvent(self, event, ...)
-	if ( event == "BATTLEFIELDS_SHOW") then
-		self.currentData = true;
-		if ( not IsBattlefieldArena() ) then
-			ShowUIPanel(BattlefieldFrame);
-			BattlefieldFrame_UpdatePanelInfo();
-		end
-	elseif ( event == "BATTLEFIELDS_CLOSED") then
-		HideUIPanel(BattlefieldFrame);
-	elseif ( event == "UPDATE_BATTLEFIELD_STATUS" ) then
+	if ( event == "UPDATE_BATTLEFIELD_STATUS" ) then
 		PVPBattleground_UpdateQueueStatus();
 		BattlefieldFrame_UpdateStatus(false);
 	elseif ( event == "PLAYER_ENTERING_WORLD" ) then

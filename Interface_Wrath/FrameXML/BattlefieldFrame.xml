@@ -363,16 +363,10 @@
 		<NormalFont style="GameFontNormalLeft"/>
 		<HighlightFont style="GameFontHighlightLeft"/>
 	</Button>
-	<Frame name="BattlefieldFrame"  toplevel="true" movable="true" parent="UIParent" enableMouse="true" hidden="true">
-		<Size>
-			<AbsDimension x="384" y="512"/>
-		</Size>
+	<Frame name="BattlefieldFrame" parent="PVPParentFrame" enableMouse="true" hidden="true">
+		<Size x="384" y="512"/>
 		<Anchors>
-			<Anchor point="TOPLEFT">
-				<Offset>
-					<AbsDimension x="0" y="-104"/>
-				</Offset>
-			</Anchor>
+			<Anchor point="TOPLEFT" x="0" y="0" />
 		</Anchors>
 		<HitRectInsets>
 			<AbsInset left="0" right="34" top="0" bottom="75"/>
@@ -612,7 +606,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						HideUIPanel(BattlefieldFrame);
+						HideUIPanel(PVPParentFrame);
 						BattlefieldFrameCloseButton_OnClick()
 					</OnClick>
 				</Scripts>
