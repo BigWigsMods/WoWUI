@@ -42,14 +42,14 @@ function LFGListingMixin:OnLoad()
 	self.viewState = LFGLISTING_VIEWSTATE_ACTIVITIES;
 
 	self:ClearUI();
-	self:LoadSoloRolesFromTalentGroups();
+	self:LoadSoloRolesOnStartup();
 	self:UpdateFrameView();
 end
 
 function LFGListingMixin:OnEvent(event, ...)
 	if ( event == "GROUP_LEFT" ) then
 		local partyCategory, partyGUID = ...;
-		if (partyCategory == LE_PARTY_CATEGORY_HOME and not C_LFGList.HasActiveEntryInfo()) then
+		if ( partyCategory == LE_PARTY_CATEGORY_HOME and not C_LFGList.HasActiveEntryInfo() ) then
 			-- If we just left a party and we don't have an activeEntry, assume that
 			-- any activeEntry information we have was inherited from the group and should probably be thrown out.
 			self:ClearCategorySelection();
@@ -60,16 +60,14 @@ function LFGListingMixin:OnEvent(event, ...)
 		local createdNew = ...;
 		self:LoadActiveEntry();
 		if (C_LFGList.HasActiveEntryInfo()) then
-			if (createdNew or PENDING_LISTING_UPDATE) then
-				-- Play sound, only if the update was manual.
+			if ( createdNew or PENDING_LISTING_UPDATE ) then
+				-- If this is either a brand new entry, or it was a manual update that we ourselves made, play a sound and swap to the browser.
+				-- Notable case: if this is an update to an existing listing from our party leader, but we ourselves didn't do anything, don't deliver feedback.
 				PlaySound(SOUNDKIT.PVP_ENTER_QUEUE);
-			end
-			if ( createdNew ) then
-				-- Search LFM based on the active entry.
 				LFGParentFrame_SearchActiveEntry();
 			end
 		else
-			if (PENDING_LISTING_UPDATE) then
+			if ( PENDING_LISTING_UPDATE ) then
 				-- Play sound, only if the update was manual.
 				PlaySound(SOUNDKIT.LFG_DENIED);
 			end
@@ -353,6 +351,16 @@ end
 ----------Button Control
 -------------------------------------------------------
 function LFGListingMixin:UpdatePostButtonEnableState()
+	if (not LFGListingUtil_CanEditListing()) then
+		if (C_LFGList.HasActiveEntryInfo()) then
+			self.PostButton.errorText = LFG_LIST_ONLY_LEADER_UPDATE;
+		else
+			self.PostButton.errorText = LFG_LIST_ONLY_LEADER_CREATE;
+		end
+		self.PostButton:SetEnabled(false);
+		return;
+	end
+
 	-- If our dirty flag is not set, disable the Post button.
 	-- Alternatively, if we do not have an activeEntry, and also do not have any activities set, disable the Post button. (An initial listing needs at least one activity.)
 	if (not self.dirty or (not C_LFGList.HasActiveEntryInfo() and not self:IsAnyActivitySelected())) then
@@ -409,14 +417,12 @@ end
 -------------------------------------------------------
 ----------Solo Role UI
 -------------------------------------------------------
-function LFGListingMixin:LoadSoloRolesFromTalentGroups()
-	for i=1,GetNumTalentGroups() do
-		for _,roleButton in ipairs(self.SoloRoleButtons.RoleButtons) do
-			if (GetTalentGroupRole(i) == roleButton.roleID) then
-				roleButton.CheckButton:SetChecked(true);
-			end
-		end
-	end
+function LFGListingMixin:LoadSoloRolesOnStartup()
+	local roles = C_LFGList.GetSavedRoles();
+	self.SoloRoleButtons.Tank.CheckButton:SetChecked(roles.tank);
+	self.SoloRoleButtons.Healer.CheckButton:SetChecked(roles.healer);
+	self.SoloRoleButtons.DPS.CheckButton:SetChecked(roles.dps);
+
 	self:SaveSoloRoles();
 end
 

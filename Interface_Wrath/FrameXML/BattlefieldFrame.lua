@@ -20,27 +20,16 @@ BATTLEFIELD_FRAME_FADE_TIME = 0.15
 
 function BattlefieldFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
-	self:RegisterEvent("BATTLEFIELDS_SHOW");
-	self:RegisterEvent("BATTLEFIELDS_CLOSED");
 	self:RegisterEvent("UPDATE_BATTLEFIELD_STATUS");
+	self:RegisterEvent("PARTY_LEADER_CHANGED");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
 	RequestPVPRewards();
 
 	BattlefieldFrame.timerDelay = 0;
 end
 
 function BattlefieldFrame_OnEvent(self, event, ...)
-	if ( event == "BATTLEFIELDS_SHOW") then
-		local isArena = ...;
-		if(not isArena) then
-			self.currentData = true;
-			RequestPVPRewards();
-			PVPBattleground_ResetInfo();
-			ShowUIPanel(BattlefieldFrame);
-			BattlefieldFrame_UpdateStatus(false);
-		end
-	elseif ( event == "BATTLEFIELDS_CLOSED") then
-		HideUIPanel(BattlefieldFrame);
-	elseif ( event == "UPDATE_BATTLEFIELD_STATUS" ) then
+	if ( event == "UPDATE_BATTLEFIELD_STATUS" ) then
 		PVPBattleground_UpdateQueueStatus();
 		BattlefieldFrame_UpdateStatus(false);
 	elseif ( event == "PLAYER_ENTERING_WORLD" ) then
@@ -51,6 +40,8 @@ function BattlefieldFrame_OnEvent(self, event, ...)
 			PVPBattleground_ResetInfo();
 			PVPBattleground_UpdateJoinButton(self.selectedBG);
 		end
+	elseif ( event == "PARTY_LEADER_CHANGED" or event == "GROUP_ROSTER_UPDATE" ) then
+		BattlefieldFrame_UpdateGroupAvailable();
 	end
 end
 
@@ -127,6 +118,14 @@ function BattlefieldTimerFrame_OnUpdate(self, elapsed)
 		end
 	else
 		BATTLEFIELD_SHUTDOWN_TIMER = 0;
+	end
+end
+
+function BattlefieldFrame_UpdatePanelInfo()
+	if(not IsBattlefieldArena()) then
+		RequestPVPRewards();
+		PVPBattleground_ResetInfo();
+		BattlefieldFrame_UpdateStatus(false);
 	end
 end
 
@@ -268,13 +267,21 @@ function BattlefieldFrame_OnShow(self)
 	
 	SortBGList();
 	
+	BattlefieldFrame_UpdatePanelInfo();
 	PVPBattleground_UpdateBattlegrounds(self, true);
 	RequestBattlegroundInstanceInfo(self.selectedBG or 1);
 end
 
 function BattlefieldFrame_OnHide(self)
-	--CloseBattlefield();
 	ClearBattlemaster();
+	UpdateMicroButtons();
+end
+
+function BattlefieldFrameCloseButton_OnClick(self)
+	if ( PVPParentFrame ) then 
+		HideUIPanel(PVPParentFrame)
+	end
+	UpdateMicroButtons();
 end
 
 function PVPBattleground_UpdateBattlegrounds(self, initializeSelectedBG)
