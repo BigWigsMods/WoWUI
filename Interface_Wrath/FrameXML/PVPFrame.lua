@@ -1,4 +1,4 @@
-function PVPFrame_OnLoad(self)
+function PVPFrame_ExpansionSpecificOnLoad(self)
 	self:RegisterEvent("BATTLEFIELDS_SHOW");
 end
 
@@ -19,7 +19,7 @@ function PVPFrame_OnHide()
 	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
 end
 
-function PVPFrame_OnEvent(self, event, ...)
+function PVPFrame_ExpansionSpecificOnEvent(self, event, ...)
 	if ( event == "BATTLEFIELDS_SHOW" and not IsBattlefieldArena() ) then
 		ShowUIPanel(PVPParentFrame);
 		PVPParentFrameTab2:Click();
