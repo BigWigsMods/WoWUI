@@ -106,6 +106,7 @@ TalentFrameBaseMixin = CreateFromMixins(CallbackRegistryMixin);
 
 local TalentFrameBaseEvents = {
 	"TRAIT_NODE_CHANGED",
+	"TRAIT_NODE_CHANGED_PARTIAL",
 	"TRAIT_NODE_ENTRY_UPDATED",
 	"TRAIT_TREE_CURRENCY_INFO_UPDATED",
 };
@@ -219,8 +220,11 @@ function TalentFrameBaseMixin:OnUpdate()
 			updateMethod(button);
 		end
 
+		local skipEdgeUpdates = self.edgePool:GetNumActive() == 0;
 		for button, isDirty in pairs(self.buttonsWithDirtyEdges) do
-			self:UpdateEdgesForButton(button);
+			if isDirty then
+				self:UpdateEdgesForButton(button, skipEdgeUpdates);
+			end
 		end
 	end
 end
@@ -256,6 +260,23 @@ function TalentFrameBaseMixin:OnEvent(event, ...)
 	if event == "TRAIT_NODE_CHANGED" then
 		local nodeID = ...;
 		self:MarkNodeInfoCacheDirty(nodeID);
+	elseif event == "TRAIT_NODE_CHANGED_PARTIAL" then
+		local nodeID, partialUpdate = ...;
+		if not self:IsNodeInfoCacheDirty() then
+			local cachedNodeInfo = self.nodeInfoCache[nodeID];
+			if cachedNodeInfo then
+				for key, value in pairs(partialUpdate) do
+					if value ~= nil then
+						cachedNodeInfo[key] = value;
+					end
+				end
+
+				local button = self:GetTalentButtonByNodeID(nodeID);
+				if button then
+					button:UpdateNodeInfo();
+				end
+			end
+		end
 	elseif event == "TRAIT_NODE_ENTRY_UPDATED" then
 		local entryID = ...;
 		self:MarkEntryInfoCacheDirty(entryID);
@@ -404,7 +425,8 @@ function TalentFrameBaseMixin:GetPanExtents()
 	local zoomLevelFactor = (1 / zoomLevel);
 
 	local basePanWidth, basePanHeight = self:GetPanViewSize();
-	local maxZoomFactor = (1 / treeInfo.minZoom);
+	local minZoom = (treeInfo and treeInfo.minZoom and (treeInfo.minZoom > 0)) and treeInfo.minZoom or 1;
+	local maxZoomFactor = (1 / minZoom);
 	local maxTreeWidth = (basePanWidth * maxZoomFactor);
 	local maxTreeHeight = (basePanHeight * maxZoomFactor);
 	local panWidth = maxTreeWidth - (basePanWidth * zoomLevelFactor);
@@ -417,7 +439,9 @@ function TalentFrameBaseMixin:TalentButtonCollectionReset(framePool, talentButto
 		return (edgeFrame:GetEndButton() == talentButton) or (edgeFrame:GetStartButton() == talentButton);
 	end
 
-	self:ReleaseEdgesByCondition(TalentFrameBaseIsEdgeConnectedToTalentButton);
+	if self.edgePool:GetNumActive() > 0 then
+		self:ReleaseEdgesByCondition(TalentFrameBaseIsEdgeConnectedToTalentButton);
+	end
 
 	local nodeID = talentButton:GetNodeID();
 	if self.nodeIDToButton[nodeID] == talentButton then
@@ -504,7 +528,7 @@ function TalentFrameBaseMixin:ToggleSelections(button, selectionOptions, canSele
 end
 
 function TalentFrameBaseMixin:ShowSelections(button, selectionOptions, canSelectChoice, currentSelection, baseCost)
-	self.SelectionChoiceFrame:SetPoint("BOTTOM", button, "TOP", 0, -5);
+	self.SelectionChoiceFrame:SetPoint("BOTTOM", button, "TOP", 0, -10);
 	self.SelectionChoiceFrame:SetSelectionOptions(button, selectionOptions, canSelectChoice, currentSelection, baseCost);
 	self.SelectionChoiceFrame:Show();
 end
@@ -534,18 +558,19 @@ function TalentFrameBaseMixin:ShouldButtonShowEdges(button)
 	return button:ShouldBeVisible();
 end
 
-function TalentFrameBaseMixin:UpdateEdgesForButton(button)
+function TalentFrameBaseMixin:UpdateEdgesForButton(button, skipEdgeUpdates)
 	local function TalentFrameBaseIsEdgeFromTalentButton(edgeFrame)
 		return (edgeFrame:GetStartButton() == button);
 	end
-
-	self:ReleaseEdgesByCondition(TalentFrameBaseIsEdgeFromTalentButton);
 
 	local function TalentFrameBaseIsEdgeToTalentButton(edgeFrame)
 		return (edgeFrame:GetEndButton() == button);
 	end
 
-	self:UpdateEdgesByCondition(TalentFrameBaseIsEdgeToTalentButton);
+	if not skipEdgeUpdates then
+		self:ReleaseEdgesByCondition(TalentFrameBaseIsEdgeFromTalentButton);
+		self:UpdateEdgesByCondition(TalentFrameBaseIsEdgeToTalentButton);
+	end
 
 	if self:ShouldButtonShowEdges(button) then
 		local nodeInfo = button:GetNodeInfo();
@@ -1072,9 +1097,23 @@ function TalentFrameBaseMixin:RollbackConfig()
 	return C_Traits.RollbackConfig(self:GetConfigID());
 end
 
+function TalentFrameBaseMixin:TryPlaySound(soundKit)
+	if not self.suppressedSounds or not tContains(self.suppressedSounds, soundKit) then
+		PlaySound(soundKit);
+	end
+end
+
+function TalentFrameBaseMixin:SetSuppressedSounds(suppressedSounds)
+	self.suppressedSounds = suppressedSounds;
+end
+
+function TalentFrameBaseMixin:ClearSuppressedSounds()
+	self.suppressedSounds = nil;
+end
+
 function TalentFrameBaseMixin:PlayCommitConfigSound()
 	if self.commitSound then
-		PlaySound(self.commitSound);
+		self:TryPlaySound(self.commitSound);
 	end
 end
 
@@ -1140,6 +1179,10 @@ end
 
 function TalentFrameBaseMixin:SetSelection(nodeID, entryID)
 	self:AttemptConfigOperation(C_Traits.SetSelection, nodeID, entryID);
+end
+
+function TalentFrameBaseMixin:ClearCascadeRepurchaseHistory()
+	C_Traits.ClearCascadeRepurchaseHistory(self:GetConfigID());
 end
 
 function TalentFrameBaseMixin:GetNodeCost(nodeID)

@@ -59,7 +59,7 @@ local function ContainerFrame_IsBackpack(id)
 	return id == 0;
 end
 
-local function ContainerFrame_IsReagentBag(id)
+function ContainerFrame_IsReagentBag(id)
 	return id == 5;
 end
 
@@ -866,31 +866,58 @@ function ContainerFrameMixin:GetInitialItemAnchor()
 	return AnchorUtil.CreateAnchor("BOTTOMRIGHT", self, "BOTTOMRIGHT", -7, self:GetFirstButtonOffsetY());
 end
 
-function ContainerFrameMixin:UpdateItemLayout()
-	local bagSize = self:GetBagSize();
-
-	local isBankBag = self:IsBankBag();
-	local isCombinedBag = self:IsCombinedBagContainer();
-	local requiresIDAssignment = isBankBag or not isCombinedBag;
-	local itemsToLayout = {};
-
-	for i, itemButton in self:EnumerateValidItems() do
-		table.insert(itemsToLayout, itemButton);
-
-		-- NOTE: This workaround has to do with the fact that banks are not using combined inventory yet, so this
-		-- is the most ideal place to update the itemSlot id.
-		if requiresIDAssignment then
-			itemButton:SetID(bagSize - i + 1);
-			itemButton:SetBagID(self:GetBagID());
+do
+	local function SortItemsByExtendedState(item1, item2)
+		local extended1, extended2 = item1:IsExtended(), item2:IsExtended();
+		if extended1 ~= extended2 then
+			return not extended1;
 		end
 
-		itemButton:Show();
+		local bag1, bag2 = item1:GetBagID(), item2:GetBagID();
+		if bag1 ~= bag2 then
+			return bag1 > bag2;
+		end
+
+		local id1, id2 = item1:GetID(), item2:GetID();
+		return id1 < id2;
 	end
 
-	AnchorUtil.GridLayout(itemsToLayout, self:GetInitialItemAnchor(), self:GetAnchorLayout());
+	local function UpdateItemSort(items)
+		if not IsAccountSecured() and ContainerFrameSettingsManager:IsUsingCombinedBags() then
+			table.sort(items, SortItemsByExtendedState);
+		end
+	end
 
-	for i = bagSize + 1, #self.Items do
-		self.Items[i]:Hide();
+	function ContainerFrameMixin:UpdateItemLayout()
+		local bagSize = self:GetBagSize();
+
+		local isBankBag = self:IsBankBag();
+		local isCombinedBag = self:IsCombinedBagContainer();
+		local requiresIDAssignment = isBankBag or not isCombinedBag;
+		local itemsToLayout = {};
+
+		for i, itemButton in self:EnumerateValidItems() do
+			table.insert(itemsToLayout, itemButton);
+
+			-- NOTE: This workaround has to do with the fact that banks are not using combined inventory yet, so this
+			-- is the most ideal place to update the itemSlot id.
+			if requiresIDAssignment then
+				itemButton:SetID(bagSize - i + 1);
+				itemButton:SetBagID(self:GetBagID());
+			end
+
+			itemButton:Show();
+		end
+
+		UpdateItemSort(itemsToLayout);
+
+		AnchorUtil.GridLayout(itemsToLayout, self:GetInitialItemAnchor(), self:GetAnchorLayout());
+
+		for i = bagSize + 1, #self.Items do
+			self.Items[i]:Hide();
+		end
+
+		self:LayoutAddSlots();
 	end
 end
 
@@ -1049,6 +1076,14 @@ function ContainerFrameMixin:UpdateItemContextMatching()
 	EventRegistry:TriggerEvent("ItemButton.UpdateItemContextMatching", self:GetBagID());
 end
 
+function ContainerFrameMixin:UpdateAddSlots()
+	-- override if needed
+end
+
+function ContainerFrameMixin:LayoutAddSlots()
+	-- override if needed
+end
+
 function ContainerFrame_UpdateAll()
 	for i, frame in ContainerFrameUtil_EnumerateContainerFrames() do
 		frame:UpdateIfShown();
@@ -1191,6 +1226,8 @@ end
 
 function ContainerFrame_GetExtendedPriceString(itemButton, isEquipped, quantity)
 	quantity = (quantity or 1);
+	isEquipped = (isEquipped or false);
+
 	local slot, bag = itemButton:GetSlotAndBagID();
 
 	local money, itemCount, refundSec, currencyCount, hasEnchants = GetContainerItemPurchaseInfo(bag, slot, isEquipped);
@@ -1725,12 +1762,15 @@ ContainerFramePortraitButtonMixin = {};
 function ContainerFramePortraitButtonMixin:OnMouseDown()
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 	ToggleDropDownMenu(1, nil, self:GetParent().FilterDropDown, self, 0, 0);
+	if ContainerFrame_IsBackpack(self:GetID()) then
+		HelpTip:Hide(UIParent, TUTORIAL_HUD_REVAMP_BAG_CHANGES);
+	end
 end
 
 function ContainerFramePortraitButtonMixin:OnEnter()
 	GameTooltip:SetOwner(self, "ANCHOR_LEFT");
 	local waitingOnData = false;
-	if ( self:GetID() == 0 ) then
+	if ContainerFrame_IsBackpack(self:GetID()) then
 		GameTooltip:SetText(BACKPACK_TOOLTIP, 1.0, 1.0, 1.0);
 		if (GetBindingKey("TOGGLEBACKPACK")) then
 			GameTooltip:AppendText(" "..NORMAL_FONT_COLOR_CODE.."("..GetBindingKey("TOGGLEBACKPACK")..")"..FONT_COLOR_CODE_CLOSE)
@@ -1766,6 +1806,28 @@ end
 
 function ContainerFramePortraitButtonMixin:OnLeave()
 	GameTooltip_Hide();
+end
+
+function ContainerFramePortraitButtonMixin:OnShow()
+	if ( self:GetID() == 0 ) then
+		if not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_HUD_REVAMP_BAG_CHANGES) then
+			local helpTipInfo = {
+				text = TUTORIAL_HUD_REVAMP_BAG_CHANGES,
+				buttonStyle = HelpTip.ButtonStyle.Close,
+				cvarBitfield = "closedInfoFrames",
+				bitfieldFlag = LE_FRAME_TUTORIAL_HUD_REVAMP_BAG_CHANGES,
+				targetPoint = HelpTip.Point.LeftEdgeCenter,
+				offsetX = 0,
+				alignment = HelpTip.Alignment.Center,
+				acknowledgeOnHide = true,
+			};
+			HelpTip:Show(UIParent, helpTipInfo, self);
+		end
+	end
+end
+
+function ContainerFramePortraitButtonMixin:OnHide()
+	HelpTip:Hide(UIParent, TUTORIAL_HUD_REVAMP_BAG_CHANGES);
 end
 
 local function OpenAllBagsInternal(includeBank)
@@ -2249,6 +2311,44 @@ end
 
 ContainerFrameSettingsManager:Init();
 
+ContainerFrameExtendedSlotPack = CreateFromMixins(ContainerFrameMixin);
+
+function ContainerFrameExtendedSlotPack:UpdateAddSlots()
+	if not self.AddSlotsButton then
+		self.AddSlotsButton = CreateFrame("BUTTON", nil, self, "AddExtendedSlotsButtonTemplate");
+	end
+
+	self.AddSlotsButton:SetShown(not IsAccountSecured());
+end
+
+do
+	local function FindTargetExtendedItemButton(container)
+		local isCombined = ContainerFrameSettingsManager:IsUsingCombinedBags();
+		local lastExtendedItemButton;
+		for i, itemButton in container:EnumerateValidItems() do
+			if itemButton:IsExtended() then
+				lastExtendedItemButton = itemButton;
+
+				if isCombined then
+					return lastExtendedItemButton;
+				end
+			end
+		end
+
+		return lastExtendedItemButton;
+	end
+
+	function ContainerFrameExtendedSlotPack:LayoutAddSlots()
+		if self.AddSlotsButton and self.AddSlotsButton:IsShown() then
+			local itemButton = FindTargetExtendedItemButton(self);
+			if itemButton then
+				self.AddSlotsButton:ClearAllPoints();
+				self.AddSlotsButton:SetPoint("LEFT", itemButton, "LEFT", -14, -2);
+			end
+		end
+	end
+end
+
 ContainerFrameTokenWatcherMixin = CreateFromMixins(ContainerFrameMixin);
 
 function ContainerFrameTokenWatcherMixin:OnShow()
@@ -2309,7 +2409,7 @@ function ContainerFrameTokenWatcherMixin:UpdateCurrencyFrames()
 	self.MoneyFrame:Show();
 end
 
-ContainerFrameBackpackMixin = CreateFromMixins(ContainerFrameTokenWatcherMixin);
+ContainerFrameBackpackMixin = CreateFromMixins(ContainerFrameTokenWatcherMixin, ContainerFrameExtendedSlotPack);
 
 function ContainerFrameBackpackMixin:IsBackpack()
 	return true;
@@ -2334,11 +2434,10 @@ end
 function ContainerFrameBackpackMixin:UpdateMiscellaneousFrames()
 	ContainerFrameMixin.UpdateMiscellaneousFrames(self);
 	self:UpdateCurrencyFrames();
-
-	self.AddSlotsButton:SetShown(not IsAccountSecured());
+	self:UpdateAddSlots();
 end
 
-ContainerFrameCombinedBagsMixin = CreateFromMixins(ContainerFrameTokenWatcherMixin);
+ContainerFrameCombinedBagsMixin = CreateFromMixins(ContainerFrameTokenWatcherMixin, ContainerFrameExtendedSlotPack);
 
 function ContainerFrameCombinedBagsMixin:OnLoad()
 	ContainerFrame_OnLoad(self);
@@ -2406,6 +2505,7 @@ end
 
 function ContainerFrameCombinedBagsMixin:UpdateMiscellaneousFrames()
 	self:SetPortraitToAsset("Interface/Icons/Inv_misc_bag_08");
+	self:UpdateAddSlots();
 	self:UpdateCurrencyFrames();
 end
 

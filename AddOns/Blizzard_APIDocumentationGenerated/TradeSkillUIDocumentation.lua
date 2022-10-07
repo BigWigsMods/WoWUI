@@ -123,7 +123,7 @@ local TradeSkillUI =
 			{
 				{ Name = "recipeID", Type = "number", Nilable = false },
 				{ Name = "craftingReagents", Type = "table", InnerType = "CraftingReagentInfo", Nilable = false },
-				{ Name = "recraftItemGUID", Type = "string", Nilable = true },
+				{ Name = "allocationItemGUID", Type = "string", Nilable = true },
 			},
 
 			Returns =
@@ -140,7 +140,7 @@ local TradeSkillUI =
 				{ Name = "recipeSpellID", Type = "number", Nilable = false },
 				{ Name = "craftingReagentIndex", Type = "number", Nilable = false },
 				{ Name = "craftingReagents", Type = "table", InnerType = "CraftingReagentInfo", Nilable = false },
-				{ Name = "recraftItemGUID", Type = "string", Nilable = true },
+				{ Name = "allocationItemGUID", Type = "string", Nilable = true },
 			},
 
 			Returns =
@@ -351,7 +351,7 @@ local TradeSkillUI =
 			{
 				{ Name = "recipeID", Type = "number", Nilable = false },
 				{ Name = "craftingReagents", Type = "table", InnerType = "CraftingReagentInfo", Nilable = false },
-				{ Name = "recraftItemGUID", Type = "string", Nilable = true },
+				{ Name = "allocationItemGUID", Type = "string", Nilable = true },
 			},
 
 			Returns =
@@ -397,7 +397,7 @@ local TradeSkillUI =
 			{
 				{ Name = "recipeSpellID", Type = "number", Nilable = false },
 				{ Name = "reagents", Type = "table", InnerType = "CraftingReagentInfo", Nilable = true },
-				{ Name = "recraftItemGUID", Type = "string", Nilable = true },
+				{ Name = "allocationItemGUID", Type = "string", Nilable = true },
 			},
 
 			Returns =
@@ -696,7 +696,7 @@ local TradeSkillUI =
 			{
 				{ Name = "recipeID", Type = "number", Nilable = false },
 				{ Name = "craftingReagents", Type = "table", InnerType = "CraftingReagentInfo", Nilable = false },
-				{ Name = "recraftItemGUID", Type = "string", Nilable = true },
+				{ Name = "allocationItemGUID", Type = "string", Nilable = true },
 				{ Name = "recipeLevel", Type = "number", Nilable = true },
 				{ Name = "overrideQualityID", Type = "number", Nilable = true },
 			},
@@ -753,12 +753,30 @@ local TradeSkillUI =
 			LiteralName = "TRADE_SKILL_CLOSE",
 		},
 		{
+			Name = "TradeSkillCraftBegin",
+			Type = "Event",
+			LiteralName = "TRADE_SKILL_CRAFT_BEGIN",
+			Payload =
+			{
+				{ Name = "recipeSpellID", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "TradeSkillCraftingReagentBonusTextUpdated",
 			Type = "Event",
 			LiteralName = "TRADE_SKILL_CRAFTING_REAGENT_BONUS_TEXT_UPDATED",
 			Payload =
 			{
 				{ Name = "itemID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "TradeSkillCurrencyRewardResult",
+			Type = "Event",
+			LiteralName = "TRADE_SKILL_CURRENCY_REWARD_RESULT",
+			Payload =
+			{
+				{ Name = "data", Type = "CraftingCurrencyResultData", Nilable = false },
 			},
 		},
 		{
