@@ -10,6 +10,10 @@ LEFT_ACTIONBAR_PAGE = 4;
 RIGHT_ACTIONBAR_PAGE = 3;
 RANGE_INDICATOR = "●";
 
+MULTIBAR_5_ACTIONBAR_PAGE = 13;
+MULTIBAR_6_ACTIONBAR_PAGE = 14;
+MULTIBAR_7_ACTIONBAR_PAGE = 15;
+
 COOLDOWN_TYPE_LOSS_OF_CONTROL = 1;
 COOLDOWN_TYPE_NORMAL = 2;
 
@@ -1130,7 +1134,6 @@ function ActionBarActionButtonMixin:OnClick(button, down)
 				C_ActionBar.ToggleAutoCastPetAction(self.action);
 			end
 		else
-			local useKeyDownCvar = GetCVarBool("ActionButtonUseKeyDown");
 			local actionBarLocked = Settings.GetValue("lockActionBars");
 
 			local isModifiedClickLockedBarDoNothing = IsModifiedClick("PICKUPACTION");
@@ -1141,14 +1144,13 @@ function ActionBarActionButtonMixin:OnClick(button, down)
 			end
 
 			local lockedBarDoNothing = actionBarLocked and down and isModifiedClickLockedBarDoNothing;
-			local unlockedBarDoNothing = not actionBarLocked and (self:GetAttribute("pressAndHoldAction") or (useKeyDownCvar and down));
+			local unlockedBarDoNothing = not actionBarLocked and (self:GetAttribute("pressAndHoldAction") and down);
 			if lockedBarDoNothing or unlockedBarDoNothing then
 				return;
 			end
 
-			local useDown = down or (useKeyDownCvar and not actionBarLocked);
 			local isKeyPress = false;
-			SecureActionButton_OnClick(self, button, useDown, isKeyPress);
+			SecureActionButton_OnClick(self, button, down, isKeyPress);
 		end
 	end
 

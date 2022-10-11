@@ -613,7 +613,7 @@
 				self.showAuraCount = true;
 				self:OnLoad("focus", FocusFrameDropDown_Initialize);
 				self:CreateSpellbar("PLAYER_FOCUS_CHANGED");
-				self:CreateTargetofTarget("focus-target");
+				self:CreateTargetofTarget("focustarget");
 				self:RegisterEvent("PLAYER_FOCUS_CHANGED");
 			</OnLoad>
 		</Scripts>

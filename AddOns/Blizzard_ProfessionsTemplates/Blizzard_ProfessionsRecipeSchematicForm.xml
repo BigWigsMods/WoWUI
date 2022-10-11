@@ -190,8 +190,8 @@
 					<Size x="400" y="0"/>
 				</FontString>
 				
-				<FontString parentKey="Description" inherits="GameFontHighlightSmall2" justifyH="LEFT">
-					<Size x="400" y="0"/>
+				<FontString parentKey="Description" inherits="GameFontHighlightSmall2" maxLines="4" justifyH="LEFT">
+					<Size x="460" y="0"/>
 				</FontString>
 			</Layer>
 		</Layers>

@@ -44,15 +44,16 @@ function Class_Intro_KeyboardMouse:OnBegin()
 	end
 	Dispatcher:RegisterEvent("QUEST_DETAIL", self);
 	self:HideScreenTutorial();
-	C_Timer.After(4, function()
-		self:LaunchMouseKeyboardFrame();
-	end);	
+	self.LaunchTimer = C_Timer.NewTimer(4,
+		function()
+			self:LaunchMouseKeyboardFrame();
+		end);
 end
 
 function Class_Intro_KeyboardMouse:LaunchMouseKeyboardFrame()
 	EventRegistry:RegisterCallback("TutorialKeyboardMouseFrame.Closed", self.CloseMouseKeyboardFrame, self);
 	self:ShowMouseKeyboardTutorial();
-	self.Timer = C_Timer.NewTimer(10,
+	self.GlowTimer = C_Timer.NewTimer(10,
 		function()
 			GlowEmitterFactory:Show(KeyboardMouseConfirmButton,
 			GlowEmitterMixin.Anims.NPE_RedButton_GreenGlow)
@@ -70,12 +71,16 @@ function Class_Intro_KeyboardMouse:QUEST_DETAIL(logindex, questID)
 end
 
 function Class_Intro_KeyboardMouse:OnInterrupt(interruptedBy)
+	self:HideMouseKeyboardTutorial();
 	TutorialManager:Finished(self:Name());
 end
 
 function Class_Intro_KeyboardMouse:OnComplete()
-	if self.Timer then
-		self.Timer:Cancel();
+	if self.LaunchTimer then
+		self.LaunchTimer:Cancel();
+	end
+	if self.GlowTimer then
+		self.GlowTimer:Cancel();
 	end
 	Dispatcher:UnregisterEvent("QUEST_DETAIL", self);
 	self:HideMouseKeyboardTutorial();
@@ -320,7 +325,7 @@ function Class_Intro_CombatDummyInRange:OnComplete()
 	Dispatcher:UnregisterEvent("PLAYER_ENTER_COMBAT", self);
 	Dispatcher:UnregisterEvent("UNIT_TARGET", self);
 
-	local UI_Watcher = TutorialManager:GetWatcher(Class_UI_Watcher.name);
+	local UI_Watcher = TutorialManager:GetWatcher("UI_Watcher");
 	if UI_Watcher then
 		UI_Watcher:SetShown(TutorialData.UI_Elements.TARGET_FRAME, true);
 	end

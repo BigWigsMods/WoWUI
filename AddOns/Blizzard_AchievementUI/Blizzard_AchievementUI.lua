@@ -923,9 +923,10 @@ GUILDACHIEVEMENTBUTTON_MINHEIGHT = 128;
 AchievementTemplateMixin = {};
 
 function AchievementTemplateMixin:OnLoad()
+	self.DateCompleted = self.Shield.DateCompleted;
+
 	AchievementButton_Localize(self);
 
-	self.DateCompleted = self.Shield.DateCompleted;
 	if ( not ACHIEVEMENTUI_FONTHEIGHT ) then
 		local _, fontHeight = self.Description:GetFont();
 		ACHIEVEMENTUI_FONTHEIGHT = fontHeight;

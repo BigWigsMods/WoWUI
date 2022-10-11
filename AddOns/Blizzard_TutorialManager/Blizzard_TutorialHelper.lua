@@ -156,7 +156,7 @@ function TutorialHelper:DoQuestsInBundleNeedPickup(questBundle)
 	return false;
 end
 
-local actionBars = {"ActionButton", "MultiBarBottomLeftButton", "MultiBarBottomRightButton", "MultiBarLeftButton", "MultiBarRightButton"}
+local actionBars = {"ActionButton", "MultiBarBottomLeftButton", "MultiBarBottomRightButton", "MultiBarLeftButton", "MultiBarRightButton", "MultiBar5Button", "MultiBar6Button", "MultiBar7Button"}
 function TutorialHelper:FindEmptyButton(optionalPreferredActionBar)
 	if optionalPreferredActionBar then
 		for i = 1, 12 do

@@ -191,6 +191,21 @@ local TradeSkillUI =
 			},
 		},
 		{
+			Name = "GetHideUnownedFlags",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "recipeID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "cannotModifyHideUnowned", Type = "bool", Nilable = false },
+				{ Name = "alwaysHideUnowned", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "GetItemCraftedQualityByItemInfo",
 			Type = "Function",
 

@@ -820,10 +820,15 @@ function ProfessionsCraftingPageMixin:ConfigureInventorySlots(info)
 		self:HideInventorySlots();
 	else
 		local professionSlots = C_TradeSkillUI.GetProfessionSlots(info.profession);
+		local numShownSlots = 0;
 		for index, inventorySlot in ipairs(self.InventorySlots) do
 			local show = tContains(professionSlots, inventorySlot.slotID);
 			inventorySlot:SetShown(show);
+			if show then
+				numShownSlots = numShownSlots + 1;
+			end
 		end
+		self.GearSlotDivider:SetShown(numShownSlots > 1);
 	end
 end
 
@@ -839,7 +844,9 @@ function ProfessionsCraftingPageMixin:HideInventorySlots()
 	for index, inventorySlot in ipairs(self.InventorySlots) do
 		inventorySlot:Hide();
 	end
+	self.GearSlotDivider:Hide();
 end
+
 function ProfessionsCraftingPageMixin:AnyInventorySlotShown()
 	for index, inventorySlot in ipairs(self.InventorySlots) do
 		if inventorySlot:IsShown() then

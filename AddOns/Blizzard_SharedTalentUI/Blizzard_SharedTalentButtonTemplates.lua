@@ -84,6 +84,9 @@ end
 function TalentDisplayMixin:AcquireTooltip()
 	local tooltip = GameTooltip;
 	tooltip:SetOwner(self, "ANCHOR_RIGHT", 0, 0);
+	if self.tooltipBackdropStyle then
+		SharedTooltip_SetBackdropStyle(tooltip, self.tooltipBackdropStyle);
+	end
 	return tooltip;
 end
 
@@ -843,6 +846,9 @@ end
 function TalentButtonArtMixin:OnSearchIconEnter()
 	if self.searchIconTooltipText then
 		GameTooltip:SetOwner(self.SearchIcon.Mouseover, "ANCHOR_RIGHT", 0, 0);
+		if self.tooltipBackdropStyle then
+			SharedTooltip_SetBackdropStyle(GameTooltip, self.tooltipBackdropStyle);
+		end
 		GameTooltip_AddNormalLine(GameTooltip, self.searchIconTooltipText);
 		GameTooltip:Show();
 	end
@@ -983,7 +989,10 @@ function TalentButtonSpendMixin:AddTooltipInstructions(tooltip)
 	local canPurchase = self:CanPurchaseRank();
 	local canRefund = self:CanRefundRank();
 	local canRepurchase = self:CanCascadeRepurchaseRanks();
-	if canPurchase or canRefund then
+	local isGhosted = self:IsGhosted();
+
+	-- We want a preceding blank line if there are any instructions, but not lines between instructions.
+	if canPurchase or canRefund or canRepurchase or isGhosted then
 		GameTooltip_AddBlankLineToTooltip(tooltip);
 	end
 
@@ -995,8 +1004,7 @@ function TalentButtonSpendMixin:AddTooltipInstructions(tooltip)
 
 	if canRepurchase then
 		GameTooltip_AddColoredLine(tooltip, TALENT_BUTTON_TOOLTIP_REPURCHASE_INSTRUCTIONS, BRIGHTBLUE_FONT_COLOR);
-	elseif self:IsGhosted() then
-		GameTooltip_AddBlankLineToTooltip(tooltip);
+	elseif isGhosted then
 		GameTooltip_AddColoredLine(tooltip, TALENT_BUTTON_TOOLTIP_CLEAR_REPURCHASE_INSTRUCTIONS, BRIGHTBLUE_FONT_COLOR);
 	end
 end
@@ -1084,6 +1092,9 @@ function TalentButtonSelectMixin:AcquireTooltip()
 	local tooltip = GameTooltip;
 	tooltip:SetOwner(self, "ANCHOR_NONE");
 	tooltip:SetPoint("TOPLEFT", self, "TOPRIGHT");
+	if self.tooltipBackdropStyle then
+		SharedTooltip_SetBackdropStyle(tooltip, self.tooltipBackdropStyle);
+	end
 	return tooltip;
 end
 
@@ -1110,14 +1121,6 @@ end
 
 function TalentButtonSelectMixin:AddTooltipCost(tooltip)
 	-- Override TalentButtonBaseMixin.
-end
-
-function TalentButtonSelectMixin:AddTooltipInstructions(tooltip)
-	-- Override TalentButtonBaseMixin.
-
-	if self:IsGhosted() then
-		--GameTooltip_AddColoredLine(tooltip, TALENT_BUTTON_TOOLTIP_CLEAR_REPURCHASE_INSTRUCTIONS, BRIGHTBLUE_FONT_COLOR);
-	end
 end
 
 function TalentButtonSelectMixin:AddTooltipErrors(unused_tooltip)

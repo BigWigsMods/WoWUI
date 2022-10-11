@@ -5,6 +5,11 @@ local AutoPanEdgeSize = 40;
 local AutoPanOverEdge = 10;
 local AutoPanDelay = 0.35;
 
+-- Delays less than 0.5 risk displaying the spinner right before the commit cast bar starts showing
+-- Rather than reducing this, we should expand the cases where we can safely pass skipSpinnerDelay instead
+-- (See SetCommitVisualsActive)
+local CommitSpinnerWithBarDelay = 0.5;
+
 
 TalentFrameBaseButtonsParentMixin = {};
 
@@ -116,6 +121,13 @@ TalentFrameBaseMixin:GenerateCallbackEvents(
 	"TalentButtonAcquired",
 	"TalentButtonReleased",
 });
+
+TalentFrameBaseMixin.CommitUpdateReasons = {
+	CommitStarted = 1,
+	CommitSucceeded = 2,
+	CommitFailed = 3,
+	InstantCommit = 4,
+};
 
 function TalentFrameBaseMixin:OnLoad()
 	CallbackRegistryMixin.OnLoad(self);
@@ -240,16 +252,16 @@ function TalentFrameBaseMixin:OnShow()
 	end
 
 	if self:IsCommitInProgress() then
-		self:SetCommitVisualsActive(true);
+		local active = true;
+		local skipSpinnerDelay = true;
+		self:SetCommitVisualsActive(active, skipSpinnerDelay);
 	end
 end
 
 function TalentFrameBaseMixin:OnHide()
 	FrameUtil.UnregisterFrameForEvents(self, TalentFrameBaseEvents);
 
-	if self:IsCommitInProgress() then
-		self:SetCommitVisualsActive(false);
-	end
+	self:SetCommitVisualsActive(false);
 
 	self:SetCommitCompleteVisualsActive(false);
 
@@ -295,8 +307,7 @@ function TalentFrameBaseMixin:OnEvent(event, ...)
 		self:OnTraitConfigUpdated(configID);
 	elseif event == "CONFIG_COMMIT_FAILED" then
 		if self:IsCommitInProgress() then
-			local isCommitFailure = true;
-			self:SetCommitStarted(nil, isCommitFailure);
+			self:SetCommitStarted(nil, TalentFrameBaseMixin.CommitUpdateReasons.CommitFailed);
 			self:UpdateTreeCurrencyInfo();
 		end
 	end
@@ -304,7 +315,7 @@ end
 
 function TalentFrameBaseMixin:OnTraitConfigUpdated(configID)
 	if (configID == self.commitedConfigID) and self:IsCommitInProgress() then
-		self:SetCommitStarted(nil);
+		self:SetCommitStarted(nil, TalentFrameBaseMixin.CommitUpdateReasons.CommitSucceeded);
 		self:UpdateTreeCurrencyInfo();
 	end
 end
@@ -337,7 +348,7 @@ function TalentFrameBaseMixin:AdjustZoomLevel(adjustment)
 end
 
 function TalentFrameBaseMixin:SetZoomLevel(zoomLevel)
-	local treeInfo = self:GetTreeInfo();
+	local treeInfo = self:GetTreeInfoOrLayoutDefaults();
 	zoomLevel = Clamp(zoomLevel, treeInfo.minZoom, treeInfo.maxZoom);
 	self:SetZoomLevelInternal(zoomLevel);
 end
@@ -420,12 +431,12 @@ function TalentFrameBaseMixin:GetPanViewCornerPosition()
 end
 
 function TalentFrameBaseMixin:GetPanExtents()
-	local treeInfo = self:GetTreeInfo();
+	local treeInfo = self:GetTreeInfoOrLayoutDefaults();
 	local zoomLevel = self:GetZoomLevel();
 	local zoomLevelFactor = (1 / zoomLevel);
 
 	local basePanWidth, basePanHeight = self:GetPanViewSize();
-	local minZoom = (treeInfo and treeInfo.minZoom and (treeInfo.minZoom > 0)) and treeInfo.minZoom or 1;
+	local minZoom = treeInfo.minZoom;
 	local maxZoomFactor = (1 / minZoom);
 	local maxTreeWidth = (basePanWidth * maxZoomFactor);
 	local maxTreeHeight = (basePanHeight * maxZoomFactor);
@@ -923,6 +934,14 @@ function TalentFrameBaseMixin:GetTreeInfo()
 	return self.talentTreeInfo;
 end
 
+function TalentFrameBaseMixin:GetTreeInfoOrLayoutDefaults()
+	local treeInfo = self.talentTreeInfo or {};
+	treeInfo.minZoom = (treeInfo.minZoom and treeInfo.minZoom > 0) and treeInfo.minZoom or 1;
+	treeInfo.maxZoom = (treeInfo.maxZoom and treeInfo.maxZoom > 0) and treeInfo.maxZoom or 1;
+	treeInfo.buttonSize = treeInfo.buttonSize or 40;
+	return treeInfo;
+end
+
 function TalentFrameBaseMixin:GetButtonSize()
 	return self.buttonSize;
 end
@@ -1012,7 +1031,20 @@ function TalentFrameBaseMixin:SetDisabledOverlayShown(shown)
 	self.DisabledOverlay:SetShown(shown);
 end
 
-function TalentFrameBaseMixin:SetCommitVisualsActive(active)
+function TalentFrameBaseMixin:SetCommitSpinnerShown(shown)
+	local isCastBarActive = self.enableCommitCastBar and OverlayPlayerCastingBarFrame:IsShown();
+
+	if shown and not isCastBarActive then
+		self.CommitSpinner:Show();
+	else
+		if self.spinnerTimer then
+			self.spinnerTimer:Cancel();
+		end
+		self.CommitSpinner:Hide();
+	end
+end
+
+function TalentFrameBaseMixin:SetCommitVisualsActive(active, skipSpinnerDelay)
 	self.DisabledOverlay:SetShown(active);
 
 	if self.enableCommitCastBar then
@@ -1022,29 +1054,66 @@ function TalentFrameBaseMixin:SetCommitVisualsActive(active)
 			OverlayPlayerCastingBarFrame:EndReplacingPlayerBar();
 		end
 	end
-end
 
-function TalentFrameBaseMixin:SetCommitCompleteVisualsActive(active)
-	if self.enableCommitEndFlash then
+	local isCastBarActive = self.enableCommitCastBar and OverlayPlayerCastingBarFrame:IsShown();
+
+	if self.enableCommitSpinner then
+		if active and not isCastBarActive then
+			-- If the cast bar is also in use, put the spinner on a delay in case the bar is about to display
+			-- skipSpinnerDelay should only be passed in cases we know the cast bar will never be used
+			if self.enableCommitCastBar and not skipSpinnerDelay then
+				self.spinnerTimer = C_Timer.NewTimer(CommitSpinnerWithBarDelay, function()
+					self:SetCommitSpinnerShown(true);
+				end);
+			else
+				self:SetCommitSpinnerShown(true);
+			end
+		else
+			self:SetCommitSpinnerShown(false);
+		end
+	end
+
+	-- If both the spinner and cast bar are in use, listen for cast bar activating so we can hide spinner
+	if self.enableCommitSpinner and self.enableCommitCastBar then
 		if active then
-			self.AnimationHolder.BackgroundFlashAnim:Restart();
-			self.playingBackgroundFlash = true;
-		elseif self.playingBackgroundFlash then
-			self.BackgroundFlash:SetAlpha(0);
-			self.AnimationHolder.BackgroundFlashAnim:Stop();
-			self.playingBackgroundFlash = false;
+			EventRegistry:RegisterCallback("OverlayPlayerCastBar.OnShow", self.OnCommitCastBarShow, self);
+		else
+			EventRegistry:UnregisterCallback("OverlayPlayerCastBar.OnShow", self);
 		end
 	end
 end
 
-function TalentFrameBaseMixin:SetCommitStarted(configID, isCommitFailure)
+function TalentFrameBaseMixin:OnCommitCastBarShow()
+	self:SetCommitSpinnerShown(false);
+end
+
+function TalentFrameBaseMixin:SetCommitCompleteVisualsActive(active)
+	local playingBackgroundFlash = self.AnimationHolder.BackgroundFlashAnim:IsPlaying();
+	if self.enableCommitEndFlash and (active ~= playingBackgroundFlash) then
+		if active then
+			self.AnimationHolder.BackgroundFlashAnim:Restart();
+		else
+			self.BackgroundFlash:SetAlpha(0);
+			self.AnimationHolder.BackgroundFlashAnim:Stop();
+		end
+	end
+end
+
+function TalentFrameBaseMixin:CanCommitInstantly()
+	-- Override in your derived mixin.
+	return false;
+end
+
+function TalentFrameBaseMixin:SetCommitStarted(configID, reason, skipAnimation)
 	local isCommitStarted = (configID ~= nil);
 	local wasCommitActive = self:IsCommitInProgress();
 
 	self.commitedConfigID = configID;
 
-	if isCommitStarted ~= wasCommitActive then
-		self:SetCommitVisualsActive(isCommitStarted);
+	if reason == TalentFrameBaseMixin.CommitUpdateReasons.CommitFailed then
+		self:SetCommitVisualsActive(false);
+	elseif isCommitStarted ~= wasCommitActive then
+		self:SetCommitVisualsActive(isCommitStarted and (reason ~= TalentFrameBaseMixin.CommitUpdateReasons.InstantCommit));
 	end
 
 	if not isCommitStarted and self.commitTimer then
@@ -1053,12 +1122,18 @@ function TalentFrameBaseMixin:SetCommitStarted(configID, isCommitFailure)
 	end
 
 	if self:IsShown() then
-		if isCommitFailure then
+		if reason == TalentFrameBaseMixin.CommitUpdateReasons.CommitFailed then
 			self:SetCommitCompleteVisualsActive(false);
-		elseif not isCommitStarted and wasCommitActive then
-			self:SetCommitCompleteVisualsActive(true);
+		elseif not skipAnimation then
+			if reason == TalentFrameBaseMixin.CommitUpdateReasons.InstantCommit then
+				self:SetCommitCompleteVisualsActive(true);
+			elseif (self.previousCommitUpdateReason ~= TalentFrameBaseMixin.CommitUpdateReasons.InstantCommit) and (reason == TalentFrameBaseMixin.CommitUpdateReasons.CommitSucceeded) then
+				self:SetCommitCompleteVisualsActive(true);
+			end
 		end
 	end
+
+	self.previousCommitUpdateReason = reason;
 end
 
 function TalentFrameBaseMixin:GetMaximumCommitTime()
@@ -1072,12 +1147,11 @@ function TalentFrameBaseMixin:CommitConfig()
 
 	self:PlayCommitConfigSound();
 
-	self:SetCommitStarted(self:GetConfigID());
+	self:SetCommitStarted(self:GetConfigID(), self:CanCommitInstantly() and TalentFrameBaseMixin.CommitUpdateReasons.InstantCommit or TalentFrameBaseMixin.CommitUpdateReasons.CommitStarted);
 
-	-- TODO:: Replace this backup once we're confident with the proper flow.
-	-- Wait until we have server to client error messaging as well WOW10-27631
+	-- TODO:: Consider removing this backup now that we're confident with the proper flow.
 	self.commitTimer = C_Timer.NewTimer(self:GetMaximumCommitTime(), function()
-		self:SetCommitStarted(nil);
+		self:SetCommitStarted(nil, TalentFrameBaseMixin.CommitUpdateReasons.CommitFailed);
 	end);
 
 	return self:CommitConfigInternal();

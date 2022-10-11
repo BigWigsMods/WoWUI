@@ -608,8 +608,8 @@ function ProfessionsRecipeSchematicFormMixin:Init(recipeInfo)
 						return C_TradeSkillUI.IsOriginalCraftRecipeLearned(elementData.itemGUID);
 					end
 
-					local cannotFilter = true;
-					flyout:Init(self.recraftSlot.InputSlot, self.transaction, cannotFilter);
+					local canModifyFilter = false;
+					flyout:Init(self.recraftSlot.InputSlot, self.transaction, canModifyFilter);
 					flyout:RegisterCallback(ProfessionsItemFlyoutMixin.Event.ItemSelected, OnFlyoutItemSelected, slot);
 				end
 			end
@@ -793,8 +793,7 @@ function ProfessionsRecipeSchematicFormMixin:Init(recipeInfo)
 
 							flyout.OnElementEnabledImplementation = nil;
 
-							local cannotFilter = false;
-							flyout:Init(slot.Button, self.transaction, cannotFilter);
+							flyout:Init(slot.Button, self.transaction);
 							flyout:RegisterCallback(ProfessionsItemFlyoutMixin.Event.ItemSelected, OnFlyoutItemSelected, slot);
 						end
 					elseif buttonName == "RightButton" then
@@ -866,8 +865,7 @@ function ProfessionsRecipeSchematicFormMixin:Init(recipeInfo)
 						return (quantity ~= nil) and (quantity >= self.recipeSchematic.quantityMax);
 					end
 
-					local cannotFilter = false;
-					flyout:Init(self.salvageSlot.Button, self.transaction, cannotFilter);
+					flyout:Init(self.salvageSlot.Button, self.transaction);
 					flyout:RegisterCallback(ProfessionsItemFlyoutMixin.Event.ItemSelected, OnFlyoutItemSelected, slot);
 				end
 			elseif buttonName == "RightButton" then
@@ -944,8 +942,8 @@ function ProfessionsRecipeSchematicFormMixin:Init(recipeInfo)
 	
 					flyout.OnElementEnabledImplementation = nil;
 	
-					local cannotFilter = true;
-					flyout:Init(self.enchantSlot.Button, self.transaction, cannotFilter);
+					local canModifyFilter = false;
+					flyout:Init(self.enchantSlot.Button, self.transaction, canModifyFilter);
 					flyout:RegisterCallback(ProfessionsItemFlyoutMixin.Event.ItemSelected, OnFlyoutItemSelected, slot);
 				end
 			elseif buttonName == "RightButton" then

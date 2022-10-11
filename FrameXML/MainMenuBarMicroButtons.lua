@@ -1257,13 +1257,15 @@ function MainMenuMicroButtonMixin:OnMouseUp(button)
 		self.down = nil;
 		if ( self:IsMouseOver() ) then
 			if ( not GameMenuFrame:IsShown() ) then
-				if ( SettingsPanel:IsShown() ) then
-					SettingsPanel:Close();
+				if ( not AreAllPanelsDisallowed() ) then
+					if ( SettingsPanel:IsShown() ) then
+						SettingsPanel:Close();
+					end
+					CloseMenus();
+					CloseAllWindows();
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPEN);
+					ShowUIPanel(GameMenuFrame);
 				end
-				CloseMenus();
-				CloseAllWindows();
-				PlaySound(SOUNDKIT.IG_MAINMENU_OPEN);
-				ShowUIPanel(GameMenuFrame);
 			else
 				PlaySound(SOUNDKIT.IG_MAINMENU_QUIT);
 				HideUIPanel(GameMenuFrame);
