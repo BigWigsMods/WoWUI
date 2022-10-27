@@ -661,7 +661,7 @@ end
 
 function EditModeActionBarSystemMixin:UpdateButtonArt()
 	for i, actionButton in pairs(self.actionButtons) do
-		actionButton:UpdateButtonArt(i >= self.numShowingButtons);
+		actionButton:UpdateButtonArt(i >= self.numButtonsShowable);
 	end
 end
 
@@ -694,7 +694,7 @@ function EditModeActionBarSystemMixin:UpdateSystemSettingNumRows()
 end
 
 function EditModeActionBarSystemMixin:UpdateSystemSettingNumIcons()
-	self.numShowingButtons = self:GetSettingValue(Enum.EditModeActionBarSetting.NumIcons);
+	self.numButtonsShowable = self:GetSettingValue(Enum.EditModeActionBarSetting.NumIcons);
 	self:UpdateShownButtons();
 
 	-- Since the num icons changed we'll want to update the grid layout
@@ -1297,16 +1297,6 @@ function EditModeCastBarSystemMixin:UpdateSystemSetting(setting, entireSystemUpd
 end
 
 EditModeEncounterBarSystemMixin = {};
-
-function EditModeEncounterBarSystemMixin:OnEditModeExit()
-	EditModeSystemMixin.OnEditModeExit(self);
-
-	-- Undo encounter bar min size stuff so we don't have extra spacing in bottom managed container
-	EncounterBar.minimumWidth = nil;
-	EncounterBar.minimumHeight = nil;
-	EncounterBar:Layout();
-	UIParent_ManageFramePositions();
-end
 
 function EditModeEncounterBarSystemMixin:ApplySystemAnchor()
 	EditModeSystemMixin.ApplySystemAnchor(self);
