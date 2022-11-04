@@ -142,6 +142,13 @@
 			<AnimationGroup parentKey="FlashAnim" setToFinalAlpha="true">
 				<Alpha childKey="Flash" fromAlpha="0" toAlpha="1" duration="0.2"/>
 			</AnimationGroup>
+			<AnimationGroup parentKey="StageFlash" setToFinalAlpha="true">
+				<Alpha childKey="ChargeFlash" fromAlpha="0" toAlpha="1" duration="0.0"/>
+				<Alpha childKey="ChargeFlash" fromAlpha="1" toAlpha="0" duration="0.3"/>
+			</AnimationGroup>
+			<AnimationGroup parentKey="StageFinish" setToFinalAlpha="true">
+				<Alpha childKey="ChargeFlash" fromAlpha="0" toAlpha="1" duration="0.1"/>
+			</AnimationGroup>
 			<AnimationGroup parentKey="StandardFinish" inherits="TargetsVisibleWhilePlayingAnimGroupTemplate" looping="REPEAT" setToFinalAlpha="true">
 				<Translation childKey="EnergyGlow" duration="0.5" order="1" offsetX="0" offsetY="220" smoothing="NONE"/>
 				<Translation childKey="Flakes01" duration="0.5" order="1" offsetX="0" offsetY="100" startDelay="0" smoothing="IN"/>
@@ -196,6 +203,12 @@
 		<BarTexture atlas="ui-castingbar-filling-standard" useAtlasSize="true"/>
 		<Layers>
 			<Layer level="BACKGROUND" textureSubLevel="0">
+				<Texture parentKey="DropShadow" atlas="castbar_shadow_embedded" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="0" y="0"/>
+						<Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
+					</Anchors>
+				</Texture>
 				<Texture parentKey="TextBorder" atlas="ui-castingbar-textbox">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="0" y="0"/>
@@ -218,8 +231,8 @@
 			<Layer level="BACKGROUND" textureSubLevel="2">
 				<Texture parentKey="Background" atlas="ui-castingbar-background">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="1" y="-1"/>
-						<Anchor point="BOTTOMRIGHT" x="-1" y="1"/>
+						<Anchor point="TOPLEFT" x="-1" y="1"/>
+						<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -253,8 +266,8 @@
 				</Texture>
 				<Texture parentKey="Border" atlas="ui-castingbar-frame">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="-1" y="1"/>
-						<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
+						<Anchor point="TOPLEFT" x="-2" y="2"/>
+						<Anchor point="BOTTOMRIGHT" x="2" y="-2"/>
 					</Anchors>
 				</Texture>
 			</Layer>
@@ -310,6 +323,7 @@
 						<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
 					</Anchors>
 				</Texture>
+				<Texture parentKey="ChargeFlash" alpha="0" atlas="ui-castingbar-full-glow-standard" alphaMode="ADD" setAllPoints="true"/>
 				<FontString parentKey="Text" inherits="GameFontHighlightSmall">
 					<Size x="185" y="16"/>
 					<Anchors>
@@ -318,7 +332,8 @@
 				</FontString>
 			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="2">
-				<Texture parentKey="Spark" atlas="ui-castingbar-pip" useAtlasSize="true">
+				<Texture parentKey="Spark" atlas="ui-castingbar-pip">
+					<Size x="8" y="20"/>
 					<Anchors>
 						<Anchor point="CENTER" x="0" y="0"/>
 					</Anchors>
@@ -456,8 +471,8 @@
 		</Scripts>
 	</StatusBar>
 
-	<StatusBar name="PlayerCastingBarFrame" toplevel="true" inherits="CastingBarFrameTemplate, UIParentBottomManagedFrameTemplate, EditModeCastBarSystemTemplate" frameStrata="HIGH" mixin="PlayerCastingBarMixin">
-		<Size x="209" y="11"/>
+	<StatusBar name="PlayerCastingBarFrame" toplevel="true" inherits="CastingBarFrameTemplate, UIParentBottomManagedFrameTemplate, EditModeCastBarSystemTemplate" fixedFrameStrata="true" frameStrata="HIGH" mixin="PlayerCastingBarMixin">
+		<Size x="208" y="11"/>
 		<KeyValues>
 			<KeyValue key="layoutIndex" value="2" type="number"/>
 			<KeyValue key="bottomPadding" value="8" type="number"/>
@@ -470,23 +485,13 @@
 	</StatusBar>
 
 	<StatusBar name="OverlayPlayerCastingBarFrame" toplevel="true" inherits="CastingBarFrameTemplate" parent="UIParent" hidden="true" frameStrata="HIGH" mixin="OverlayPlayerCastingBarMixin">
-		<Size x="209" y="11"/>
+		<Size x="208" y="11"/>
 		<KeyValues>
 			<KeyValue key="playCastFX" value="true" type="boolean"/>
 		</KeyValues>
 		<Anchors>
 			<Anchor point="CENTER" x="0" y="0"/>
 		</Anchors>
-		<Layers>
-			<Layer level="OVERLAY" textureSubLevel="1">
-				<FontString parentKey="Text" inherits="GameFontNormalLarge">
-					<Size x="300" y="20"/>
-					<Anchors>
-						<Anchor point="TOP" x="0" y="30"/>
-					</Anchors>
-				</FontString>
-			</Layer>
-		</Layers>
 		<Scripts>
 			<OnLoad method="OnLoad"/>
 		</Scripts>

@@ -29,7 +29,10 @@ local ErrorMessages =
 	VRN_NEEDS_WINDOWS_11,
 	VRN_MACOS_UNSUPPORTED,
 	VRN_WINDOWS_UNSUPPORTED,
+	VRN_LEGACY_UNSUPPORTED,
+	VRN_DX11_UNSUPPORTED,
 	VRN_DX12_WIN7_UNSUPPORTED,
+	VRN_REMOTE_DESKTOP_UNSUPPORTED,
 	VRN_WINE_UNSUPPORTED,
 	VRN_NVAPI_WINE_UNSUPPORTED,
 	VRN_APPLE_UNSUPPORTED,
@@ -594,6 +597,22 @@ local function Register()
 		setting:SetCommitFlags(Settings.CommitFlag.Apply, Settings.CommitFlag.UpdateWindow);
 
 		Settings.CreateDropDown(category, setting, GetOptions, OPTION_TOOLTIP_NOTCH_MODE);
+	end
+
+	-- Low Latency Mode
+	do
+		local cvar = "LowLatencyMode";
+
+		local function GetOptions()
+			local container = Settings.CreateControlTextContainer();
+			AddValidatedCVarOption(container, cvar, 0, VIDEO_OPTIONS_DISABLED);
+			AddValidatedCVarOption(container, cvar, 1, VIDEO_OPTIONS_BUILTIN);
+			AddValidatedCVarOption(container, cvar, 2, VIDEO_OPTIONS_NVIDIA_REFLEX);
+			AddValidatedCVarOption(container, cvar, 3, VIDEO_OPTIONS_NVIDIA_REFLEX_BOOST);
+			return container:GetData();
+		end
+
+		Settings.SetupCVarDropDown(category, cvar, Settings.VarType.Number, GetOptions, LOW_LATENCY_MODE, OPTION_TOOLTIP_LOW_LATENCY_MODE);
 	end
 
 	do
