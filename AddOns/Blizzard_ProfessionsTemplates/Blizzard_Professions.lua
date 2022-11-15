@@ -213,10 +213,10 @@ function Professions.GetProfessionCategories(sorted)
 end
 
 function Professions.GetFirstRecipe(recipeInfo)
-	local previousRecipeID = recipeInfo.previousRecipeID;
+	local previousRecipeID = recipeInfo and recipeInfo.previousRecipeID;
 	while previousRecipeID do
 		recipeInfo = C_TradeSkillUI.GetRecipeInfo(previousRecipeID);
-		previousRecipeID = recipeInfo.previousRecipeID;
+		previousRecipeID = recipeInfo and recipeInfo.previousRecipeID;
 	end
 	
 	return recipeInfo;
@@ -674,17 +674,7 @@ function Professions.GenerateCraftingDataProvider(professionID, searching, noStr
 	local showAllRecipes = searching or C_TradeSkillUI.IsNPCCrafting();
 	for index, recipeID in ipairs(C_TradeSkillUI.GetFilteredRecipeIDs()) do
 		local recipeInfo = Professions.GetFirstRecipe(C_TradeSkillUI.GetRecipeInfo(recipeID));
-		local showRecipe = showAllRecipes;
-		if not showRecipe then
-			showRecipe = C_TradeSkillUI.IsRecipeInSkillLine(recipeID, professionID);
-			-- Temporary fix for expansionless recipes not appearing in the list. This will cause the
-			-- recipe to appear in every expansion in an undesirable categorization. Once these recipes
-			-- are reorganized this function may be removed.
-			if not showRecipe then
-				showRecipe = C_TradeSkillUI.IsRecipeInBaseSkillLine(recipeID);
-			end
-		end
-
+		local showRecipe = showAllRecipes or C_TradeSkillUI.IsRecipeInSkillLine(recipeID, professionID);
 		if showRecipe then
 			recipeInfos[recipeInfo.recipeID] = recipeInfo;
 		end

@@ -1205,6 +1205,7 @@ function UpdateContainerFrameAnchors()
 	local firstBagInMostRecentColumn;
 	for index, frame in ipairs(ContainerFrameSettingsManager:GetBagsShown()) do
 		frame:SetScale(containerScale);
+		frame:ClearAllPoints();
 		if index == 1 then
 			-- First bag
 			frame:SetPoint("BOTTOMRIGHT", frame:GetParent(), "BOTTOMRIGHT", -xOffset, yOffset);
@@ -1480,7 +1481,7 @@ function ContainerFrameItemButtonMixin:OnLeave()
 		ResetCursor();
 	end
 
-	if ( ArtifactFrame ) then
+	if ( ArtifactFrame and self:HasItem() ) then
 		ArtifactFrame:OnInventoryItemMouseLeave(self:GetBagID(), self:GetID());
 	end
 end
