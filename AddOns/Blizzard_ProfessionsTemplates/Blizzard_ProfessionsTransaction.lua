@@ -129,6 +129,10 @@ function ProfessionsRecipeTransactionMixin:Init(recipeSchematic)
 	end
 end
 
+function ProfessionsRecipeTransactionMixin:HasReagentSlots()
+	return #self.reagentSlotSchematicTbls > 0;
+end
+
 function ProfessionsRecipeTransactionMixin:SetAllocationsChangedHandler(onChangedFunc)
 	-- onChangedFunc intended to be invoked when any synthesized slots (enchant, recraft, salvage) are changed.
 	self.onChangedFunc = onChangedFunc;
@@ -510,6 +514,10 @@ function ProfessionsRecipeTransactionMixin:GetModification(dataSlotIndex)
 end
 
 function ProfessionsRecipeTransactionMixin:GetOriginalModification(dataSlotIndex)
+	if self.recraftOrderID then
+		-- Recrafting an order does not display previous modifications
+		return nil;
+	end
 	return self:GetModificationInternal(dataSlotIndex, self.recraftItemMods);
 end
 
