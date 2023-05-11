@@ -1,3 +1,6 @@
+local securecallfunction = securecallfunction;
+local type = type;
+
 do
 	if StaticPopupDialogs then
 		StaticPopupDialogs["CONFIRM_DELETING_CHARACTER_SPECIFIC_BINDINGS"] = {
@@ -111,10 +114,17 @@ function SettingsKeybindingSectionInitializer:GetExtent()
 	return bindingHeight;
 end
 
-function CreateKeybindingSectionInitializer(name, bindingsCategories)
+function CreateKeybindingSectionInitializer(name, bindingsCategories, requiredSettingName)
 	local initializer = CreateFromMixins(SettingsKeybindingSectionInitializer);
 	initializer:Init("SettingsKeybindingSectionTemplate");
 	initializer.data = {name=name, bindingsCategories=bindingsCategories};
+
+	local function ShouldShowKeybindingSection()
+		local requiredSetting = Settings.GetSetting(requiredSettingName);
+		return not requiredSetting or requiredSetting:GetValue();
+	end
+	initializer:AddShownPredicate(ShouldShowKeybindingSection);
+
 	return initializer;
 end
 
@@ -131,7 +141,6 @@ local function CreateSearchableSettings(redirectCategory)
 		if not cat then
 			tinsert(bindingsCategories[BINDING_HEADER_OTHER], {bindingIndex, action});
 		else
-			cat = _G[cat] or cat;
 			if not bindingsCategories[cat] then
 				bindingsCategories[cat] = {};
 			end
@@ -156,37 +165,36 @@ local function CreateSearchableSettings(redirectCategory)
 	Settings.RegisterCategory(fakeCategory, SETTING_GROUP_GAMEPLAY);
 end
 
+local function GetBindingCategoryName(cat)
+	local loc = _G[cat];
+	if type(loc) == "string" then
+		return loc;
+	end
+
+	return cat;
+end
+
 local retained = {};
 
 local function CreateKeybindingInitializers(category, layout)
 	-- Keybinding sections
 	local bindingsCategories = {};
 	local nextOrder = 1;
-	local function AddBindingCategory(key)
+	local function AddBindingCategory(key, requiredSettingName)
 		if not bindingsCategories[key] then
-			bindingsCategories[key] = {order = nextOrder, bindings = {}};
+			bindingsCategories[key] = {order = nextOrder, bindings = {}, requiredSettingName = requiredSettingName};
 			nextOrder = nextOrder + 1;
 		end
 	end
 
-	AddBindingCategory(BINDING_HEADER_MOVEMENT);
-	AddBindingCategory(BINDING_HEADER_INTERFACE);
-	AddBindingCategory(BINDING_HEADER_ACTIONBAR);
-	AddBindingCategory(BINDING_HEADER_MULTIACTIONBAR);
-	AddBindingCategory(BINDING_HEADER_CHAT);
-	AddBindingCategory(BINDING_HEADER_TARGETING);
-	AddBindingCategory(BINDING_HEADER_RAID_TARGET);
-	AddBindingCategory(BINDING_HEADER_VEHICLE);
-	AddBindingCategory(BINDING_HEADER_CAMERA);
-	AddBindingCategory(BINDING_HEADER_MISC);
-	AddBindingCategory(BINDING_HEADER_OTHER);
+	KeybindingsOverrides.AddBindingCategories(AddBindingCategory);
 
 	for bindingIndex = 1, GetNumBindings() do
 		local action, cat, binding1, binding2 = GetBinding(bindingIndex);
 		if not cat then
 			tinsert(bindingsCategories[BINDING_HEADER_OTHER].bindings, {bindingIndex, action});
 		else
-			cat = _G[cat] or cat;
+			cat = securecallfunction(GetBindingCategoryName, cat);
 			AddBindingCategory(cat);
 
 			if strsub(action, 1, 6) == "HEADER" then
@@ -200,12 +208,12 @@ local function CreateKeybindingInitializers(category, layout)
 	local sortedCategories = {};
 
 	for cat, bindingCategory in pairs(bindingsCategories) do
-		sortedCategories[bindingCategory.order] = {cat = cat, bindings = bindingCategory.bindings};
+		sortedCategories[bindingCategory.order] = {cat = cat, bindings = bindingCategory.bindings, requiredSettingName = bindingCategory.requiredSettingName};
 	end
 
 	for _, categoryInfo in ipairs(sortedCategories) do
 		if #(categoryInfo.bindings) > 0 then
-			layout:AddInitializer(CreateKeybindingSectionInitializer(categoryInfo.cat, categoryInfo.bindings));
+			layout:AddInitializer(CreateKeybindingSectionInitializer(categoryInfo.cat, categoryInfo.bindings, categoryInfo.requiredSettingName));
 		end
 	end
 	
@@ -254,29 +262,7 @@ local function Register()
 		initializer:SetSettingIntercept(CanChangeSetting);
 	end
 
-	-- Click Cast Bindings
-	do
-		local function OnButtonClick(button, buttonName, down)
-			local skipTransitionBackToOpeningPanel = true;
-			SettingsPanel:Close(skipTransitionBackToOpeningPanel);
-			ToggleClickBindingFrame();
-		end
-
-		local initializer = CreateSettingsButtonInitializer("", CLICK_BIND_MODE, OnButtonClick);
-		layout:AddInitializer(initializer);
-	end
-
-	-- Quick keybind
-	do
-		local function OnButtonClick(button, buttonName, down)
-			local skipTransitionBackToOpeningPanel = true;
-			SettingsPanel:Close(skipTransitionBackToOpeningPanel);
-			QuickKeybindFrame:Show();
-		end
-
-		local initializer = CreateSettingsButtonInitializer("", SETTINGS_QUICK_KEYBIND_BUTTON, OnButtonClick);
-		layout:AddInitializer(initializer);
-	end
+	KeybindingsOverrides.CreateBindingButtonSettings(layout);
 	
 	retained.initializers = CopyTable(layout:GetInitializers(), true);
 
@@ -287,9 +273,19 @@ end
 
 SettingsRegistrar:AddRegistrant(Register);
 
--- Temporary fix to restore access to CG bindings. Will be removed shortly with a proper
--- regeneration technique.
-EventUtil.ContinueOnAddOnLoaded("CameraGuy", function()
+EventRegistry:RegisterFrameEventAndCallback("ADDON_LOADED", function(o, ...)
+	local name, containsBindings = ...;
+	if not retained.layout then
+		--[[ We have not created any initial bindings. 
+		The initial bindings will include the addon's bindings.]]--
+		return;
+	end
+
+	if not containsBindings then
+		-- No bindings, no need to continue.
+		return;
+	end
+
 	-- Flush out every initializer from the layout.
 	local initializers = retained.layout:GetInitializers();
 	wipe(initializers);
@@ -301,6 +297,4 @@ EventUtil.ContinueOnAddOnLoaded("CameraGuy", function()
 
 	-- Create new bindings.
 	CreateKeybindingInitializers(retained.category, retained.layout);
-
-	retained = nil;
 end);

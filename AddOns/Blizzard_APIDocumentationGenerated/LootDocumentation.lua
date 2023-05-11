@@ -7,6 +7,20 @@ local Loot =
 	Functions =
 	{
 		{
+			Name = "GetLootRollDuration",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "rollID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "duration", Type = "number", Nilable = true },
+			},
+		},
+		{
 			Name = "IsLegacyLootModeEnabled",
 			Type = "Function",
 
@@ -64,6 +78,11 @@ local Loot =
 			Name = "BonusRollStarted",
 			Type = "Event",
 			LiteralName = "BONUS_ROLL_STARTED",
+		},
+		{
+			Name = "CancelAllLootRolls",
+			Type = "Event",
+			LiteralName = "CANCEL_ALL_LOOT_ROLLS",
 		},
 		{
 			Name = "CancelLootRoll",
@@ -144,36 +163,6 @@ local Loot =
 			LiteralName = "LOOT_CLOSED",
 		},
 		{
-			Name = "LootHistoryAutoShow",
-			Type = "Event",
-			LiteralName = "LOOT_HISTORY_AUTO_SHOW",
-			Payload =
-			{
-				{ Name = "rollID", Type = "number", Nilable = false },
-				{ Name = "isMasterLoot", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "LootHistoryFullUpdate",
-			Type = "Event",
-			LiteralName = "LOOT_HISTORY_FULL_UPDATE",
-		},
-		{
-			Name = "LootHistoryRollChanged",
-			Type = "Event",
-			LiteralName = "LOOT_HISTORY_ROLL_CHANGED",
-			Payload =
-			{
-				{ Name = "historyIndex", Type = "number", Nilable = false },
-				{ Name = "playerIndex", Type = "number", Nilable = false },
-			},
-		},
-		{
-			Name = "LootHistoryRollComplete",
-			Type = "Event",
-			LiteralName = "LOOT_HISTORY_ROLL_COMPLETE",
-		},
-		{
 			Name = "LootItemAvailable",
 			Type = "Event",
 			LiteralName = "LOOT_ITEM_AVAILABLE",
@@ -240,6 +229,17 @@ local Loot =
 			Payload =
 			{
 				{ Name = "lootSlot", Type = "luaIndex", Nilable = false },
+			},
+		},
+		{
+			Name = "MainSpecNeedRoll",
+			Type = "Event",
+			LiteralName = "MAIN_SPEC_NEED_ROLL",
+			Payload =
+			{
+				{ Name = "rollID", Type = "number", Nilable = false },
+				{ Name = "roll", Type = "number", Nilable = false },
+				{ Name = "isWinning", Type = "bool", Nilable = false },
 			},
 		},
 		{

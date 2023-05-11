@@ -1,7 +1,6 @@
 -----
 --A note on nomenclature:
 --LFD is used for Dungeon-specific functions and values
---LFR is used for Raid-specific functions and values
 --LFG is used for for generic functions/values that may be used for LFD, LFR, and any other LF_ system we may implement in the future.
 ------
 
@@ -341,7 +340,6 @@ end
 
 function LFG_UpdateFindGroupButtons()
 	LFDQueueFrameFindGroupButton_Update();
-	LFRQueueFrameFindGroupButton_Update();
 	RaidFinderFrameFindRaidButton_Update();
 end
 
@@ -357,9 +355,6 @@ function LFG_UpdateFramesIfShown()
 		LFDQueueFrame_Update();
 		LFDQueueFrameRandom_UpdateFrame();
 	end
-	if ( LFRParentFrame:IsVisible() ) then
-		LFRQueueFrame_Update();
-	end
 end
 
 function LFG_PermanentlyDisableRoleButton(button)
@@ -367,7 +362,7 @@ function LFG_PermanentlyDisableRoleButton(button)
 	button:Disable();
 	SetDesaturation(button:GetNormalTexture(), true);
 	button.cover:Show();
-	button.cover:SetAlpha(0.7);
+	button.cover:SetAlpha(button.permDisabledCoverAlpha);
 	button.checkButton:Hide();
 	button.checkButton:Disable();
 	button.checkButton:SetChecked(false);
@@ -457,7 +452,6 @@ function LFG_UpdateAllRoleCheckboxes()
 			LFG_UpdateRoleCheckboxes(LE_LFG_CATEGORY_LFD, nil, LFDRoleCheckPopupRoleButtonTank, LFDRoleCheckPopupRoleButtonHealer, LFDRoleCheckPopupRoleButtonDPS);
 	end
 
-	LFG_UpdateRoleCheckboxes(LE_LFG_CATEGORY_LFR, nil, LFRQueueFrameRoleButtonTank, LFRQueueFrameRoleButtonHealer, LFRQueueFrameRoleButtonDPS, nil);
 	LFG_UpdateRoleCheckboxes(LE_LFG_CATEGORY_RF, RaidFinderQueueFrame.raid, RaidFinderQueueFrameRoleButtonTank, RaidFinderQueueFrameRoleButtonHealer, RaidFinderQueueFrameRoleButtonDPS, RaidFinderQueueFrameRoleButtonLeader);
 end
 
@@ -486,15 +480,6 @@ function LFG_UpdateRolesChangeable()
 		LFG_DisableRoleButton(LFDQueueFrameRoleButtonLeader, true);
 	else
 		LFG_UpdateAvailableRoles(LFDQueueFrameRoleButtonTank, LFDQueueFrameRoleButtonHealer, LFDQueueFrameRoleButtonDPS, LFDQueueFrameRoleButtonLeader);
-	end
-
-	mode, subMode = GetLFGMode(LE_LFG_CATEGORY_LFR);
-	if ( mode == "queued" or mode == "listed" or mode == "rolecheck" or mode == "proposal" or mode == "suspended" ) then
-		LFG_DisableRoleButton(LFRQueueFrameRoleButtonTank, true);
-		LFG_DisableRoleButton(LFRQueueFrameRoleButtonHealer, true);
-		LFG_DisableRoleButton(LFRQueueFrameRoleButtonDPS, true);
-	else
-		LFG_UpdateAvailableRoles(LFRQueueFrameRoleButtonTank, LFRQueueFrameRoleButtonHealer, LFRQueueFrameRoleButtonDPS, nil);
 	end
 
 	mode, subMode = GetLFGMode(LE_LFG_CATEGORY_RF, RaidFinderQueueFrame.raid);
@@ -1068,10 +1053,6 @@ function LFDGetNumDungeons()
 	return #LFDDungeonList;
 end
 
-function LFRGetNumDungeons()
-	return #LFRRaidList;
-end
-
 function LFGIsIDHeader(id)
 	return id < 0;
 end
@@ -1086,7 +1067,6 @@ function LFGDungeonList_Setup()
 		LFGLockList = GetLFGLockList();
 
 		LFDQueueFrame_Update();
-		LFRQueueFrame_Update();
 		return true;
 	end
 	return false;
@@ -2231,4 +2211,77 @@ function LFGRoleButton_LockReasonsTextTable(dungeonID, roleID, textTable)
 	end
 
 	return textTable;
+end
+
+LFGRoleButtonWithShortageRewardMixin = {};
+
+function LFGRoleButtonWithShortageRewardMixin:OnLoad()
+	LFGRoleButtonTemplate_OnLoad(self);
+
+	if self.onClick then
+		self.checkButton.onClick = self.onClick;
+	end
+	
+	self:SetUpIconPulseAnim();
+	self.enableAnim = false;
+end
+
+function LFGRoleButtonWithShortageRewardMixin:OnShow()
+	self.RoleShortagePulseAnim:SetPlaying(self.enableAnim);
+end
+
+function LFGRoleButtonWithShortageRewardMixin:OnHide()
+	self.RoleShortagePulseAnim:SetPlaying(false);
+end
+
+function LFGRoleButtonWithShortageRewardMixin:SetUpIconPulseAnim()
+	self.IconPulse:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-ROLES");
+	self.IconPulse:SetTexCoord(GetTexCoordsForRole(self.role));
+end
+
+function LFGRoleButtonWithShortageRewardMixin:EnableRoleShortagePulseAnim(enableAnim)
+	self.enableAnim = enableAnim;	
+	local playAnim = self:IsVisible() and enableAnim;
+	if playAnim and self.RoleShortagePulseAnim:IsPlaying() then
+		self:RestartRoleShortagePulseAnim();
+		return;
+	end
+	
+	self.RoleShortagePulseAnim:SetPlaying(playAnim);
+end
+
+function LFGRoleButtonWithShortageRewardMixin:RestartRoleShortagePulseAnim()
+	self:CancelPulseEffect();
+	self.RoleShortagePulseAnim:Restart();
+end
+
+function LFGRoleButtonWithShortageRewardMixin:TryPlayPulseEffect()
+	if not self:IsVisible() or not self.RoleShortagePulseAnim:IsPlaying() then
+		return;
+	end
+
+	local roleShortageEffectID, effectSpeed = 164, 0.17;
+	self.RoleShortagePulseModelScene:SetEffectSpeed(effectSpeed);
+	self.RoleShortagePulseModelScene:AddEffect(roleShortageEffectID, self);
+end
+
+function LFGRoleButtonWithShortageRewardMixin:CancelPulseEffect()
+	if self.effectTimer then
+		self.effectTimer:Cancel();
+	end
+
+	self.RoleShortagePulseModelScene:ClearEffects();
+end
+
+LFGRoleShortagePulseAnimMixin = {};
+
+function LFGRoleShortagePulseAnimMixin:OnLoop()
+	local parentFrame = self:GetParent();
+	-- Play the pulse effect when the role icon is at its brightest
+	local pulseEffectDelay = 0.9;
+	parentFrame.effectTimer = C_Timer.NewTimer(pulseEffectDelay, GenerateClosure(parentFrame.TryPlayPulseEffect, parentFrame));
+end
+
+function LFGRoleShortagePulseAnimMixin:OnStop()
+	self:GetParent():CancelPulseEffect();
 end

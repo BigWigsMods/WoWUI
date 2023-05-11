@@ -576,10 +576,10 @@ end
 do
 	local function iterator(container, index)
 		index = index + 1;
-		if index <= container:GetBagSize() then
-			return index, container.Items[index];
+			if index <= container:GetBagSize() then
+				return index, container.Items[index];
+			end
 		end
-	end
 
 	function BaseContainerFrameMixin:EnumerateValidItems()
 		return iterator, self, 0;
@@ -887,17 +887,17 @@ do
 		local itemsToLayout = {};
 
 		for i, itemButton in self:EnumerateValidItems() do
-			table.insert(itemsToLayout, itemButton);
+				table.insert(itemsToLayout, itemButton);
 
-			-- NOTE: This workaround has to do with the fact that banks are not using combined inventory yet, so this
-			-- is the most ideal place to update the itemSlot id.
-			if requiresIDAssignment then
-				itemButton:SetID(bagSize - i + 1);
-				itemButton:SetBagID(self:GetBagID());
+				-- NOTE: This workaround has to do with the fact that banks are not using combined inventory yet, so this
+				-- is the most ideal place to update the itemSlot id.
+				if requiresIDAssignment then
+					itemButton:SetID(bagSize - i + 1);
+					itemButton:SetBagID(self:GetBagID());
+				end
+
+				itemButton:Show();
 			end
-
-			itemButton:Show();
-		end
 
 		UpdateItemSort(itemsToLayout);
 
@@ -1034,7 +1034,7 @@ function ContainerFrameMixin:UpdateItems()
 		if itemButton:CheckForTutorials(not isFiltered and shouldDoTutorialChecks, itemID) then
 			shouldDoTutorialChecks = false;
 		end
-	end
+	    end
 end
 
 function ContainerFrameMixin:UpdateIfShown()
@@ -1230,7 +1230,8 @@ function ContainerFrame_GetExtendedPriceString(itemButton, isEquipped, quantity)
 
 	local slot, bag = itemButton:GetSlotAndBagID();
 
-	local info = C_Container.GetContainerItemPurchaseInfo(bag, slot, isEquipped);
+	-- Equipped items won't have a bagID so we just pass 0 and the bag id is actually ignored since the item is equipped
+	local info = C_Container.GetContainerItemPurchaseInfo(bag or 0, slot, isEquipped);
 	local money = info and info.money;
 	local itemCount = info and info.itemCount;
 	local refundSec = info and info.refundSeconds;
@@ -1618,6 +1619,10 @@ function ContainerFrameItemButtonMixin:UpdateQuestItem(isQuestItem, questID, isA
 end
 
 function ContainerFrameItemButtonMixin:UpdateNewItem(quality)
+	if(not self.BattlepayItemTexture and not self.NewItemTexture) then 
+		return; 
+	end 
+
 	if C_NewItems.IsNewItem(self:GetBagID(), self:GetID()) then
 		if C_Container.IsBattlePayItem(self:GetBagID(), self:GetID()) then
 			self.NewItemTexture:Hide();
@@ -1706,7 +1711,7 @@ function ContainerFrameItemButtonMixin:SetIsExtended(isExtended)
 end
 
 function ContainerFrameItemButtonMixin:IsExtended()
-	return self.isExtended;
+		return self.isExtended;
 end
 
 function ContainerFrameItemButtonMixin:UpdateExtended()

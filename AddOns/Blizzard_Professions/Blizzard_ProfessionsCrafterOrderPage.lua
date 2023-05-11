@@ -19,7 +19,7 @@ local function SetTabTitleWithCount(tabButton, type, count)
 	end
 end
 
-ProfessionsCrafterOrderListElementMixin = CreateFromMixins(ScrollListLineMixin, TableBuilderRowMixin);
+ProfessionsCrafterOrderListElementMixin = CreateFromMixins(TableBuilderRowMixin);
 
 function ProfessionsCrafterOrderListElementMixin:OnLineEnter()
 	self.HighlightTexture:Show();
@@ -109,8 +109,8 @@ function ProfessionsCraftingOrderPageMixin:InitButtons()
 		GameTooltip:SetOwner(frame, "ANCHOR_RIGHT");
 		local claimInfo = C_CraftingOrders.GetOrderClaimInfo(self.professionInfo.profession);
 		local tooltipText;
-		if claimInfo.hoursToRecharge then
-			tooltipText = CRAFTING_ORDERS_CLAIMS_REMAINING_REFRESH_TOOLTIP:format(claimInfo.claimsRemaining, claimInfo.hoursToRecharge);
+		if claimInfo.secondsToRecharge then
+			tooltipText = CRAFTING_ORDERS_CLAIMS_REMAINING_REFRESH_TOOLTIP:format(claimInfo.claimsRemaining, SecondsToTime(claimInfo.secondsToRecharge));
 		else
 			tooltipText = CRAFTING_ORDERS_CLAIMS_REMAINING_TOOLTIP:format(claimInfo.claimsRemaining);
 		end
@@ -285,7 +285,7 @@ function ProfessionsCraftingOrderPageMixin:SetupTable()
 	self.tableBuilder:SetColumnHeaderOverlap(2);
 	self.tableBuilder:SetHeaderContainer(self.BrowseFrame.OrderList.HeaderContainer);
 	self.tableBuilder:SetTableMargins(-3, 5);
-	self.tableBuilder:SetTableWidth(747);
+	self.tableBuilder:SetTableWidth(777);
 
 	local PTC = ProfessionsTableConstants;
 	self.tableBuilder:AddFillColumn(self, PTC.NoPadding, 1.0,
@@ -441,7 +441,8 @@ function ProfessionsCraftingOrderPageMixin:OnShow()
 
 	self.BrowseFrame.RecipeList.SearchBox:SetText(C_TradeSkillUI.GetRecipeItemNameFilter());
 
-	if self.professionInfo and C_CraftingOrders.ShouldShowCraftingOrderTab() and C_TradeSkillUI.IsNearProfessionSpellFocus(self.professionInfo.profession) then
+	local profession = self.professionInfo and self.professionInfo.profession;
+	if profession and C_CraftingOrders.ShouldShowCraftingOrderTab() and C_TradeSkillUI.IsNearProfessionSpellFocus(profession) then
 		C_CraftingOrders.OpenCrafterCraftingOrders();
 		-- Delay a frame so that the recipe list does not get thrashed because of the delayed event from flag changes
 		RunNextFrame(function() self:StartDefaultSearch(); end);

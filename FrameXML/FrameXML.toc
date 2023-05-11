@@ -64,6 +64,7 @@
 ..\SharedXML\ButtonGroup.lua
 ..\SharedXML\Frame\EventFrame.xml
 ..\SharedXML\Frame\EventButton.xml
+..\SharedXML\Frame\EventScrollFrame.xml
 ..\SharedXML\Frame\EventEditBox.xml
 ..\SharedXML\DataProviders.xml
 ..\SharedXML\Interpolator.lua
@@ -103,6 +104,7 @@ IconDataProvider.lua
 ..\SharedXML\FrameStack.lua
 
 AnimatedStatusBar.xml
+GradualAnimatedStatusBar.xml
 PowerDependencyLine.xml
 FlowContainer.lua
 FrameLocks.lua
@@ -133,6 +135,14 @@ ObjectAPI\Quest.lua
 ObjectAPI\UiMapPoint.lua
 ObjectAPI\CovenantCalling.lua
 
+ContentTracking\ContentTrackingManager.lua
+ContentTracking\ContentTrackingElement.xml
+
+POIButton\POIButtonHighlightManager.lua
+POIButton\POIButton.xml
+POIButton\POIButtonOwner.xml
+POIButton\POIButtonUtil.lua
+
 ## add new modules below here
 ..\SharedXML\Backdrop.xml
 ChatBubbleTemplates.xml
@@ -147,6 +157,7 @@ UIParent.xml
 ..\SharedXML\ScriptedAnimations\ScriptAnimatedModelScene.xml
 ..\SharedXML\Selector\Blizzard_SelectorUI.xml
 ..\SharedXML\Selector\Blizzard_GridSelectorUI.xml
+..\SharedXML\Selector\Blizzard_ScrollBoxSelector.lua
 ..\SharedXML\Selector\Blizzard_ScrollBoxSelector.xml
 ..\SharedXML\GlobalFXModelScenes.xml
 PartyUtil.lua
@@ -169,6 +180,7 @@ RenownRewardUtil.lua
 RewardTrackTemplates.xml
 TitleUtil.lua
 CollectionsUtil.lua
+ProfessionsUtil.lua
 ItemDisplay.xml
 ..\SharedXML\HelpTip.xml
 CurrencyContainer.lua
@@ -176,6 +188,8 @@ MoneyFrame.lua
 MoneyFrame.xml
 MoneyInputFrame.lua
 MoneyInputFrame.xml
+..\SharedXML\ScrollDefine.xml
+..\SharedXML\SecureScrollTemplates.xml
 ..\SharedXML\SecureUIPanelTemplates.xml
 ..\SharedXML\SharedUIPanelTemplates.xml
 ..\SharedXML\Tabs\MinimalTab.xml
@@ -202,10 +216,13 @@ StaticPopup.xml
 ..\SharedXML\DialogUtil.lua
 ..\SharedXML\Settings\GameplaySettingsGroup.lua
 ..\SharedXML\Settings\Settings.xml
+..\FrameXML\SettingDefinitions\OverrideDefinitions.xml
 SettingDefinitions\Definitions.xml
 QuickKeybind.xml
 TutorialFrame.xml
+EditModePresetLayoutSystemUtils.lua
 EditModePresetLayouts.lua
+EditModePresetLayoutsManager.lua
 EditModeSettingDisplayInfo.lua
 EditModeUtil.lua
 EditModeTemplates.lua
@@ -234,9 +251,11 @@ TabardModelFrameMixin.lua
 WardrobeOutfits.xml
 DressUpFrames.xml
 NavigationBar.xml
+
+## Deprecated. Retained only for addons
 ..\SharedXML\HybridScrollFrame.xml
+
 ..\SharedXML\TemplatedList.xml
-..\SharedXML\ScrollList.xml
 ..\SharedXML\PagedList.xml
 GameMenuFrame.xml
 FilterDropDown.lua
@@ -278,14 +297,15 @@ VoiceChatDots.xml
 VoiceChatTranscriptionButton.xml
 VoiceChatHeadsetButton.xml
 VoiceToggleButton.xml
+..\SharedXML\SharedReportFrame.xml
 ReportFrame.xml
 UnitPopupSlider.xml
 UnitPopupCustomControls.xml
-UnitPopupSharedUtils.lua
+..\SharedXML\UnitPopupSharedUtils.lua
 UnitPopupUtils.lua
-UnitPopupSharedButtonMixins.lua
-UnitPopupShared.xml
-UnitPopupSharedMenus.lua
+..\SharedXML\UnitPopupSharedButtonMixins.lua
+..\SharedXML\UnitPopupShared.xml
+..\SharedXML\UnitPopupSharedMenus.lua
 UnitPopupButtons.lua
 UnitPopupMenus.lua
 UnitPopup.xml
@@ -308,10 +328,10 @@ PaperDollFrame.xml
 ReputationFrame.xml
 FriendshipStatusBar.xml
 QuestFrame.xml
-QuestPOI.xml
 QuestInfo.xml
 MerchantFrame.xml
 TradeFrame.xml
+ContainerFrame.lua
 ContainerFrame.xml
 ScrollingFlatPanel.xml
 LootFrame.xml
@@ -360,7 +380,6 @@ QueueUpdater.lua
 PVEFrame.xml
 LFGFrame.xml
 LFDFrame.xml
-LFRFrame.xml
 RaidFinder.xml
 LFGList.xml
 PvpPopup.xml
@@ -371,14 +390,17 @@ ClassPowerBar.xml
 ClassResourceBarTemplate.xml
 RuneFrame.xml
 ShardBar.xml
-ComboFramePlayer.xml
+RogueComboPointBar.xml
+DruidComboPointBar.xml
 InsanityBar.xml
 EssenceFramePlayer.xml
 EasyMenu.lua
 ChatConfigFrame.xml
 MovieFrame.xml
+AlternatePowerBarBase.xml
 AlternatePowerBar.xml
 MonkStaggerBar.xml
+EvokerEbonMightBar.xml
 BossBannerToast.xml
 EventToastManager.xml
 AnimationSystem.lua
@@ -386,6 +408,7 @@ EquipmentManager.lua
 CompactUnitFrame.xml
 CompactRaidGroup.xml
 CompactPartyFrame.xml
+CompactArenaFrame.xml
 RolePoll.xml
 SpellFlyout.xml
 PaladinPowerBar.xml
@@ -399,7 +422,6 @@ Timer.xml
 MonkHarmonyBar.xml
 RecruitAFriendFrame.xml
 DestinyFrame.xml
-PriestBar.xml
 SharedPetBattleTemplates.xml
 LootHistory.xml
 FloatingPetBattleTooltip.xml
@@ -421,7 +443,6 @@ ActionStatus.xml
 WeeklyReward.lua
 PlayerInteractionFrameManager.xml
 TalkingHeadUI.xml
-ArenaUI.xml
 FramerateFrame.xml
 ClassTalentHelper.lua
 MotionSickness.xml

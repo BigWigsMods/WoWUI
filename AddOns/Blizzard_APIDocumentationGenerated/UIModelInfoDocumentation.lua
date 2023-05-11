@@ -121,20 +121,6 @@ local UIModelInfo =
 	Tables =
 	{
 		{
-			Name = "ItemTryOnReason",
-			Type = "Enumeration",
-			NumValues = 4,
-			MinValue = 0,
-			MaxValue = 3,
-			Fields =
-			{
-				{ Name = "Success", Type = "ItemTryOnReason", EnumValue = 0 },
-				{ Name = "WrongRace", Type = "ItemTryOnReason", EnumValue = 1 },
-				{ Name = "NotEquippable", Type = "ItemTryOnReason", EnumValue = 2 },
-				{ Name = "DataPending", Type = "ItemTryOnReason", EnumValue = 3 },
-			},
-		},
-		{
 			Name = "ModelSceneSetting",
 			Type = "Enumeration",
 			NumValues = 1,
@@ -173,6 +159,20 @@ local UIModelInfo =
 				{ Name = "WorldMapThreat", Type = "ModelSceneType", EnumValue = 17 },
 				{ Name = "Soulbinds", Type = "ModelSceneType", EnumValue = 18 },
 				{ Name = "JailersTowerAnimaGlow", Type = "ModelSceneType", EnumValue = 19 },
+			},
+		},
+		{
+			Name = "UIModelSceneActorFlag",
+			Type = "Enumeration",
+			NumValues = 4,
+			MinValue = 1,
+			MaxValue = 8,
+			Fields =
+			{
+				{ Name = "Deprecated1", Type = "UIModelSceneActorFlag", EnumValue = 1 },
+				{ Name = "UseCenterForOriginX", Type = "UIModelSceneActorFlag", EnumValue = 2 },
+				{ Name = "UseCenterForOriginY", Type = "UIModelSceneActorFlag", EnumValue = 4 },
+				{ Name = "UseCenterForOriginZ", Type = "UIModelSceneActorFlag", EnumValue = 8 },
 			},
 		},
 		{

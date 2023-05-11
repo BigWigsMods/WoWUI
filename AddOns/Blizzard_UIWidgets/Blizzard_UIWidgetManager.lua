@@ -43,15 +43,31 @@ function UIWidgetContainerMixin:OnLoad()
 	end
 end
 
+function UIWidgetContainerMixin:OnShow()
+	self:UpdateWidgetLayout();
+end
+
 function UIWidgetContainerMixin:OnEvent(event, ...)
 	if event == "UPDATE_ALL_UI_WIDGETS" then
 		self:ProcessAllWidgets();
 	elseif event == "UPDATE_UI_WIDGET" then
 		local widgetInfo = ...;
-		if (widgetInfo.widgetSetID == self.widgetSetID) and (not widgetInfo.unit or (widgetInfo.unit == self.attachedToUnit)) then
+		if self:IsRegisteredForWidgetSet(widgetInfo.widgetSetID) and (not widgetInfo.unit or (widgetInfo.unit == self.attachedToUnit)) then
 			self:ProcessWidget(widgetInfo.widgetID, widgetInfo.widgetType);
 		end
 	end
+end
+
+function UIWidgetContainerMixin:MarkDirtyLayout()
+	self.dirtyLayout = true;
+
+	-- To optimize performance, only set OnUpdate while marked dirty.
+	self:SetScript("OnUpdate", UIWidgetContainerMixin.OnUpdate);
+end
+
+function UIWidgetContainerMixin:MarkCleanLayout()
+	self.dirtyLayout = false;
+	self:SetScript("OnUpdate", nil);
 end
 
 function UIWidgetContainerMixin:OnUpdate(elapsed)
@@ -272,6 +288,15 @@ function UIWidgetContainerMixin:UnregisterForWidgetSet()
 	UIWidgetManager:OnWidgetContainerUnregistered(self);
 end
 
+-- Pass in nil to check if we are registered to any widget set
+function UIWidgetContainerMixin:IsRegisteredForWidgetSet(widgetSetID)
+	if widgetSetID then
+		return self.widgetSetID == widgetSetID;
+	else
+		return self.widgetSetID ~= nil;
+	end
+end
+
 function UIWidgetContainerMixin:RegisterTimerWidget(widgetID, widgetFrame)
 	if not self.timerWidgets[widgetID] then
 		-- New timer added
@@ -360,7 +385,7 @@ function UIWidgetContainerMixin:RemoveWidget(widgetID)
 	self.widgetFrames[widgetID] = nil;
 
 	-- The layout is dirty
-	self.dirtyLayout = true;
+	self:MarkDirtyLayout();
 end
 
 local function ResetWidget(pool, widgetFrame)
@@ -481,7 +506,7 @@ function UIWidgetContainerMixin:ProcessWidget(widgetID, widgetType)
 	local needsLayout = (oldOrderIndex ~= widgetFrame.orderIndex) or (oldLayoutDirection ~= widgetFrame.layoutDirection);
 	if needsLayout then
 		-- Either this is a new widget or either orderIndex or layoutDirection changed. In either case layout needs to be run
-		self.dirtyLayout = true;
+		self:MarkDirtyLayout();
 	end
 end
 
@@ -519,6 +544,12 @@ function UIWidgetContainerMixin:HasAnyWidgetsShowing()
 end
 
 function UIWidgetContainerMixin:UpdateWidgetLayout()
+	if not self:IsRegisteredForWidgetSet() then
+		-- We aren't registered for a widget set, nothing to layout
+		self:MarkCleanLayout();
+		return;
+	end
+
 	local sortedWidgets = {};
 	for _, widget in pairs(self.widgetFrames) do
 		table.insert(sortedWidgets, widget);
@@ -528,7 +559,7 @@ function UIWidgetContainerMixin:UpdateWidgetLayout()
 
 	self.numWidgetsShowing = #sortedWidgets;
 	self:layoutFunc(sortedWidgets);
-	self.dirtyLayout = false;
+	self:MarkCleanLayout();
 end
 
 UIWidgetManagerMixin = {};

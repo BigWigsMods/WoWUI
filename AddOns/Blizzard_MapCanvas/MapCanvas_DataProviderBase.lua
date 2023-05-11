@@ -157,6 +157,13 @@ function MapCanvasPinMixin:OnClick(...)
 	end	
 end
 
+function MapCanvasPinMixin:DisableInheritedMotionScriptsWarning()
+	-- Override in your mixin to disable warnings (for use if you're inheriting from a template that has OnEnter/OnLeave defined).
+	-- Make sure you call the appropriate OnEnter/OnLeave inside OnMouseEnter/OnMouseLeave.
+
+	return false;
+end
+
 function MapCanvasPinMixin:OnMouseEnter()
 	-- Override in your mixin, called when the mouse enters this pin
 end
@@ -421,6 +428,13 @@ end
 
 function MapCanvasPinMixin:UseFrameLevelType(pinFrameLevelType, index)
 	self.pinFrameLevelType = pinFrameLevelType;
+	self.pinFrameLevelIndex = index;
+end
+
+function MapCanvasPinMixin:UseFrameLevelTypeFromRangeTop(pinFrameLevelType, index)
+	self.pinFrameLevelType = pinFrameLevelType;
+	local range = self:GetMap():GetPinFrameLevelsManager():GetFrameLevelRange(pinFrameLevelType);
+	index = range - (index or 1) + 1;
 	self.pinFrameLevelIndex = index;
 end
 

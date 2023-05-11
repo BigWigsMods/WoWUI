@@ -6,6 +6,20 @@ local Unit =
 	Functions =
 	{
 		{
+			Name = "GetClassIDFromSpecID",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "specID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "classID", Type = "number", Nilable = true },
+			},
+		},
+		{
 			Name = "GetNegativeCorruptionEffectInfo",
 			Type = "Function",
 
@@ -306,6 +320,21 @@ local Unit =
 			},
 		},
 		{
+			Name = "UnitDistanceSquared",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "distance", Type = "number", Nilable = false },
+				{ Name = "checkedDistance", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "UnitInPartyShard",
 			Type = "Function",
 
@@ -317,6 +346,21 @@ local Unit =
 			Returns =
 			{
 				{ Name = "inPartyShard", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitInRange",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "inRange", Type = "bool", Nilable = false },
+				{ Name = "checkedRange", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -1153,6 +1197,16 @@ local Unit =
 			},
 		},
 		{
+			Name = "UnitDistanceCheckUpdate",
+			Type = "Event",
+			LiteralName = "UNIT_DISTANCE_CHECK_UPDATE",
+			Payload =
+			{
+				{ Name = "unitTarget", Type = "UnitToken", Nilable = false },
+				{ Name = "isInDistance", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "UnitFaction",
 			Type = "Event",
 			LiteralName = "UNIT_FACTION",
@@ -1204,6 +1258,16 @@ local Unit =
 			Payload =
 			{
 				{ Name = "unitTarget", Type = "UnitToken", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitInRangeUpdate",
+			Type = "Event",
+			LiteralName = "UNIT_IN_RANGE_UPDATE",
+			Payload =
+			{
+				{ Name = "unitTarget", Type = "UnitToken", Nilable = false },
+				{ Name = "isInRange", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -1668,9 +1732,9 @@ local Unit =
 		{
 			Name = "PowerType",
 			Type = "Enumeration",
-			NumValues = 26,
+			NumValues = 29,
 			MinValue = -2,
-			MaxValue = 23,
+			MaxValue = 26,
 			Fields =
 			{
 				{ Name = "HealthCost", Type = "PowerType", EnumValue = -2 },
@@ -1698,7 +1762,10 @@ local Unit =
 				{ Name = "RuneBlood", Type = "PowerType", EnumValue = 20 },
 				{ Name = "RuneFrost", Type = "PowerType", EnumValue = 21 },
 				{ Name = "RuneUnholy", Type = "PowerType", EnumValue = 22 },
-				{ Name = "NumPowerTypes", Type = "PowerType", EnumValue = 23 },
+				{ Name = "AlternateQuest", Type = "PowerType", EnumValue = 23 },
+				{ Name = "AlternateEncounter", Type = "PowerType", EnumValue = 24 },
+				{ Name = "AlternateMount", Type = "PowerType", EnumValue = 25 },
+				{ Name = "NumPowerTypes", Type = "PowerType", EnumValue = 26 },
 			},
 		},
 		{

@@ -173,7 +173,7 @@ do
 			end
 
 			if isMouseMotionEnabled then
-				if newPin then
+				if newPin and not pin:DisableInheritedMotionScriptsWarning() then
 					-- These will never be called, just define a OnMouseEnter and OnMouseLeave on the pin mixin and it'll be called when appropriate
 					assert(pin:GetScript("OnEnter") == nil);
 					assert(pin:GetScript("OnLeave") == nil);
@@ -679,6 +679,15 @@ function MapCanvasMixin:ShouldNavigateOnClick()
 	return self.ScrollContainer:ShouldNavigateOnClick();
 end
 
+-- Optional limiter related to shouldNavigateOnClick checks.
+function MapCanvasMixin:SetShouldNavigateIgnoreZoneMapPositionData(ignoreZoneMapPositionData)
+	self.ScrollContainer:SetShouldNavigateIgnoreZoneMapPositionData(ignoreZoneMapPositionData);
+end
+
+function MapCanvasMixin:ShouldNavigateIgnoreZoneMapPositionData()
+	return self.ScrollContainer:ShouldNavigateIgnoreZoneMapPositionData();
+end
+
 function MapCanvasMixin:SetShouldPanOnClick(shouldPanOnClick)
 	self.ScrollContainer:SetShouldPanOnClick(shouldPanOnClick);
 end
@@ -790,12 +799,14 @@ function MapCanvasMixin:NavigateToParentMap()
 	end
 end
 
-function MapCanvasMixin:NavigateToCursor()
+function MapCanvasMixin:NavigateToCursor(ignoreZoneMapPositionData)
 	local normalizedCursorX, normalizedCursorY = self:GetNormalizedCursorPosition();
-	local mapInfo = C_Map.GetMapInfoAtPosition(self:GetMapID(), normalizedCursorX, normalizedCursorY);
+	local mapInfo = C_Map.GetMapInfoAtPosition(self:GetMapID(), normalizedCursorX, normalizedCursorY, ignoreZoneMapPositionData);
 	if mapInfo then
 		self:SetMapID(mapInfo.mapID);
+		return true;
 	end
+	return false;
 end
 
 local function PrioritySorter(left, right)

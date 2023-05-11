@@ -80,6 +80,65 @@ function ProfessionsCrafterOrderViewMixin:InitButtons()
 			return;
 		end
 
+		-- Add whisper option
+		do
+			local info = UIDropDownMenu_CreateInfo();
+			info.text = WHISPER_MESSAGE;
+
+			local whisperStatus = self:GetWhisperCustomerStatus();
+
+			if whisperStatus == Enum.ChatWhisperTargetStatus.CanWhisper or whisperStatus == Enum.ChatWhisperTargetStatus.CanWhisperGuild then
+				info.func = function()
+					ChatFrame_SendTell(self.order.customerName);
+				end
+			else
+				info.disabled = true;
+				info.tooltipWhileDisabled = true;
+				info.tooltipOnButton = true;
+				info.tooltipTitle = "";
+				if whisperStatus == Enum.ChatWhisperTargetStatus.Offline then
+					info.tooltipText = PROF_ORDER_CANT_WHISPER_OFFLINE;
+				elseif whisperStatus == Enum.ChatWhisperTargetStatus.WrongFaction then
+					info.tooltipText = PROF_ORDER_CANT_WHISPER_WRONG_FACTION;
+				end
+			end
+			info.isNotRadio = true;
+			info.notCheckable = true;
+			UIDropDownMenu_AddButton(info, level);
+		end
+
+		-- Add "Add Friend" option
+		do
+			local info = UIDropDownMenu_CreateInfo();
+			info.text = ADD_FRIEND;
+
+			-- Use the same status as whisper for now; if the player is offline, we can't easily check their faction
+			local whisperStatus = self:GetWhisperCustomerStatus();
+			local alreadyIsFriend = C_FriendList.IsFriend(self.order.customerGuid);
+
+			if whisperStatus == Enum.ChatWhisperTargetStatus.CanWhisper and not alreadyIsFriend then
+				info.func = function()
+					C_FriendList.AddFriend(self.order.customerName);
+				end
+			else
+				info.disabled = true;
+				info.tooltipWhileDisabled = true;
+				info.tooltipOnButton = true;
+				info.tooltipTitle = "";
+				if alreadyIsFriend then
+					info.tooltipText = ALREADY_FRIEND_FMT:format(self.order.customerName);
+				elseif whisperStatus == Enum.ChatWhisperTargetStatus.Offline then
+					info.tooltipText = PROF_ORDER_CANT_ADD_FRIEND_OFFLINE;
+				elseif whisperStatus == Enum.ChatWhisperTargetStatus.WrongFaction or whisperStatus == Enum.ChatWhisperTargetStatus.CanWhisperGuild then
+					-- CanWhisperGuild means we can whisper the player despite them being cross-faction because they are in our guild
+					info.tooltipText = PROF_ORDER_CANT_ADD_FRIEND_WRONG_FACTION;
+				end
+			end
+			info.isNotRadio = true;
+			info.notCheckable = true;
+			UIDropDownMenu_AddButton(info, level);
+		end
+
 		-- Add ignore option
 		do
 			local canIgnore = self.order.orderState == Enum.CraftingOrderState.Created and not C_FriendList.IsIgnoredByGuid(self.order.customerGuid);
@@ -110,33 +169,6 @@ function ProfessionsCrafterOrderViewMixin:InitButtons()
 				info.tooltipOnButton = true;
 				info.tooltipTitle = "";
 				info.tooltipText = self.order.orderState ~= Enum.CraftingOrderState.Created and PROF_ORDER_CANT_IGNORE_IN_PROGRESS or PROF_ORDER_CANT_IGNORE_ALREADY_IGNORED;
-			end
-			info.isNotRadio = true;
-			info.notCheckable = true;
-			UIDropDownMenu_AddButton(info, level);
-		end
-
-		-- Add whisper option
-		do
-			local info = UIDropDownMenu_CreateInfo();
-			info.text = WHISPER_MESSAGE;
-
-			local whisperStatus = self:GetWhisperCustomerStatus();
-
-			if whisperStatus == Enum.ChatWhisperTargetStatus.CanWhisper then
-				info.func = function()
-					ChatFrame_SendTell(self.order.customerName);
-				end
-			else
-				info.disabled = true;
-				info.tooltipWhileDisabled = true;
-				info.tooltipOnButton = true;
-				info.tooltipTitle = "";
-				if whisperStatus == Enum.ChatWhisperTargetStatus.Offline then
-					info.tooltipText = PROF_ORDER_CANT_WHISPER_OFFLINE;
-				elseif whisperStatus == Enum.ChatWhisperTargetStatus.WrongFaction then
-					info.tooltipText = PROF_ORDER_CANT_WHISPER_WRONG_FACTION;
-				end
 			end
 			info.isNotRadio = true;
 			info.notCheckable = true;
@@ -398,11 +430,12 @@ function ProfessionsCrafterOrderViewMixin:SchematicPostInit()
             end
         end
     end
-
+	
     if not self.order.isFulfillable then -- Don't re-use reagents for subsequent recrafts
         for _, reagentInfo in ipairs(self.order.reagents) do
             local allocations = transaction:GetAllocations(reagentInfo.reagentSlot);
 
+			-- isBasicReagent check here to handle multiple allocations within the same slot (qualities)
             if not self.reagentSlotProvidedByCustomer[reagentInfo.reagentSlot] or not reagentInfo.isBasicReagent then
                 allocations:Clear();
                 self.reagentSlotProvidedByCustomer[reagentInfo.reagentSlot] = true;
@@ -412,26 +445,57 @@ function ProfessionsCrafterOrderViewMixin:SchematicPostInit()
             reagentSlotToItemID[reagentInfo.reagentSlot] = reagentInfo.reagent.itemID;
         end
     end
+	
+	if self:IsRecrafting() then
+		-- After the allocations above, strip any reagents that fail to meet prerequisites. This is a workaround for
+		-- incompatible reagents being part of the original order data because it is not removed until the item is
+		-- actually recreated. Since the crafter cannot modify this slot anyways, it's empty state will be the only
+		-- correct state.
+		for slotIndex, reagentSlotSchematic in ipairs(self.OrderDetails.SchematicForm.recipeSchematic.reagentSlotSchematics) do
+            if reagentSlotSchematic.dataSlotType == Enum.TradeskillSlotDataType.ModifiedReagent then
+                local modification = transaction:GetModification(reagentSlotSchematic.dataSlotIndex);
+				local itemID = modification and modification.itemID;
+				if itemID and itemID > 0 and not transaction:AreAllRequirementsAllocatedByItemID(itemID) then
+					transaction:ClearAllocations(slotIndex);
+					transaction:ClearModification(reagentSlotSchematic.dataSlotIndex);
+					self.reagentSlotProvidedByCustomer[slotIndex] = nil;
+					reagentSlotToItemID[slotIndex] = nil;
+				end
+            end
+        end
+	end
 
-    for reagentType, slots in pairs(self.OrderDetails.SchematicForm.reagentSlots) do
+	-- Avoid using the reagentType index because the reagentSlots now contain
+	-- multiple different reagent types (i.e. modifying-required + basic)
+    for _, slots in pairs(self.OrderDetails.SchematicForm.reagentSlots) do
         for _, slot in ipairs(slots) do
+			local reagentType = slot:GetReagentType();
+			local reagentSlotSchematic = slot:GetReagentSlotSchematic();
             local providedByCustomer = self.reagentSlotProvidedByCustomer[slot:GetSlotIndex()];
             if providedByCustomer then
                 slot:SetUnallocatable(true);
                 slot:SetOverrideNameColor(HIGHLIGHT_FONT_COLOR);
 				slot:SetShowOnlyRequired(true);
-				if reagentType ~= Enum.CraftingReagentType.Optional then
+
+				if reagentSlotSchematic.required then
 					slot:SetCheckmarkShown(true);
+					slot:SetCheckmarkTooltipText(PROFESSIONS_CUSTOMER_ORDER_REAGENT_PROVIDED);
+					slot:SetCheckmarkAtlas("Professions-Icon-Customer");
 				end
-				slot:SetCheckmarkTooltipText(PROFESSIONS_CUSTOMER_ORDER_REAGENT_PROVIDED);
-            end
+			else
+				if reagentSlotSchematic.required then
+					slot:SetCheckmarkShown(true);
+					slot:SetCheckmarkTooltipText(PROFESSIONS_CUSTOMER_ORDER_REAGENT_NOTPROVIDED);
+					slot:SetCheckmarkAtlas("Professions-Icon-Crafter");
+				end
+			end
 
             if self.order.orderState == Enum.CraftingOrderState.Created then
                 slot:SetUnallocatable(true);
                 slot:SetAddIconDesaturated(true);
             end
 
-            if reagentType == Enum.CraftingReagentType.Optional then
+            if reagentType == Enum.CraftingReagentType.Modifying then
 				local modification = transaction:GetModification(slot:GetReagentSlotSchematic().dataSlotIndex);
 				if modification and modification.itemID > 0 then
 					slot:SetItem(Item:CreateFromItemID(modification.itemID));
@@ -522,9 +586,9 @@ function ProfessionsCrafterOrderViewMixin:UpdateStartOrderButton()
         errorReason = PROFESSIONS_CRAFTER_CANT_CLAIM_OWN;
     elseif claimInfo and self.order.orderType == Enum.CraftingOrderType.Public and claimInfo.claimsRemaining <= 0 and Professions.GetCraftingOrderRemainingTime(self.order.expirationTime) > Constants.ProfessionConsts.PUBLIC_CRAFTING_ORDER_STALE_THRESHOLD then
         enabled = false;
-        errorReason = PROFESSIONS_CRAFTER_OUT_OF_CLAIMS_FMT:format(claimInfo.hoursToRecharge);
+        errorReason = PROFESSIONS_CRAFTER_OUT_OF_CLAIMS_FMT:format(SecondsToTime(claimInfo.secondsToRecharge));
     elseif not recipeInfo or not recipeInfo.learned or (self.order.isRecraft and not C_CraftingOrders.OrderCanBeRecrafted(self.order.orderID)) then
-        enabled = false;
+		enabled = false;
         errorReason = PROFESSIONS_CRAFTER_CANT_CLAIM_UNLEARNED;
     elseif not self.hasOptionalReagentSlots then
         enabled = false;
@@ -594,7 +658,7 @@ function ProfessionsCrafterOrderViewMixin:UpdateCreateButton()
     if Professions.IsRecipeOnCooldown(self.order.spellID) then
         enabled = false;
         errorReason = PROFESSIONS_RECIPE_COOLDOWN;
-    elseif not transaction:HasAllocatedReagentRequirements() then
+    elseif not transaction:HasMetAllRequirements() then
         enabled = false;
         errorReason = PROFESSIONS_INSUFFICIENT_REAGENTS;
     elseif self.order.minQuality and self.OrderDetails.SchematicForm.Details:GetProjectedQuality() and self.order.minQuality > self.OrderDetails.SchematicForm.Details:GetProjectedQuality() then
@@ -625,6 +689,23 @@ function ProfessionsCrafterOrderViewMixin:SetOrder(order)
     self.OrderInfo.CommissionTitleMoneyDisplayFrame:SetAmount(order.tipAmount);
     self.OrderInfo.ConsortiumCutMoneyDisplayFrame:SetAmount(order.consortiumCut);
     self.OrderInfo.FinalTipMoneyDisplayFrame:SetAmount(order.tipAmount - order.consortiumCut);
+
+	local warningText, atlas;
+	if self.order.reagentState == Enum.CraftingOrderReagentsType.All then
+		warningText = PROFESSIONS_CUSTOMER_ORDER_REAGENTS_ALL;
+		atlas = "Professions-Icon-Customer";
+	elseif self.order.reagentState == Enum.CraftingOrderReagentsType.Some then
+		warningText = PROFESSIONS_CUSTOMER_ORDER_REAGENTS_SOME;
+		atlas = "Professions_Icon_Warning";
+	elseif self.order.reagentState == Enum.CraftingOrderReagentsType.None then
+		warningText = PROFESSIONS_CUSTOMER_ORDER_REAGENTS_NONE;
+		atlas = "Professions_Icon_Warning";
+	end
+	self.OrderInfo.OrderReagentsWarning.Icon:SetAtlas(atlas, TextureKitConstants.UseAtlasSize);
+	self.OrderInfo.OrderReagentsWarning.Text:SetText(warningText);
+	local warningWidth = self.OrderInfo.OrderReagentsWarning.Text:GetStringWidth();
+	self.OrderInfo.OrderReagentsWarning.Text:SetWidth(math.min(warningWidth, 220));
+
     self.OrderDetails.FulfillmentForm.NoteEditBox.ScrollingEditBox:SetText("");
 	self.OrderDetails.FulfillmentForm.NoteEditBox:SetShown(not C_CraftingOrders.AreOrderNotesDisabled());
 	self.DeclineOrderDialog.NoteEditBox:SetShown(not C_CraftingOrders.AreOrderNotesDisabled());
@@ -737,8 +818,13 @@ function ProfessionsCrafterOrderViewMixin:SetOrderState(orderState)
 
     self.OrderInfo.StartOrderButton:ClearAllPoints();
     local xOfs = showDeclineOrderButton and -70 or 0;
-    local yOfs = showDeclineOrderButton and 8 or 125;
+    local yOfs = showDeclineOrderButton and 8 or 55;
     self.OrderInfo.StartOrderButton:SetPoint("BOTTOM", self.OrderInfo, "BOTTOM", xOfs, yOfs);
+
+	-- Sits above StartOrderButton with a fixed x position because the x position of the StartOrderButton
+	-- changes between private and public order.
+	self.OrderInfo.OrderReagentsWarning:ClearAllPoints();
+	self.OrderInfo.OrderReagentsWarning:SetPoint("BOTTOMLEFT", self.OrderInfo, "BOTTOMLEFT", 20, yOfs + 35);
 
 	self:UpdateMinimumQualityIcon();
 end
@@ -761,22 +847,16 @@ function ProfessionsCrafterOrderViewMixin:RecraftOrder()
     local predicate = function(reagentTbl, slotIndex)
 		return reagentTbl.reagentSlotSchematic.dataSlotType == Enum.TradeskillSlotDataType.ModifiedReagent and not self.reagentSlotProvidedByCustomer[slotIndex];
 	end
-    local craftingReagentTbl = self.OrderDetails.SchematicForm.transaction:CreateCraftingReagentInfoTblIf(predicate);
-    local itemMods = self.OrderDetails.SchematicForm.transaction:GetRecraftItemMods();
-    if itemMods then
-        for dataSlotIndex, modification in ipairs(itemMods) do
-            if modification.itemID > 0 then
-                for _, craftingReagentInfo in ipairs(craftingReagentTbl) do
-                    if (craftingReagentInfo.itemID == modification.itemID) and (craftingReagentInfo.dataSlotIndex == modification.dataSlotIndex) then
-                        -- If the modification still exists in the same position, set it's quantity to 0 to inform the server
-                        -- not to modify this reagent.
-                        craftingReagentInfo.quantity = 0;
-                        break;
-                    end
-                end
-            end
-        end
-    end
+
+	local transaction = self.OrderDetails.SchematicForm.transaction;
+    local craftingReagentTbl = transaction:CreateCraftingReagentInfoTblIf(predicate);
+	
+	-- Not passing any removed modifications since the server resolves this when handling overrides or
+	-- swapping between prerequisite reagents of different seasons. If we do need to pass these, the
+	-- implementation in PrepareRecipeRecraft won't be applicable anyways since we aren't accounting
+	-- for unmodified reagent slots.
+	Professions.PrepareRecipeRecraft(transaction, craftingReagentTbl);
+
     C_TradeSkillUI.RecraftRecipeForOrder(self.order.orderID, self.order.outputItemGUID, craftingReagentTbl);
 	self.CraftingOutputLog:StartListening();
 end
