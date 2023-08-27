@@ -1,3 +1,10 @@
 GlueXML/GlueLocalization.lua
 FrameXML/Localization.lua
 AddOns/Blizzard_Calendar/Localization.lua
+Interface/AddOns/Blizzard_Calendar/Localization.lua
+Interface_Vanilla/GlueXML/GlueLocalization.lua
+Interface_Vanilla/FrameXML/Localization.lua
+Interface_TBC/GlueXML/GlueLocalization.lua
+Interface_TBC/FrameXML/Localization.lua
+Interface_Wrath/GlueXML/GlueLocalization.lua
+Interface_Wrath/FrameXML/Localization.lua
