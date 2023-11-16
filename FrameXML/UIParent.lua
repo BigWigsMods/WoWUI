@@ -31,6 +31,42 @@ local FRAME_POSITION_KEYS = {
 	fullscreen = 5,
 };
 
+--[[ 
+UIPanelWindow attributes
+======================================================
+area: [string]  --  Desired area of UIParent the frame should show in. Depending on chosen area and other settings, where a frame actually shows can vary when multiple frames are open.
+	full: Take up the full screen. Other non-full frames can't show with or replace a fullscreen frame.
+	center: Take up center area. Can't be shown with any other frames in the left/center/right areas, but may be replaced by other frames if allowOtherPanels is 1.
+	left: Take leftmost area of the screen. If pushable, may be shifted to center or right if other pushable frames are shown.
+	doublewide: Take up left and center areas. Can be shown with another single-area frame if it's pushable.
+	centerOrLeft: Take up center area when no other frames are showing, or use "left" behavior if other frames are shown.
+centerFrameSkipAnchoring: [bool]  --  If true on a frame using area "center," skips updating the frame's anchors when positioned
+neverAllowOtherPanels: [0,1]  --  If 1 on a frame using area "center" or "full", prevents trying to show any other panel while that frame is shown
+allowOtherPanels: [0,1]   -- (default 0 for "center" frames, otherwise 1)
+						  -- If 1 on non center or full area frames, allows other panels to be shown in other areas at the same time.
+						  -- If 1 on center frames, allows other frames to replace this one when opened. Also allows bags to be opened while this frame is open.
+pushable: [0,1,..n]  --  (attribute used by frames using areas left/doublewide/centerOrLeft)
+					 --  If 0, frame is not pushable to other areas; exact behavior is complicated. (Needs to be investigated to figure out what's actually intentional behavior vs legacy bugs)
+					 --  If > 0, frame can be pushed to other areas than area attribute when other frames are also open.
+					 --  Pushable frames are sorted by their pushable values, lower to higher, left to right.
+					 --  Equal pushable value frames are sorted by how recently they were shown, oldest to newest, left to right.
+whileDead: [0,1]  --  If 0, frame cannot be opened while the player is dead. 
+ignoreControlLost: [bool]  --  If true, do not close the frame when player loses control of character (ie when feared).
+showFailedFunc: [func]  --  Function to call when attempting to show the frame via ShowUIPanel fails.
+width: [number]  --  Override width to use instead of the frame's actual width for layout/position calculations.
+height: [number]  --  Override width to use instead of the frame's actual height for layout/position calculations.
+extraWidth: [number]  --  Extra buffer width to add when checking frame's width for layout/position calculations. Is added to 'width' if also set, otherwise is added to frame's actual width.
+extraHeight: [number]  --  Extra buffer height to add when checking frame's height for layout/position calculations. Is added to 'height' if also set, otherwise is added to frame's actual height.
+xoffset: [number]  --  X offset to add when positioning the frame within the UI parent.
+yoffset: [number]  --  Y offset to add when positioning the frame within the UI parent. Actual y position is also clamped based on minYOffset & bottomClampOverride.
+minYOffset: [number]  --  (default -10) Custom minimum amount of y offset the frame should have. Since Y offsets from the top are negative, this is numerically a "max" (ex: -20 is "more" offset than -10).
+bottomClampOverride: [number]  --  (default 140) Custom bottom-most edge that a frame can be positioned to reach. Frame's y offset is calculated by taking this + minYOffset into account.
+maximizePoint: [string]  --  [WARNING: Don't use this; this maximize/restore flow is very one-off specific to the World Map] Point that's passed to SetPoint if the frame is maximized via MaximizeUIPanel.
+checkFit: [0,1]  --  If 1, frame is scaled down if needed to fit within the current size of the UIParent. This can help large frames stay visible on varying screen sizes/UI scales.
+checkFitExtraWidth: [number]  --  (default 20) Extra buffer width added when checking the frame's current size when rescaling for checkFit.
+checkFitExtraHeight: [number]  --  (default 20) Extra buffer height added when checking the frame's current size when rescaling for checkFit. 
+]]--
+
 
 -- Per panel settings
 UIPanelWindows = {};
@@ -172,9 +208,8 @@ end
 -- Hooked by DesignerBar.lua if that addon is loaded
 function GetUIParentOffset()
     local notchHeight = GetNotchHeight();
-	local debugMenuOffset = DebugMenu and DebugMenu.IsVisible() and DebugMenu.GetMenuHeight() or 0;
-	local revealTimeTrackOffset = C_Reveal and C_Reveal:IsCapturing() and C_Reveal:GetTimeTrackHeight() or 0;
-	return math.max(debugMenuOffset + revealTimeTrackOffset, notchHeight);
+	local debugBarsHeight = DebugBarManager:GetTotalHeight();
+	return math.max(debugBarsHeight, notchHeight);
 end
 
 function UpdateUIParentPosition()
@@ -329,6 +364,8 @@ function UIParent_OnLoad(self)
 	self:RegisterEvent("AUCTION_HOUSE_SHOW");
 	self:RegisterEvent("AUCTION_HOUSE_CLOSED");
 	self:RegisterEvent("AUCTION_HOUSE_DISABLED");
+	self:RegisterEvent("AUCTION_HOUSE_SHOW_FORMATTED_NOTIFICATION");
+	self:RegisterEvent("AUCTION_HOUSE_SHOW_NOTIFICATION")
 
 	-- Events for trade skill UI handling
 	self:RegisterEvent("TRADE_SKILL_SHOW");
@@ -360,7 +397,6 @@ function UIParent_OnLoad(self)
 
 	-- Events for PerksProgram Handling
 	self:RegisterEvent("PERKS_PROGRAM_OPEN");
-	self:RegisterEvent("PERKS_PROGRAM_CLOSE");
 	self:RegisterEvent("PERKS_PROGRAM_DISABLED");
 
 	--Events for GMChatUI
@@ -398,12 +434,6 @@ function UIParent_OnLoad(self)
 
 	-- Lua warnings
 	self:RegisterEvent("LUA_WARNING");
-
-	-- debug menu
-	self:RegisterEvent("DEBUG_MENU_TOGGLED");
-
-	-- Reveal
-	self:RegisterEvent("REVEAL_CAPTURE_TOGGLED");
 
 	-- Garrison
 	self:RegisterEvent("GARRISON_MISSION_NPC_OPENED");
@@ -544,7 +574,7 @@ end
 local FailedAddOnLoad = {};
 
 function UIParentLoadAddOn(name)
-	local loaded, reason = LoadAddOn(name);
+	local loaded, reason = C_AddOns.LoadAddOn(name);
 	if ( not loaded ) then
 		if ( not FailedAddOnLoad[name] ) then
 			message(format(ADDON_LOAD_FAILED, name, _G["ADDON_"..reason]));
@@ -703,7 +733,7 @@ function ArchaeologyFrame_LoadUI()
 end
 
 function GMChatFrame_LoadUI(...)
-	if ( IsAddOnLoaded("Blizzard_GMChatUI") ) then
+	if ( C_AddOns.IsAddOnLoaded("Blizzard_GMChatUI") ) then
 		return;
 	else
 		UIParentLoadAddOn("Blizzard_GMChatUI");
@@ -801,7 +831,7 @@ function NPE_CheckTutorials()
 end
 
 function NPE_LoadUI()
-	if ( not GetTutorialsEnabled() or IsAddOnLoaded("Blizzard_NewPlayerExperience") ) then
+	if ( not GetTutorialsEnabled() or C_AddOns.IsAddOnLoaded("Blizzard_NewPlayerExperience") ) then
 		return;
 	end
 	local isRestricted = C_PlayerInfo.IsPlayerNPERestricted();
@@ -811,13 +841,13 @@ function NPE_LoadUI()
 end
 
 function BoostTutorial_AttemptLoad()
-	if IsBoostTutorialScenario() and not IsAddOnLoaded("Blizzard_BoostTutorial") then
+	if IsBoostTutorialScenario() and not C_AddOns.IsAddOnLoaded("Blizzard_BoostTutorial") then
 		UIParentLoadAddOn("Blizzard_BoostTutorial");
 	end
 end
 
 function ClassTrial_AttemptLoad()
-	if C_ClassTrial.IsClassTrialCharacter() and not IsAddOnLoaded("Blizzard_ClassTrial") then
+	if C_ClassTrial.IsClassTrialCharacter() and not C_AddOns.IsAddOnLoaded("Blizzard_ClassTrial") then
 		UIParentLoadAddOn("Blizzard_ClassTrial");
 	end
 end
@@ -874,7 +904,7 @@ function GenericTraitUI_LoadUI()
 end
 
 function SubscriptionInterstitial_LoadUI()
-	LoadAddOn("Blizzard_SubscriptionInterstitialUI");
+	C_AddOns.LoadAddOn("Blizzard_SubscriptionInterstitialUI");
 end
 
 local playerEnteredWorld = false;
@@ -900,7 +930,7 @@ function OrderHall_CheckCommandBar()
 end
 
 function ShowMacroFrame()
-	if ( Kiosk.IsEnabled() or DISALLOW_FRAME_TOGGLING ) then
+	if ( DISALLOW_FRAME_TOGGLING ) then
 		return;
 	end
 
@@ -1171,11 +1201,7 @@ COLLECTIONS_JOURNAL_TAB_INDEX_HEIRLOOMS = COLLECTIONS_JOURNAL_TAB_INDEX_TOYS + 1
 COLLECTIONS_JOURNAL_TAB_INDEX_APPEARANCES = COLLECTIONS_JOURNAL_TAB_INDEX_HEIRLOOMS + 1;
 
 function ToggleCollectionsJournal(tabIndex)
-	if ( Kiosk.IsEnabled() or DISALLOW_FRAME_TOGGLING ) then
-		return;
-	end
-
-	if Kiosk.IsEnabled() then
+	if DISALLOW_FRAME_TOGGLING then
 		return;
 	end
 
@@ -1189,7 +1215,7 @@ function ToggleCollectionsJournal(tabIndex)
 end
 
 function SetCollectionsJournalShown(shown, tabIndex)
-	if ( Kiosk.IsEnabled() or DISALLOW_FRAME_TOGGLING ) then
+	if DISALLOW_FRAME_TOGGLING then
 		return;
 	end
 
@@ -1209,7 +1235,7 @@ function SetCollectionsJournalShown(shown, tabIndex)
 end
 
 function ToggleToyCollection(autoPageToCollectedToyID)
-	if ( Kiosk.IsEnabled() or DISALLOW_FRAME_TOGGLING ) then
+	if DISALLOW_FRAME_TOGGLING then
 		return;
 	end
 
@@ -1496,7 +1522,7 @@ function UIParent_OnEvent(self, event, ...)
 		if cvarName and cvarName == "showTutorials" then
 			local showTutorials = GetCVarBool("showTutorials");
 			if ( showTutorials ) then
-				if ( IsAddOnLoaded("Blizzard_NewPlayerExperience") ) then
+				if ( C_AddOns.IsAddOnLoaded("Blizzard_NewPlayerExperience") ) then
 					NewPlayerExperience:Initialize();
 				else
 					NPE_LoadUI();
@@ -1814,7 +1840,12 @@ function UIParent_OnEvent(self, event, ...)
 		BoostTutorial_AttemptLoad();
 
 		if Kiosk.IsEnabled() then
-			LoadAddOn("Blizzard_Kiosk");
+			C_AddOns.LoadAddOn("Blizzard_Kiosk");
+
+			local isInitialLogin, isUIReload = arg1, arg2;
+			if isInitialLogin and not isUIReload then
+				KioskSessionStartedDialog:Show();
+			end
 		end
 
 		if IsTrialAccount() or IsVeteranTrialAccount() then
@@ -2058,6 +2089,9 @@ function UIParent_OnEvent(self, event, ...)
 		end
 	elseif ( event == "AUCTION_HOUSE_DISABLED" ) then
 		StaticPopup_Show("AUCTION_HOUSE_DISABLED");
+	elseif ( event == "AUCTION_HOUSE_SHOW_NOTIFICATION" or event == "AUCTION_HOUSE_SHOW_FORMATTED_NOTIFICATION" ) then
+		local auctionHouseNotification, formatArg = ...;
+		Chat_AddSystemMessage(ChatFrameUtil.GetAuctionHouseNotificationText(auctionHouseNotification, formatArg));
 
 	-- Events for trade skill UI handling
 	elseif ( event == "TRADE_SKILL_SHOW" ) then
@@ -2151,10 +2185,6 @@ function UIParent_OnEvent(self, event, ...)
 		end
 
 		ShowUIPanel(PerksProgramFrame);
-	elseif ( event == "PERKS_PROGRAM_CLOSE" ) then
-		if ( PerksProgramFrame and PerksProgramFrame:IsVisible() ) then
-			HideUIPanel(PerksProgramFrame);
-		end
 	elseif ( event == "PERKS_PROGRAM_DISABLED" ) then
 		StaticPopup_Show("PERKS_PROGRAM_DISABLED");
 
@@ -2330,7 +2360,7 @@ function UIParent_OnEvent(self, event, ...)
 		ToggleOrderHallTalentUI();
 	elseif ( event == "BEHAVIORAL_NOTIFICATION") then
 		self:UnregisterEvent("BEHAVIORAL_NOTIFICATION");
-		LoadAddOn("Blizzard_BehavioralMessaging");
+		C_AddOns.LoadAddOn("Blizzard_BehavioralMessaging");
 		BehavioralMessagingTray:OnEvent(event, ...);
 	elseif ( event == "PRODUCT_DISTRIBUTIONS_UPDATED" ) then
 		StoreFrame_CheckForFree(event);
@@ -2375,10 +2405,6 @@ function UIParent_OnEvent(self, event, ...)
 		end
 	elseif (event == "SCENARIO_UPDATE") then
 		BoostTutorial_AttemptLoad();
-	elseif (event == "DEBUG_MENU_TOGGLED") then
-		UpdateUIParentPosition();
-	elseif (event == "REVEAL_CAPTURE_TOGGLED") then
-		UpdateUIParentPosition();
     elseif (event == "NOTCHED_DISPLAY_MODE_CHANGED") then
         UpdateUIParentPosition();
 	elseif (event == "CLIENT_SCENE_OPENED") then
@@ -2437,6 +2463,14 @@ function UIParent_OnEvent(self, event, ...)
 	elseif (event == "GLOBAL_MOUSE_DOWN" or event == "GLOBAL_MOUSE_UP") then
 		local buttonID = ...;
 
+		-- Ping Listener.
+		-- When pinging UI, if the ping keybind is mapped to any mouse button the input gets consumed before it would hit the normal logic in Bindings.
+    	-- Below logic catches the input and handles this case specifically.
+		-- TogglePingListener is restricted, so this is must be done before dropdown handling to avoid taint propagation
+		if IsMouseButton(buttonID) and GetConvertedKeyOrButton(buttonID) == GetBindingKey("TOGGLEPINGLISTENER") then
+			C_Ping.TogglePingListener(event == "GLOBAL_MOUSE_DOWN");
+		end
+
 		-- Close dropdown(s).
 		local mouseFocus = GetMouseFocus();
 		if not HandlesGlobalMouseEvent(mouseFocus, buttonID, event) then
@@ -2460,13 +2494,6 @@ function UIParent_OnEvent(self, event, ...)
 					end
  				end
 			end
-		end
-
-		-- Ping Listener.
-		-- When pinging UI, if the ping keybind is mapped to any mouse button the input gets consumed before it would hit the normal logic in Bindings.
-    	-- Below logic catches the input and handles this case specifically.
-		if IsMouseButton(buttonID) and GetConvertedKeyOrButton(buttonID) == GetBindingKey("TOGGLEPINGLISTENER") then
-			C_Ping.TogglePingListener(event == "GLOBAL_MOUSE_DOWN");
 		end
 	elseif (event == "SCRIPTED_ANIMATIONS_UPDATE") then
 		ScriptedAnimationEffectsUtil.ReloadDB();
@@ -2712,11 +2739,11 @@ function FramePositionDelegate:ShowUIPanel(frame, force)
 	local centerFrame = self:GetUIPanel("center");
 	local centerArea, centerPushable;
 	if ( centerFrame ) then
-		if ( GetUIPanelAttribute(centerFrame, "allowOtherPanels") ) then
+		centerArea = GetUIPanelAttribute(centerFrame, "area");
+		if ( centerArea == "center" and GetUIPanelAttribute(centerFrame, "allowOtherPanels") ) then
 			HideUIPanel(centerFrame);
 			centerFrame = nil;
 		else
-			centerArea = GetUIPanelAttribute(centerFrame, "area");
 			if ( centerArea and (centerArea == "center") and (frameArea ~= "center") and (frameArea ~= "full") ) then
 				if ( force ) then
 					self:SetUIPanel("center", nil, 1);
@@ -3116,7 +3143,7 @@ function FramePositionDelegate:UpdateUIPanelPositions(currentFrame)
 			local yPos = ClampUIPanelY(frame, yOff + topOffset, minYOffset, bottomClampOverride);
 			xOff = xOff + xSpacing; -- add separating space
 			frame:ClearAllPoints();
-			frame:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", rightOffset  + xOff, yPos);
+			frame:SetPoint("TOPLEFT", "UIParent", "TOPLEFT", rightOffset + xOff, yPos);
 		else
 			if ( frame == currentFrame ) then
 				frame = GetUIPanel("center") or GetUIPanel("left") or GetUIPanel("doublewide");
@@ -3318,8 +3345,10 @@ function ClampUIPanelY(frame, yOffset, minYOffset, bottomClampOverride)
 	if (bottomPos < bottomClamp) then
 		yOffset = yOffset + (bottomClamp - bottomPos);
 	end
-	if (yOffset > -10) then
-		yOffset = minYOffset or -10;
+	-- The minimum amount the y can be offset (mathematically speaking it's a max since y offsets from the top are negative)
+	local minimumOffset = minYOffset or -10;
+	if (yOffset > minimumOffset) then
+		yOffset = minimumOffset;
 	end
 	return yOffset;
 end
@@ -4205,8 +4234,7 @@ end
 
 
 -- Bindings --
-
-function GetBindingFromClick(input)
+function GetBindingFullInput(input)
 	local fullInput = "";
 
 	-- MUST BE IN THIS ORDER (ALT, CTRL, SHIFT, META)
@@ -4292,6 +4320,11 @@ function GetBindingFromClick(input)
 		fullInput = fullInput..input;
 	end
 
+	return fullInput;
+end
+
+function GetBindingFromClick(input)
+	local fullInput = GetBindingFullInput(input);
 	return GetBindingByKey(fullInput);
 end
 

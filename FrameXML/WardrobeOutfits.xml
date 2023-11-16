@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\FrameXML\UI.xsd">
+UI_shared.xsd">
 	<Script file="WardrobeOutfits.lua"/>
 
 	<Button name="WardrobeOutfitButtonButtonTemplate" virtual="true">
@@ -259,9 +259,17 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="WardrobeOutfitCheckAppearancesFrame" inherits="LoadingSpinnerTemplate" hidden="true" mixin="WardrobeOutfitCheckAppearancesMixin">
+	<Frame name="WardrobeOutfitCheckAppearancesFrame" hidden="true" mixin="WardrobeOutfitCheckAppearancesMixin">
+		<Size x="40" y="40"/>
+		<Frames>
+			<Frame parentKey="Spinner" inherits="SpinnerTemplate">
+				<Size x="30" y="30"/>
+				<Anchors>
+					<Anchor point="CENTER" y="-5"/>
+				</Anchors>
+			</Frame>
+		</Frames>
 		<Scripts>
-			<OnLoad method="OnLoad"/>
 			<OnShow method="OnShow"/>
 			<OnUpdate method="OnUpdate"/>
 			<OnHide method="OnHide"/>

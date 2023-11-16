@@ -2031,7 +2031,7 @@ do
 	local bagFrames;
 	local function InitializeFrameEnumerator(startIndex, endIndex, frameTable)
 		for i = startIndex, endIndex do
-			local frame = UIParent.ContainerFrames[i];
+			local frame = ContainerFrameContainer.ContainerFrames[i];
 			if frame then
 				table.insert(frameTable, frame);
 			end
@@ -2303,7 +2303,7 @@ function ContainerFrameSettingsManager:SetupBagsGeneric(overrideParent)
 	for bag = startIndex, endIndex, increment do
 		local numBagSlots = ContainerFrame_GetContainerNumSlots(bag);
 		for i = 1, numBagSlots do
-			local containerFrame = UIParent.ContainerFrames[bag + 1];
+			local containerFrame = ContainerFrameContainer.ContainerFrames[bag + 1];
 			local itemButton = containerFrame.Items[i];
 			local slot = numBagSlots - i + 1;
 
@@ -2448,7 +2448,7 @@ end
 function ContainerFrameTokenWatcherMixin:UpdateTokenTracker()
 	local tokenFrame = ContainerFrameSettingsManager:GetTokenTracker(self);
 	if tokenFrame then
-		local showTokenFrame = tokenFrame:ShouldShow() and self:IsShown()
+		local showTokenFrame = tokenFrame:ShouldShow() and self:IsShown();
 		tokenFrame:SetShown(showTokenFrame);
 	end
 

@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\..\FrameXML\UI.xsd">
+..\..\FrameXML\UI_shared.xsd">
 	<Include file="Blizzard_Shared_StoreUIPatchwerk.xml" />
 	<Script file="Blizzard_Shared_StoreUIInbound.lua" />
 	<Script file="Blizzard_Shared_StoreUIOutbound.lua" />
@@ -860,9 +860,10 @@
 								<OnClick function="VASCharacterSelectionContinueButton_OnClick"/>
 							</Scripts>
 						</Button>
-						<Frame parentKey="Spinner" inherits="LoadingSpinnerTemplate" hidden="true">
+						<Frame parentKey="Spinner" inherits="SpinnerWithShadowTemplate" hidden="true">
+							<Size x="30" y="30"/>
 							<Anchors>
-								<Anchor point="BOTTOM" x="0" y="22" />
+								<Anchor point="BOTTOM" x="0" y="31" />
 							</Anchors>
 						</Frame>
 						<EditBox parentKey="NewCharacterName" letters="12" inherits="StoreEditBoxTemplate">

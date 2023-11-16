@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\FrameXML\UI.xsd">
+UI_shared.xsd">
 
 	<Script file="PVPHelper.lua"/>
 
@@ -201,7 +201,7 @@
 			<OnShow function="PVPRoleCheckPopup_OnShow"/>
 		</Scripts>
 	</Frame>
-	<Frame name="PVPReadyDialog" parent="UIParent" frameStrata="DIALOG" toplevel="true" enableMouse="true">
+	<Frame name="PVPReadyDialog" parent="UIParent" frameStrata="DIALOG" toplevel="true" enableMouse="true" hidden="true">
 		<Size x="306" y="210"/>
 		<Layers>
 			<Layer level="BACKGROUND" textureSubLevel="2">

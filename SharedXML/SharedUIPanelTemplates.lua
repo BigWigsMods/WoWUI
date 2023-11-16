@@ -61,7 +61,7 @@ end
 function FrameTemplate_SetAtticHeight(self, atticHeight)
 	if self.bottomInset then
 		self.bottomInset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, -atticHeight);
-	else
+	elseif self.Inset then
 		self.Inset:SetPoint("TOPLEFT", self, "TOPLEFT", PANEL_INSET_LEFT_OFFSET, -atticHeight);
 	end
 end
@@ -69,7 +69,7 @@ end
 function FrameTemplate_SetButtonBarHeight(self, buttonBarHeight)
 	if self.topInset then
 		self.topInset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, buttonBarHeight);
-	else
+	elseif self.Inset then
 		self.Inset:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", PANEL_INSET_RIGHT_OFFSET, buttonBarHeight);
 	end
 end
@@ -110,9 +110,14 @@ local function ButtonFrameTemplate_UpdateRegionAnchor(region, desiredOffsetX)
 	end
 end
 
-local function ButtonFrameTemplate_UpdateBGAnchors(self, isPortraitMode)
+local function ButtonFrameTemplate_UpdateAnchors(self, isPortraitMode)
 	ButtonFrameTemplate_UpdateRegionAnchor(self.Bg, isPortraitMode and 2 or 7);
 	ButtonFrameTemplate_UpdateRegionAnchor(self.Inset, isPortraitMode and 4 or 9);
+
+	if self.TitleContainer then
+		self.TitleContainer:SetPoint("TOPLEFT", self, "TOPRIGHT", isPortraitMode and 58 or 0, -1);
+		self.TitleContainer:SetPoint("TOPRIGHT", self, "TOPLEFT", isPortraitMode and -24 or 0, -1);
+	end
 end
 
 function ButtonFrameTemplate_HidePortrait(self)
@@ -120,7 +125,7 @@ function ButtonFrameTemplate_HidePortrait(self)
 	self:SetPortraitShown(false);
 
 	local isPortraitMode = false;
-	ButtonFrameTemplate_UpdateBGAnchors(self, isPortraitMode);
+	ButtonFrameTemplate_UpdateAnchors(self, isPortraitMode);
 end
 
 function ButtonFrameTemplate_ShowPortrait(self)
@@ -128,7 +133,7 @@ function ButtonFrameTemplate_ShowPortrait(self)
 	self:SetPortraitShown(true);
 
 	local isPortraitMode = true;
-	ButtonFrameTemplate_UpdateBGAnchors(self, isPortraitMode);
+	ButtonFrameTemplate_UpdateAnchors(self, isPortraitMode);
 end
 
 function ButtonFrameTemplateMinimizable_HidePortrait(self)
@@ -851,7 +856,22 @@ function TruncatedTooltipFontStringWrapperMixin:OnLeave()
 	end
 end
 
+local alternateTopLevelParent;
+function SetAlternateTopLevelParent(parent)
+	alternateTopLevelParent = parent;
+	EventRegistry:TriggerEvent("UI.AlternateTopLevelParentChanged", parent);
+end
+
+function ClearAlternateTopLevelParent()
+	alternateTopLevelParent = nil;
+	EventRegistry:TriggerEvent("UI.AlternateTopLevelParentChanged");
+end
+
 function GetAppropriateTopLevelParent()
+	if alternateTopLevelParent and alternateTopLevelParent:IsShown() then
+		return alternateTopLevelParent;
+	end
+
 	return UIParent or GlueParent;
 end
 
@@ -1638,6 +1658,8 @@ SelectionPopoutButtonMixin = CreateFromMixins(CallbackRegistryMixin, EventButton
 SelectionPopoutButtonMixin:GenerateCallbackEvents(
 	{
 		"OnValueChanged",
+		"OnPopoutShow",
+		"OnPopoutHide",
 	}
 );
 
@@ -1705,6 +1727,7 @@ end
 
 function SelectionPopoutButtonMixin:HidePopout()
 	self.Popout:Hide();
+	self:TriggerEvent(SelectionPopoutButtonMixin.Event.OnPopoutHide);
 
 	if GetMouseFocus() == self then
 		self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox-hover");
@@ -1722,6 +1745,7 @@ function SelectionPopoutButtonMixin:ShowPopout()
 	SelectionPopouts:CloseAll();
 
 	self.Popout:Show();
+	self:TriggerEvent(SelectionPopoutButtonMixin.Event.OnPopoutShow);
 	self.NormalTexture:SetAtlas("charactercreate-customize-dropdownbox-open");
 	self.HighlightTexture:SetAlpha(0.2);
 end
@@ -1754,9 +1778,9 @@ local function getNumColumnsAndStride(numSelections, maxStride)
 	elseif numSelections > MAX_POPOUT_ENTRIES_FOR_2_COLUMNS then
 		numColumns, stride = 3, math.ceil(numSelections / 3);
 	elseif numSelections > MAX_POPOUT_ENTRIES_FOR_1_COLUMN then
-		numColumns, stride =  2, math.ceil(numSelections / 2);
+		numColumns, stride = 2, math.ceil(numSelections / 2);
 	else
-		numColumns, stride =  1, numSelections;
+		numColumns, stride = 1, numSelections;
 	end
 
 	if maxStride and stride > maxStride then
@@ -1767,11 +1791,15 @@ local function getNumColumnsAndStride(numSelections, maxStride)
 	return numColumns, stride;
 end
 
+local MIN_STRIDE = 1;
+
 function SelectionPopoutButtonMixin:GetMaxPopoutStride()
 	local maxPopoutHeight = self.parent.GetMaxPopoutHeight and self.parent:GetMaxPopoutHeight() or nil;
 	if maxPopoutHeight then
 		local selectionHeight = 20;
-		return math.floor(maxPopoutHeight / selectionHeight);
+
+		-- Calculate the max stride, and clamp it to be at least one (to avoid div by zero errors).
+		return math.max(MIN_STRIDE, math.floor(maxPopoutHeight / selectionHeight));
 	end
 end
 
@@ -2198,11 +2226,37 @@ function PanelDragBarMixin:SetTarget(target)
 end
 
 function PanelDragBarMixin:OnDragStart()
-	self.target:StartMoving();
+	local target = self.target;
+
+	local continueDragStart = true;
+	if target.onDragStartCallback then
+		continueDragStart = target.onDragStartCallback(self);
+	end
+
+	if continueDragStart then
+		target:StartMoving();
+	end
+
+	if SetCursor then
+		SetCursor("UI_MOVE_CURSOR");
+	end
 end
 
 function PanelDragBarMixin:OnDragStop()
-	self.target:StopMovingOrSizing();
+	local target = self.target;
+
+	local continueDragStop = true;
+	if target.onDragStopCallback then
+		continueDragStop = target.onDragStopCallback(self);
+	end
+
+	if continueDragStop then
+		target:StopMovingOrSizing();
+	end
+
+	if SetCursor then
+		SetCursor(nil);
+	end
 end
 
 PanelResizeButtonMixin = {};
@@ -2236,10 +2290,32 @@ function PanelResizeButtonMixin:Init(target, minWidth, minHeight, maxWidth, maxH
 	end
 end
 
+function PanelResizeButtonMixin:OnEnter()
+	if SetCursor then
+		SetCursor("UI_RESIZE_CURSOR");
+	end
+end
+
+function PanelResizeButtonMixin:OnLeave()
+	if SetCursor then
+		SetCursor(nil);
+	end
+end
+
 function PanelResizeButtonMixin:OnMouseDown()
 	self.isActive = true;
 
-	if self.target then
+	local target = self.target;
+	if not target then
+		return;
+	end
+
+	local continueResizeStart = true;
+	if target.onResizeStartCallback then
+		continueResizeStart = target.onResizeStartCallback(self);
+	end
+
+	if continueResizeStart then
 		local alwaysStartFromMouse = true;
 		self.target:StartSizing("BOTTOMRIGHT", alwaysStartFromMouse);
 	end
@@ -2248,12 +2324,22 @@ end
 function PanelResizeButtonMixin:OnMouseUp()
 	self.isActive = false;
 
-	if self.target then
-		self.target:StopMovingOrSizing();
+	local target = self.target;
+	if not target then
+		return;
+	end
 
-		if self.resizeStoppedCallback ~= nil then
-			self.resizeStoppedCallback(self.target);
-		end
+	local continueResizeStop = true;
+	if target.onResizeStopCallback then
+		continueResizeStop = target.onResizeStopCallback(self);
+	end
+
+	if continueResizeStop then
+		target:StopMovingOrSizing();
+	end
+
+	if self.resizeStoppedCallback ~= nil then
+		self.resizeStoppedCallback(self.target);
 	end
 end
 
@@ -2717,6 +2803,8 @@ function IconSelectorPopupFrameTemplateMixin:OnShow()
 
 	self.BorderBox.SelectedIconArea.SelectedIconButton:SetIconSelector(self);
 	self.BorderBox.IconSelectorEditBox:SetIconSelector(self);
+
+	self:UpdateStateFromCursorType();
 end
 
 -- Usually overridden by inheriting frame.
@@ -2732,22 +2820,26 @@ end
 
 function IconSelectorPopupFrameTemplateMixin:OnEvent(event, ...)
 	if ( event == "CURSOR_CHANGED" ) then
-		local cursorType = GetCursorInfo();
-		local isValidCursorType = false;
-		for _, validType in ipairs(ValidIconSelectorCursorTypes) do
-			if ( cursorType == validType ) then
-				isValidCursorType = true;
-				break;
-			end
-		end
-
-		self.BorderBox.IconDragArea:SetShown(isValidCursorType);
-		self.BorderBox.IconSelectionText:SetShown(not isValidCursorType);
-		self.BorderBox.IconTypeDropDown:SetShown(not isValidCursorType);
-		self.IconSelector:SetShown(not isValidCursorType);
+		self:UpdateStateFromCursorType();
 	elseif ( event == "GLOBAL_MOUSE_UP" and DoesAncestryInclude(self, GetMouseFocus())) then
 		self:SetIconFromMouse();
 	end
+end
+
+function IconSelectorPopupFrameTemplateMixin:UpdateStateFromCursorType()
+	local cursorType = GetCursorInfo();
+	local isValidCursorType = false;
+	for _, validType in ipairs(ValidIconSelectorCursorTypes) do
+		if ( cursorType == validType ) then
+			isValidCursorType = true;
+			break;
+		end
+	end
+
+	self.BorderBox.IconDragArea:SetShown(isValidCursorType);
+	self.BorderBox.IconSelectionText:SetShown(not isValidCursorType);
+	self.BorderBox.IconTypeDropDown:SetShown(not isValidCursorType);
+	self.IconSelector:SetShown(not isValidCursorType);
 end
 
 function IconSelectorPopupFrameTemplateMixin:SetIconFromMouse()

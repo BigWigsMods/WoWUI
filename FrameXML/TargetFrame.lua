@@ -65,19 +65,23 @@ function TargetFrameMixin:OnLoad(unit, menuFunc)
 						 healthBar.MyHealPredictionBar,
 						 healthBar.OtherHealPredictionBar,
 						 healthBar.TotalAbsorbBar,
-						 healthBar.TotalAbsorbBarOverlay,
 						 healthBar.OverAbsorbGlow,
 						 healthBar.OverHealAbsorbGlow,
-						 healthBar.HealAbsorbBar,
-						 healthBar.HealAbsorbBarLeftShadow,
-						 healthBar.HealAbsorbBarRightShadow);
+						 healthBar.HealAbsorbBar);
 
 	self.auraPools = CreateFramePoolCollection();
 	self.auraPools:CreatePool("FRAME", self, "TargetDebuffFrameTemplate");
 	self.auraPools:CreatePool("FRAME", self, "TargetBuffFrameTemplate");
 
-	healthBar:GetStatusBarTexture():AddMaskTexture(healthBar.HealthBarMask);
-	manaBar:GetStatusBarTexture():AddMaskTexture(manaBar.ManaBarMask);
+	local healthBarTexture = healthBar:GetStatusBarTexture();
+	healthBarTexture:AddMaskTexture(healthBar.HealthBarMask);
+	healthBarTexture:SetTexelSnappingBias(0);
+	healthBarTexture:SetSnapToPixelGrid(false);
+
+	local manaBarTexture = manaBar:GetStatusBarTexture();
+	manaBarTexture:AddMaskTexture(manaBar.ManaBarMask);
+	manaBarTexture:SetTexelSnappingBias(0);
+	manaBarTexture:SetSnapToPixelGrid(false);
 
 	self:Update();
 
@@ -250,7 +254,8 @@ end
 function TargetFrameMixin:OnHide()
 	-- "Soft" target changes should not cause this sound to play
 	if (not IsTargetLoose()) then
-		PlaySound(SOUNDKIT.INTERFACE_SOUND_LOST_TARGET_UNIT);
+		local forceNoDuplicates = true;
+		PlaySound(SOUNDKIT.INTERFACE_SOUND_LOST_TARGET_UNIT, nil, forceNoDuplicates);
 	end
 	CloseDropDownMenus();
 end
@@ -361,7 +366,8 @@ end
 
 function TargetFrameMixin:CheckBattlePet()
 	if (UnitIsWildBattlePet(self.unit) or UnitIsBattlePetCompanion(self.unit)) then
-		local petType = UnitBattlePetType(self.unit);
+		-- Weird indexing via an enum and in conjuction with the way PET_TYPE_SUFFIX is being used it would be too much work to convert this to a luaIndex to fix it properly
+		local petType = UnitBattlePetType(self.unit) + 1;
 		self.TargetFrameContent.TargetFrameContentContextual.PetBattleIcon:SetTexture("Interface\\TargetingFrame\\PetBadge-"..PET_TYPE_SUFFIX[petType]);
 		self.TargetFrameContent.TargetFrameContentContextual.PetBattleIcon:Show();
 	else
@@ -1123,8 +1129,12 @@ BossSpellBarMixin = CreateFromMixins(TargetSpellBarMixin);
 
 function BossSpellBarMixin:AdjustPosition()
 	self:ClearAllPoints();
-	if (self.castBarOnSide) then
-		self:SetPoint("TOPRIGHT", self:GetParent(), "TOPLEFT", 45, -34);
+	if self.castBarOnSide then
+		if self:GetParent().powerBarAlt:IsShown() then
+			self:SetPoint("TOPRIGHT", self:GetParent(), "TOPLEFT", 45, -57);
+		else
+			self:SetPoint("TOPRIGHT", self:GetParent(), "TOPLEFT", 45, -34);
+		end
 	else
 		self:SetPoint("TOPRIGHT", self:GetParent(), "BOTTOMRIGHT", -100, 17);
 	end

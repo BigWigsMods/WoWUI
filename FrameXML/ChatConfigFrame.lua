@@ -836,6 +836,8 @@ function ChatConfig_CreateCheckboxes(frame, checkBoxTable, checkBoxTemplate, tit
 		checkBoxFontString = _G[checkBoxName.."CheckText"];
 		checkBoxFontString:SetText(text);
 		checkBoxFontString:SetMaxLines(1);
+		checkBox.BlankText:SetText(text);
+		checkBox.BlankText:SetMaxLines(1);
 		check = _G[checkBoxName.."Check"];
 		check.func = value.func;
 		check:SetID(index);
@@ -1003,10 +1005,11 @@ function ChatConfig_UpdateCheckboxes(frame)
 	local height;
 	local checkBoxTable = frame.checkBoxTable;
 	local checkBoxNameString = frame:GetName().."CheckBox";
-	local checkBoxName, checkBox, baseName, colorSwatch;
+	local baseFrame, checkBoxName, checkBox, baseName, colorSwatch;
 	local topnum, padding = 0, 8;
 	for index, value in ipairs(checkBoxTable) do
 		baseName = checkBoxNameString..index;
+		baseFrame = _G[baseName];
 		checkBox = _G[baseName.."Check"];
 		if ( checkBox ) then
 			if ( not height ) then
@@ -1014,8 +1017,10 @@ function ChatConfig_UpdateCheckboxes(frame)
 			end
 			if ( value.isBlank ) then
 				checkBox:Hide();
+				baseFrame.BlankText:Show();
 			else
 				checkBox:Show();
+				baseFrame.BlankText:Hide();
 				if ( type(value.checked) == "function" ) then
 					checkBox:SetChecked(value.checked());
 				else
@@ -1397,8 +1402,8 @@ COMBATCONFIG_COLORPICKER_FUNCTIONS = {
 			CombatConfig_Colorize_Update();
 		end;
 	chatUnitColorCancel = function()
-			SetChatUnitColor(CHAT_CONFIG_CURRENT_COLOR_SWATCH.type, ColorPicker_GetPreviousValues());
-			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName().."NormalTexture"]:SetVertexColor(ColorPicker_GetPreviousValues());
+			SetChatUnitColor(CHAT_CONFIG_CURRENT_COLOR_SWATCH.type, ColorPickerFrame:GetPreviousValues());
+			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName().."NormalTexture"]:SetVertexColor(ColorPickerFrame:GetPreviousValues());
 			CombatConfig_Colorize_Update();
 		end;
 	spellColorSwatch = function()
@@ -1407,8 +1412,8 @@ COMBATCONFIG_COLORPICKER_FUNCTIONS = {
 			CombatConfig_Colorize_Update();
 		end;
 	spellColorCancel = function()
-			SetTableColor(CHATCONFIG_SELECTED_FILTER.colors.defaults.spell, ColorPicker_GetPreviousValues());
-			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName().."NormalTexture"]:SetVertexColor(ColorPicker_GetPreviousValues());
+			SetTableColor(CHATCONFIG_SELECTED_FILTER.colors.defaults.spell, ColorPickerFrame:GetPreviousValues());
+			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName().."NormalTexture"]:SetVertexColor(ColorPickerFrame:GetPreviousValues());
 			CombatConfig_Colorize_Update();
 		end;
 	damageColorSwatch = function()
@@ -1417,12 +1422,12 @@ COMBATCONFIG_COLORPICKER_FUNCTIONS = {
 			CombatConfig_Colorize_Update();
 		end;
 	damageColorCancel = function()
-			SetTableColor(CHATCONFIG_SELECTED_FILTER.colors.defaults.damage, ColorPicker_GetPreviousValues());
-			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName().."NormalTexture"]:SetVertexColor(ColorPicker_GetPreviousValues());
+			SetTableColor(CHATCONFIG_SELECTED_FILTER.colors.defaults.damage, ColorPickerFrame:GetPreviousValues());
+			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName().."NormalTexture"]:SetVertexColor(ColorPickerFrame:GetPreviousValues());
 			CombatConfig_Colorize_Update();
 		end;
 	messageTypeColorSwatch = function()
-			local messageTypes = ColorPickerFrame.extraInfo;
+			local messageTypes = ColorPickerFrame:GetExtraInfo();
 			if ( messageTypes ) then
 				for index, value in pairs(messageTypes) do
 					ChangeChatColor(FCF_StripChatMsg(value), ColorPickerFrame:GetColorRGB());
@@ -1434,15 +1439,15 @@ COMBATCONFIG_COLORPICKER_FUNCTIONS = {
 			CombatConfig_Colorize_Update();
 		end;
 	messageTypeColorCancel = function()
-			local messageTypes = ColorPickerFrame.extraInfo;
+			local messageTypes = ColorPickerFrame:GetExtraInfo();
 			if ( messageTypes ) then
 				for index, value in pairs(messageTypes) do
-					ChangeChatColor(FCF_StripChatMsg(value), ColorPicker_GetPreviousValues());
+					ChangeChatColor(FCF_StripChatMsg(value), ColorPickerFrame:GetPreviousValues());
 				end
 			else
-				ChangeChatColor(CHAT_CONFIG_CURRENT_COLOR_SWATCH.type, ColorPicker_GetPreviousValues());
+				ChangeChatColor(CHAT_CONFIG_CURRENT_COLOR_SWATCH.type, ColorPickerFrame:GetPreviousValues());
 			end
-			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName()].Color:SetVertexColor(ColorPicker_GetPreviousValues());
+			_G[CHAT_CONFIG_CURRENT_COLOR_SWATCH:GetName()].Color:SetVertexColor(ColorPickerFrame:GetPreviousValues());
 			CombatConfig_Colorize_Update();
 		end;
 }
@@ -1453,7 +1458,7 @@ function ChatUnitColor_OpenColorPicker(self)
 	CHAT_CONFIG_CURRENT_COLOR_SWATCH = self;
 	info.swatchFunc = COMBATCONFIG_COLORPICKER_FUNCTIONS.chatUnitColorSwatch;
 	info.cancelFunc = COMBATCONFIG_COLORPICKER_FUNCTIONS.chatUnitColorCancel;
-	OpenColorPicker(info);
+	ColorPickerFrame:SetupColorPickerAndShow(info);
 end
 
 function SpellColor_OpenColorPicker(self)
@@ -1462,7 +1467,7 @@ function SpellColor_OpenColorPicker(self)
 	info.r, info.g, info.b = GetTableColor(CHATCONFIG_SELECTED_FILTER.colors.defaults.spell);
 	info.swatchFunc = COMBATCONFIG_COLORPICKER_FUNCTIONS.spellColorSwatch;
 	info.cancelFunc = COMBATCONFIG_COLORPICKER_FUNCTIONS.spellColorCancel;
-	OpenColorPicker(info);
+	ColorPickerFrame:SetupColorPickerAndShow(info);
 end
 
 function DamageColor_OpenColorPicker(self)
@@ -1471,7 +1476,7 @@ function DamageColor_OpenColorPicker(self)
 	info.r, info.g, info.b = GetTableColor(CHATCONFIG_SELECTED_FILTER.colors.defaults.damage);
 	info.swatchFunc = COMBATCONFIG_COLORPICKER_FUNCTIONS.damageColorSwatch;
 	info.cancelFunc = COMBATCONFIG_COLORPICKER_FUNCTIONS.damageColorCancel;
-	OpenColorPicker(info);
+	ColorPickerFrame:SetupColorPickerAndShow(info);
 end
 
 function MessageTypeColor_OpenColorPicker(self)
@@ -1485,7 +1490,7 @@ function MessageTypeColor_OpenColorPicker(self)
 	if ( messageTypeTable ) then
 		info.extraInfo = messageTypeTable;
 	end
-	OpenColorPicker(info);
+	ColorPickerFrame:SetupColorPickerAndShow(info);
 end
 
 function GetMessageTypeColor(messageType)
@@ -1607,7 +1612,7 @@ function CreateChatChannelList(self, ...)
 			-- Leave empty entries for missing channels to allow for re-ordering.
 			CHAT_CONFIG_CHANNEL_LIST[count] = {};
 			CHAT_CONFIG_CHANNEL_LIST[count].channelID = count;
-			CHAT_CONFIG_CHANNEL_LIST[count].text = count..".";
+			CHAT_CONFIG_CHANNEL_LIST[count].text = count.."."..EMPTY;
 			CHAT_CONFIG_CHANNEL_LIST[count].isBlank = true;
 			count = count + 1;
 		end
@@ -2260,9 +2265,11 @@ function ChatConfigFrameTabManagerMixin:UpdateTabDisplay()
 
 	local lastTab = nil;
 	local tabCount = FCF_GetNumActiveChatFrames();
+
+	local voiceChatShown = (GetCVarBool("speechToText") and C_VoiceChat.IsTranscribing()) or C_VoiceChat.IsSpeakForMeActive();
 	
 	--This is needed to properly skip or include the TTS config tab
-	local showTTSConfigTab = GetCVarBool("textToSpeech") or GetCVarBool("remoteTextToSpeech")
+	local showTTSConfigTab = GetCVarBool("textToSpeech") or GetCVarBool("remoteTextToSpeech") or voiceChatShown;
 	if ( GetCVarBool("textToSpeech") and not GetCVarBool("remoteTextToSpeech") ) then
 		tabCount = tabCount + 1;
 	end
@@ -2442,20 +2449,24 @@ function ChatConfigWideCheckBoxMixin:SetState(state)
 	self.ArtOverlay.GrayedOut:SetShown(state == ChatConfigWideCheckBoxState.GrayedOut);
 
 	-- Allow certain rulesets to modify state behavior
-	local isEnabled = self:GetChannelRuleset() == Enum.ChatChannelRuleset.None;
-	self.CloseChannel:SetEnabled(isEnabled);
-	local desaturation = 0;
-	if not isEnabled then
-		desaturation = 1;
-	end
-
-	self.CloseChannel:DesaturateHierarchy(desaturation);
+	local enabled = self:GetChannelRuleset() == Enum.ChatChannelRuleset.None and not self:GetChannelDisabled();
+	self.CloseChannel:SetEnabled(enabled);
+	self.CloseChannel:DesaturateHierarchy(enabled and 0 or 1);
 end
 
 function ChatConfigWideCheckBoxMixin:GetChannelIndex()
 	local channelIndex = self:GetID();
 	local channelData = CHAT_CONFIG_CHANNEL_LIST[channelIndex];
 	return channelData and channelData.channelID or nil;
+end
+
+function ChatConfigWideCheckBoxMixin:GetChannelDisabled()
+	local channelIndex = self:GetID();
+	local channelData = CHAT_CONFIG_CHANNEL_LIST[channelIndex];
+	if not channelData then 
+		return false;
+	end
+	return type(channelData.disabled) == "function" and channelData.disabled() or channelData.disabled;
 end
 
 function ChatConfigWideCheckBoxMixin:GetChannelRuleset()

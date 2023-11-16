@@ -88,6 +88,7 @@ function UIDropDownMenu_Initialize(frame, initFunction, displayMode, level, menu
 	local dropDownList = _G["DropDownList"..level];
 	dropDownList.dropdown = frame;
 	dropDownList.shouldRefresh = true;
+	dropDownList:SetWindow(frame:GetWindow());
 
 	UIDropDownMenu_SetDisplayMode(frame, displayMode);
 end
@@ -211,6 +212,7 @@ function UIDropDownMenuButton_OnEnter(self)
 	end
 
 	GetValueOrCallFunction(self, "funcOnEnter", self);
+	self.NewFeature:Hide();
 end
 
 function UIDropDownMenuButton_OnLeave(self)
@@ -565,6 +567,7 @@ function UIDropDownMenu_AddButton(info, level)
 	button.iconXOffset = info.iconXOffset;
 	button.mouseOverIcon = info.mouseOverIcon;
 	button.ignoreAsMenuSelection = info.ignoreAsMenuSelection;
+	button.showNewLabel = info.showNewLabel;
 
 	if ( info.value ~= nil) then
 		button.value = info.value;
@@ -694,6 +697,7 @@ function UIDropDownMenu_AddButton(info, level)
 		_G[listFrameName.."Button"..index.."UnCheck"]:Hide();
 	end
 	button.checked = info.checked;
+	button.NewFeature:SetShown(button.showNewLabel);
 
 	-- If has a colorswatch, show it and vertex color it
 	local colorSwatch = _G[listFrameName.."Button"..index.."ColorSwatch"];
@@ -794,6 +798,9 @@ function UIDropDownMenu_GetButtonWidth(button)
 	if ( button.hasArrow or button.hasColorSwatch ) then
 		width = width + 10;
 	end
+	if (button.showNewLabel) then
+		width = width + button.NewFeature.Label:GetUnboundedStringWidth();
+	end
 	if ( button.notCheckable ) then
 		width = width - 30;
 	end
@@ -865,6 +872,10 @@ function UIDropDownMenu_Refresh(frame, useValue, dropdownLevel)
 				uncheckImage:Show();
 			end
 		end
+
+		local normalText = _G[button:GetName().."NormalText"];
+		button.NewFeature:SetShown(button.showNewLabel);
+		button.NewFeature:SetPoint("LEFT", normalText, "RIGHT", 20, 0);
 
 		if ( button:IsShown() ) then
 			local width = UIDropDownMenu_GetButtonWidth(button);
@@ -1445,7 +1456,7 @@ function UIDropDownMenuButton_OpenColorPicker(self, button)
 		button = self;
 	end
 	UIDROPDOWNMENU_MENU_VALUE = button.value;
-	OpenColorPicker(button);
+	ColorPickerFrame:SetupColorPickerAndShow(button);
 end
 
 function UIDropDownMenu_DisableButton(level, id)
@@ -1558,21 +1569,4 @@ function UIDropDownMenu_GetValue(id)
 	else
 		return nil;
 	end
-end
-
-function OpenColorPicker(info)
-	ColorPickerFrame.func = info.swatchFunc;
-	ColorPickerFrame.hasOpacity = info.hasOpacity;
-	ColorPickerFrame.opacityFunc = info.opacityFunc;
-	ColorPickerFrame.opacity = info.opacity;
-	ColorPickerFrame.previousValues = {r = info.r, g = info.g, b = info.b, opacity = info.opacity};
-	ColorPickerFrame.cancelFunc = info.cancelFunc;
-	ColorPickerFrame.extraInfo = info.extraInfo;
-	-- This must come last, since it triggers a call to ColorPickerFrame.func()
-	ColorPickerFrame:SetColorRGB(info.r, info.g, info.b);
-	ShowUIPanel(ColorPickerFrame);
-end
-
-function ColorPicker_GetPreviousValues()
-	return ColorPickerFrame.previousValues.r, ColorPickerFrame.previousValues.g, ColorPickerFrame.previousValues.b;
 end

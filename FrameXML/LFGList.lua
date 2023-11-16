@@ -58,6 +58,24 @@ LFG_LIST_GROUP_DATA_ATLASES = {
 	DAMAGER = GetMicroIconForRole("DAMAGER"),
 };
 
+local LFG_STRING_FROM_ENUM = {
+	[Enum.LFGRole.Tank] = "TANK",
+	[Enum.LFGRole.Healer] = "HEALER",
+	[Enum.LFGRole.Damage] = "DAMAGER",
+};
+
+function GetLFGStringFromEnum(role)
+	local stringName = LFG_STRING_FROM_ENUM[role];
+	
+	if not stringName then
+		assertsafe("Bad role enum: " .. tostring(role));
+		return "";
+	end
+
+	return _G[stringName];
+end
+	
+
 --Fill out classes
 for i=1, #CLASS_SORT_ORDER do
 	LFG_LIST_GROUP_DATA_ATLASES[CLASS_SORT_ORDER[i]] = "groupfinder-icon-class-"..string.lower(CLASS_SORT_ORDER[i]);
@@ -1480,6 +1498,8 @@ function LFGListApplicationViewer_UpdateInfo(self)
 	end
 
 	local filters = activityInfo.filters;
+	local categoryID = activityInfo.categoryID;
+
 	--Set the background
 	local atlasName = nil;
 	if ( categoryInfo.separateRecommended and bit.band(filters, Enum.LFGListFilter.Recommended) ~= 0 ) then
@@ -1860,7 +1880,7 @@ function LFGListApplicantMember_OnEnter(self)
 		return;
 	end
 	local applicantInfo = C_LFGList.GetApplicantInfo(applicantID);
-	local name, class, localizedClass, level, itemLevel, honorLevel, tank, healer, damage, assignedRole, relationship, dungeonScore, pvpItemLevel, factionGroup, raceID  = C_LFGList.GetApplicantMemberInfo(applicantID, memberIdx);
+	local name, class, localizedClass, level, itemLevel, honorLevel, tank, healer, damage, assignedRole, relationship, dungeonScore, pvpItemLevel, factionGroup, raceID, specID = C_LFGList.GetApplicantMemberInfo(applicantID, memberIdx);
 	local bestDungeonScoreForEntry = C_LFGList.GetApplicantDungeonScoreForListing(applicantID, memberIdx, activeEntryInfo.activityID);
 	local pvpRatingForEntry = C_LFGList.GetApplicantPvpRatingInfoForListing(applicantID, memberIdx, activeEntryInfo.activityID);
 
@@ -1870,10 +1890,17 @@ function LFGListApplicantMember_OnEnter(self)
 	if ( name ) then
 		local classTextColor = RAID_CLASS_COLORS[class];
 		GameTooltip:SetText(name, classTextColor.r, classTextColor.g, classTextColor.b);
+		local classSpecializationName = localizedClass;
+		if(specID) then
+			local specName = PlayerUtil.GetSpecNameBySpecID(specID);
+			if(specName) then
+				classSpecializationName = CLUB_FINDER_LOOKING_FOR_CLASS_SPEC:format(specName, classSpecializationName);
+			end
+		end
 		if(UnitFactionGroup("player") ~= PLAYER_FACTION_GROUP[factionGroup]) then
-			GameTooltip_AddHighlightLine(GameTooltip, UNIT_TYPE_LEVEL_FACTION_TEMPLATE:format(level, localizedClass, FACTION_STRINGS[factionGroup]));
+			GameTooltip_AddHighlightLine(GameTooltip, UNIT_TYPE_LEVEL_FACTION_TEMPLATE:format(level, classSpecializationName, FACTION_STRINGS[factionGroup]));
 		else
-			GameTooltip_AddHighlightLine(GameTooltip, UNIT_TYPE_LEVEL_TEMPLATE:format(level, localizedClass));
+			GameTooltip_AddHighlightLine(GameTooltip, UNIT_TYPE_LEVEL_TEMPLATE:format(level, classSpecializationName));
 		end
 	else
 		GameTooltip:SetText(" ");	--Just make it empty until we get the name update
@@ -3158,15 +3185,15 @@ function LFGListUtil_GetDecoratedCategoryName(categoryName, filter, useColors)
 end
 
 local roleRemainingKeyLookup = {
-	["TANK"] = "TANK_REMAINING",
-	["HEALER"] = "HEALER_REMAINING",
-	["DAMAGER"] = "DAMAGER_REMAINING",
+	[Enum.LFGRole.Tank] = "TANK_REMAINING",
+	[Enum.LFGRole.Healer] = "HEALER_REMAINING",
+	[Enum.LFGRole.Damage] = "DAMAGER_REMAINING",
 };
 
 local function HasRemainingSlotsForLocalPlayerRole(lfgSearchResultID)
 	local roles = C_LFGList.GetSearchResultMemberCounts(lfgSearchResultID);
 	if roles then
-		local playerRole = GetSpecializationRole(GetSpecialization());
+		local playerRole = GetSpecializationRoleEnum(GetSpecialization());
 		if playerRole then
 			local remainingRoleKey = roleRemainingKeyLookup[playerRole];
 			if remainingRoleKey then
@@ -3809,26 +3836,35 @@ function LFGListLockButtonMixin:OnEnter()
 	self:DisplayTooltip();
 end
 
+LFGListCreationNameMixin = CreateFromMixins(LFGEditBoxMixin);
+
+function LFGListCreationNameMixin:OnShow()
+	LFGEditBoxMixin.OnShow(self);
+	
+	local isAccountSecured = C_LFGList.IsPlayerAuthenticatedForLFG(self:GetParent().selectedActivity);
+	if not isAccountSecured then
+		self:SetSecurityDisablePaste();
+	end
+end
+
 LFGListCreationDescriptionMixin = CreateFromMixins(LFGEditBoxMixin);
 
 function LFGListCreationDescriptionMixin:OnLoad()
 	StoreSecureReference("LFGListCreationDescription", self.EditBox);
 	self.EditBox:SetSecurityDisableSetText();
-	self.EditBox:SetSecurityDisablePaste();
 	self:AddToTabCategory("ENTRY_CREATION", self.EditBox);
 	self.EditBox:SetScript("OnTabPressed", LFGListEditBox_OnTabPressed);
 	self.EditBox:EnableMouse(false);
 	InputScrollFrame_OnLoad(self);
-
-	local isAccountSecured = C_LFGList.IsPlayerAuthenticatedForLFG(self:GetParent().selectedActivity);
-	self.EditBox.Instructions:SetText(isAccountSecured and DESCRIPTION_OF_YOUR_GROUP or LFG_AUTHENTICATOR_DESCRIPTION_BOX);
-	self.EditBox:SetEnabled(isAccountSecured);
-	self.LockButton:SetShown(not isAccountSecured);
-	self.editBoxEnabled = isAccountSecured;
 end
 
 function LFGListCreationDescriptionMixin:OnShow()
 	local isAccountSecured = C_LFGList.IsPlayerAuthenticatedForLFG(self:GetParent().selectedActivity);
+
+	if not isAccountSecured then
+		self.EditBox:SetSecurityDisablePaste();
+	end
+
 	self.EditBox.Instructions:SetText(isAccountSecured and DESCRIPTION_OF_YOUR_GROUP or LFG_AUTHENTICATOR_DESCRIPTION_BOX);
 	self.EditBox:SetEnabled(isAccountSecured);
 	self.LockButton:SetShown(not isAccountSecured);

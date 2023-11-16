@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\FrameXML\UI.xsd">
+UI_shared.xsd">
 	<Script file="ContainerFrame.lua"/>
 
 	<Texture name="ItemSlotBackgroundCombinedBagsTemplate" file="Interface\ContainerFrame\UI-Bag-Components" virtual="true">
@@ -198,8 +198,10 @@
 			</OnLoad>
 		</Scripts>
 	</Frame>
+	
+	<Frame name="ContainerFrameContainer" parent="UIParent" setAllPoints="true" toplevel="true" inherits="PingTopLevelPassThroughAttributeTemplate"/>
 
-	<Frame name="ContainerFrameTemplate" inherits="PortraitFrameFlatTemplate" mixin="ContainerFrameMixin" parent="UIParent" parentArray="ContainerFrames" frameStrata="MEDIUM" toplevel="true" movable="true" enableMouse="true" hidden="true" virtual="true">
+	<Frame name="ContainerFrameTemplate" inherits="PortraitFrameFlatTemplate" mixin="ContainerFrameMixin" parent="ContainerFrameContainer" parentArray="ContainerFrames" frameStrata="MEDIUM" movable="true" enableMouse="true" hidden="true" virtual="true">
 		<KeyValues>
 			<KeyValue key="layoutType" value="HeldBagLayout" type="string"/>
 			<KeyValue key="onCloseCallback" value="ContainerFrame_OnCloseButtonClicked" type="global"/>

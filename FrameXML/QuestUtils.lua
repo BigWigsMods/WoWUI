@@ -322,15 +322,49 @@ function QuestUtil.SetupWorldQuestButton(button, info, inProgress, selected, isC
 end
 
 function QuestUtil.QuestTextContrastEnabled()
-	return GetCVarBool("QuestTextContrast");
+	return GetCVarNumberOrDefault("QuestTextContrast") > 0;
+end
+
+function QuestUtil.QuestTextContrastUseLightText()
+	return QuestUtil.ShouldQuestTextContrastSettingUseLightText(GetCVarNumberOrDefault("QuestTextContrast"));
+end
+
+function QuestUtil.ShouldQuestTextContrastSettingUseLightText(questTextContrastSetting)
+	--Use light text when the background is dark
+	return  questTextContrastSetting == 4;
 end
 
 function QuestUtil.GetDefaultQuestBackgroundTexture()
-	return QuestUtil.QuestTextContrastEnabled() and "QuestBG-Parchment-Accessibility" or "QuestBG-Parchment";
+	return QuestUtil.GetQuestBackgroundAtlas(GetCVarNumberOrDefault("QuestTextContrast"));
+end
+
+function QuestUtil.GetQuestBackgroundAtlas(questTextContrastSetting)
+	if questTextContrastSetting == 0 then
+		return "QuestBG-Parchment";
+	elseif questTextContrastSetting == 1 then
+		return "QuestBG-Parchment-Accessibility";
+	elseif questTextContrastSetting == 2 then
+		return "QuestBG-Parchment-Accessibility2";
+	elseif questTextContrastSetting == 3 then
+		return "QuestBG-Parchment-Accessibility3";
+	elseif questTextContrastSetting == 4 then
+		return "QuestBG-Parchment-Accessibility4";
+	end 
 end
 
 function QuestUtil.GetDefaultQuestMapBackgroundTexture()
-	return QuestUtil.QuestTextContrastEnabled() and "QuestDetailsBackgrounds-Accessibility" or "QuestDetailsBackgrounds";
+	local questAccesibilityBackground = GetCVarNumberOrDefault("QuestTextContrast");
+	if questAccesibilityBackground == 0 then
+		return "QuestDetailsBackgrounds";
+	elseif questAccesibilityBackground == 1 then
+		return "QuestDetailsBackgrounds-Accessibility";
+	elseif questAccesibilityBackground == 2 then
+		return "QuestDetailsBackgrounds-Accessibility_Light";
+	elseif questAccesibilityBackground == 3 then
+		return "QuestDetailsBackgrounds-Accessibility_Medium";
+	elseif questAccesibilityBackground == 4 then
+		return "QuestDetailsBackgrounds-Accessibility_Dark";
+	end 
 end
 
 function QuestUtil.GetThreatPOIIcon(questID)

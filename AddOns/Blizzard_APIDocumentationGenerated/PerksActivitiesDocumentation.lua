@@ -75,6 +75,15 @@ local PerksActivities =
 			},
 		},
 		{
+			Name = "GetPerksUIThemePrefix",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "kitPrefix", Type = "string", Nilable = false },
+			},
+		},
+		{
 			Name = "GetTrackedPerksActivities",
 			Type = "Function",
 
@@ -156,6 +165,16 @@ local PerksActivities =
 			},
 		},
 		{
+			Name = "PerksActivityCondition",
+			Type = "Structure",
+			Fields =
+			{
+				{ Name = "isMet", Type = "bool", Nilable = false },
+				{ Name = "text", Type = "cstring", Nilable = false },
+				{ Name = "uiPriority", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "PerksActivityCriteria",
 			Type = "Structure",
 			Fields =
@@ -174,9 +193,13 @@ local PerksActivities =
 				{ Name = "description", Type = "string", Nilable = false },
 				{ Name = "thresholdContributionAmount", Type = "number", Nilable = false },
 				{ Name = "completed", Type = "bool", Nilable = false },
+				{ Name = "inProgress", Type = "bool", Nilable = false },
 				{ Name = "tracked", Type = "bool", Nilable = false },
 				{ Name = "supersedes", Type = "number", Nilable = false },
 				{ Name = "uiPriority", Type = "number", Nilable = false },
+				{ Name = "areAllConditionsMet", Type = "bool", Nilable = false },
+				{ Name = "conditions", Type = "table", InnerType = "PerksActivityCondition", Nilable = false },
+				{ Name = "eventName", Type = "cstring", Nilable = true },
 				{ Name = "eventStartTime", Type = "time_t", Nilable = true },
 				{ Name = "eventEndTime", Type = "time_t", Nilable = true },
 				{ Name = "requirementsList", Type = "table", InnerType = "PerksActivityRequirement", Nilable = false },

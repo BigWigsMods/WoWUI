@@ -497,6 +497,12 @@ function SettingsDropDownControlMixin:InitDropDown()
 
 	self.DropDown.Button.selectedDataFunc = initializer.data.selectedDataFunc;
 	self.cbrHandles:RegisterCallback(self.DropDown.Button, SelectionPopoutButtonMixin.Event.OnValueChanged, OnDropDownValueChanged);
+	if setting.OnShow then
+		self.cbrHandles:RegisterCallback(self.DropDown.Button, SelectionPopoutButtonMixin.Event.OnPopoutShow, setting.OnShow);
+	end
+	if setting.OnHide then
+		self.cbrHandles:RegisterCallback(self.DropDown.Button, SelectionPopoutButtonMixin.Event.OnPopoutHide, setting.OnHide);
+	end
 
 	local selectionIndex = Settings.InitSelectionDropDown(self.DropDown, setting, options, 200, initTooltip);
 	if not initializer.skipAssertMissingOption then
@@ -568,11 +574,17 @@ function SettingsButtonControlMixin:Release()
 	SettingsListElementMixin.Release(self);
 end
 
-function CreateSettingsButtonInitializer(name, buttonText, buttonClick, tooltip)
+function CreateSettingsButtonInitializer(name, buttonText, buttonClick, tooltip, addSearchTags)
 	local data = {name = name, buttonText = buttonText, buttonClick = buttonClick, tooltip = tooltip};
 	local initializer = Settings.CreateElementInitializer("SettingButtonControlTemplate", data);
-	initializer:AddSearchTags(name);
-	initializer:AddSearchTags(buttonText);
+
+	-- Some settings buttons, like ones that open to a setting category, should not show up in search.
+	assert(addSearchTags ~= nil);
+	if addSearchTags then
+		initializer:AddSearchTags(name);
+		initializer:AddSearchTags(buttonText);
+	end
+
 	return initializer;
 end
 
@@ -890,6 +902,10 @@ function SettingsSelectionPopoutEntryMixin:OnEnter()
 	SelectionPopoutEntryMixin.OnEnter(self);
 	
 	self.HighlightBGTex:SetAlpha(0.15);
+
+	if self.selectionData.OnEnter then
+		self.selectionData.OnEnter(self.selectionData.value)
+	end
 
 	if not self.isSelected then
 		if self.selectionData.disabled == nil then

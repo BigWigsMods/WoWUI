@@ -626,7 +626,7 @@ function QuestMapFrame_ShowQuestDetails(questID)
 	QuestMapFrame.DetailsFrame.questID = questID;
 	QuestMapFrame:GetParent():SetFocusedQuestID(questID);
 	QuestInfo_Display(QUEST_TEMPLATE_MAP_DETAILS, QuestMapFrame.DetailsFrame.ScrollFrame.Contents);
-	QuestInfo_Display(QUEST_TEMPLATE_MAP_REWARDS, QuestMapFrame.DetailsFrame.RewardsFrame, nil, nil, true);
+	QuestInfo_Display(QUEST_TEMPLATE_MAP_REWARDS, QuestMapFrame.DetailsFrame.RewardsFrame.RewardsScrollFrame.Contents, nil, nil, true);
 	QuestMapFrame.DetailsFrame.ScrollFrame.ScrollBar:ScrollToBegin();
 
 	local mapFrame = QuestMapFrame:GetParent();
@@ -994,6 +994,10 @@ local function QuestLogQuests_GetTitle(displayState, info)
 
 	if displayState.displayQuestID then
 		title = info.questID.." - "..title;
+	end
+
+	if displayState.displayInternalOnlyStatus and info.isInternalOnly then
+		title = "(Internal only) "..title;
 	end
 
 	if displayState.showReadyToRecord then
@@ -1439,6 +1443,7 @@ local function QuestLogQuests_BuildInitialDisplayState(poiTable, questInfoContai
 		questInfoContainer = questInfoContainer,
 		poiTable = poiTable,
 		displayQuestID = GetCVarBool("displayQuestID"),
+		displayInternalOnlyStatus = GetCVarBool("displayInternalOnlyStatus"),
 		showReadyToRecord = GetCVarBool("showReadyToRecord"),
 		questPOI = GetCVarBool("questPOI"),
 	};
@@ -1851,6 +1856,7 @@ function QuestLogPopupDetailFrame_Show(questLogIndex)
 	QuestLogPopupDetailFrame_Update(true);
 	ShowUIPanel(QuestLogPopupDetailFrame);
 	PlaySound(SOUNDKIT.IG_QUEST_LOG_OPEN);
+	QuestLogPopupDetailFrame.Bg:SetAtlas(QuestUtil.GetDefaultQuestBackgroundTexture());
 
 	-- portrait
 	local questPortrait, questPortraitText, questPortraitName, questPortraitMount, questPortraitModelSceneID = C_QuestLog.GetQuestLogPortraitGiver();

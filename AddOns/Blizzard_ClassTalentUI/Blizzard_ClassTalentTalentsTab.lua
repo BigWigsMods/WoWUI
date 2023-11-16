@@ -304,7 +304,6 @@ function ClassTalentTalentsTabMixin:OnEvent(event, ...)
 	elseif event == "STARTER_BUILD_ACTIVATION_FAILED" then
 		self:SetCommitStarted(nil, TalentFrameBaseMixin.CommitUpdateReasons.CommitFailed);
 		self:ResetToLastConfigID();
-		UIErrorsFrame:AddExternalErrorMessage("ERR_INTERNAL_ERROR");
 	elseif event == "ACTIVE_PLAYER_SPECIALIZATION_CHANGED" then
 		self:UpdateSpecBackground();
 		self:RefreshLoadoutOptions();
@@ -1055,18 +1054,26 @@ function ClassTalentTalentsTabMixin:PurchaseRank(nodeID)
 	end
 end
 
+function ClassTalentTalentsTabMixin:RefundRank(nodeID)
+	-- Overrides TalentFrameBaseMixin.
+
+	local shouldClearEdges = ClassTalentUtil.ShouldRefundClearEdges();
+	return self:AttemptConfigOperation(C_Traits.RefundRank, nodeID, shouldClearEdges);
+end
+
 function ClassTalentTalentsTabMixin:SetSelection(nodeID, entryID, oldEntryID)
 	-- Overrides TalentFrameBaseMixin.
 
+	local shouldClearEdges = ClassTalentUtil.ShouldRefundClearEdges();
 	if not self:WillDeviateFromStarterBuild(nodeID, entryID) then
-		TalentFrameBaseMixin.SetSelection(self, nodeID, entryID);
+		self:AttemptConfigOperation(C_Traits.SetSelection, nodeID, entryID, shouldClearEdges);
 	else
 		local function FinishSelect()
 			-- Player is deviating from the Starter Build, so need to unflag them as using it
 			-- Unflagging resets any pending changes though, so we have to wait until they commit all their changes to unflag safely
 			self.unflagStarterBuildAfterNextCommit = true;
 			self.LoadoutDropDown:ClearSelection();
-			TalentFrameBaseMixin.SetSelection(self, nodeID, entryID);
+			self:AttemptConfigOperation(C_Traits.SetSelection, nodeID, entryID, shouldClearEdges);
 		end
 		local function CancelSelect()
 			local button = self:GetTalentButtonByNodeID(nodeID);
@@ -1213,7 +1220,21 @@ function ClassTalentTalentsTabMixin:CanSetDropDownValue(selectedValue, isUserInp
 	return self.LoadoutDropDown:IsSelectionIDValid(selectedValue);
 end
 
+function ClassTalentTalentsTabMixin:HasAnyRefundInvalidNodes()
+	for button in self:EnumerateAllTalentButtons() do
+		if button:IsRefundInvalid() then
+			return true;
+		end
+	end
+
+	return false;
+end
+
 function ClassTalentTalentsTabMixin:CanChangeTalents()
+	if self:HasAnyRefundInvalidNodes() then
+		return false, false, TALENT_FRAME_REFUND_INVALID_ERROR;
+	end
+
 	if self:IsCommitInProgress() then
 		return false, false;
 	end

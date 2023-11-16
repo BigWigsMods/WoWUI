@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\FrameXML\UI.xsd">
+UI_shared.xsd">
 	<Script file="LFGList.lua"/>
 
 	<Button name="LFGStartGroupButtonTemplate" inherits="UIPanelButtonTemplate" text="START_A_GROUP" motionScriptsWhileDisabled="true" virtual="true">
@@ -375,9 +375,10 @@
 				</Scripts>
 				<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD"/>
 			</Button>
-			<Frame parentKey="Spinner" inherits="LoadingSpinnerTemplate" hidden="true">
+			<Frame parentKey="Spinner" inherits="SpinnerTemplate" hidden="true">
+				<Size x="25" y="25"/>
 				<Anchors>
-					<Anchor point="RIGHT" x="3" y="0"/>
+					<Anchor point="RIGHT" x="-6" y="0"/>
 				</Anchors>
 			</Frame>
 		</Frames>
@@ -712,7 +713,6 @@
 				if ( self.secureReferenceStr ) then
 					StoreSecureReference(self.secureReferenceStr, self.EditBox);
 					self.EditBox:SetSecurityDisableSetText();
-					self.EditBox:SetSecurityDisablePaste();
 				end
 			</OnLoad>
 		</Scripts>
@@ -842,9 +842,10 @@
 					</OnClick>
 				</Scripts>
 			</Button>
-			<Frame parentKey="Spinner" inherits="LoadingSpinnerTemplate" hidden="true">
+			<Frame parentKey="Spinner" inherits="SpinnerTemplate" hidden="true">
+				<Size x="30" y="30"/>
 				<Anchors>
-					<Anchor point="RIGHT" x="3" y="-1"/>
+					<Anchor point="RIGHT" x="-6" y="-1"/>
 				</Anchors>
 			</Frame>
 			<Button parentKey="CancelButton" inherits="UIMenuButtonStretchTemplate" motionScriptsWhileDisabled="true">
@@ -1028,7 +1029,7 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<EditBox parentKey="SearchBox" secureReferenceKey="LFGListSearchBox" securityDisableSetText="true" securityDisablePaste="true" inherits="SearchBoxTemplate" letters="64">
+					<EditBox parentKey="SearchBox" secureReferenceKey="LFGListSearchBox" securityDisableSetText="true" inherits="SearchBoxTemplate" letters="64">
 						<Size x="319" y="18"/>
 						<Anchors>
 							<Anchor point="TOPLEFT" relativeKey="$parent.CategoryName" relativePoint="BOTTOMLEFT" x="4" y="-7"/>
@@ -1198,7 +1199,8 @@
 							<Anchor point="BOTTOMLEFT" relativeKey="$parent.ScrollBox" relativePoint="BOTTOMRIGHT" x="11" y="4"/>
 						</Anchors>
 					</EventFrame>
-					<Frame parentKey="SearchingSpinner" inherits="LoadingSpinnerTemplate">
+					<Frame parentKey="SearchingSpinner" inherits="SpinnerTemplate">
+						<Size x="30" y="30"/>
 						<Anchors>
 							<Anchor point="CENTER" relativeKey="$parent.ResultsInset"/>
 						</Anchors>
@@ -1206,7 +1208,7 @@
 							<Layer level="ARTWORK">
 								<FontString parentKey="Label" inherits="GameFontNormalLarge" text="SEARCHING">
 									<Anchors>
-										<Anchor point="BOTTOM" relativeKey="$parent" relativePoint="TOP" x="0" y="0"/>
+										<Anchor point="BOTTOM" relativeKey="$parent" relativePoint="TOP" x="0" y="9"/>
 									</Anchors>
 								</FontString>
 							</Layer>
@@ -1622,7 +1624,8 @@
 							</Layer>
 						</Layers>
 						<Frames>
-							<Frame parentKey="Spinner" inherits="LoadingSpinnerTemplate">
+							<Frame parentKey="Spinner" inherits="SpinnerTemplate">
+								<Size x="30" y="30"/>
 								<Anchors>
 									<Anchor point="CENTER"/>
 								</Anchors>
@@ -1727,7 +1730,7 @@
 							<OnLoad function="LFGListEntryCreationActivityFinder_OnLoad"/>
 						</Scripts>
 					</Frame>
-					<EditBox parentKey="Name" secureReferenceKey="LFGListCreationName" securityDisableSetText="true" securityDisablePaste="true" inherits="LFGListEditBoxTemplate" letters="31">
+					<EditBox parentKey="Name" secureReferenceKey="LFGListCreationName" securityDisableSetText="true" inherits="LFGListEditBoxTemplate" mixin="LFGListCreationNameMixin" letters="31">
 						<Size x="288" y="22"/>
 						<KeyValues>
 							<KeyValue key="tabCategory" value="ENTRY_CREATION" type="string"/>
@@ -1736,6 +1739,7 @@
 							<Anchor point="TOPLEFT" relativeKey="$parent.NameLabel" relativePoint="BOTTOMLEFT" x="5" y="-5"/>
 						</Anchors>
 						<Scripts>
+							<OnShow method="OnShow"/>
 							<OnEditFocusGained function="nop"/> <!--Override the base one that selects all text-->
 							<OnTextChanged>
 								InputBoxInstructions_OnTextChanged(self);
@@ -1982,7 +1986,6 @@
 					<OnLoad>
 						StoreSecureReference("LFGListApplicationDescription", self.EditBox);
 						self.EditBox:SetSecurityDisableSetText();
-						self.EditBox:SetSecurityDisablePaste();
 						InputScrollFrame_OnLoad(self);
 					</OnLoad>
 				</Scripts>

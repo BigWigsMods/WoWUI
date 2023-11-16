@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\..\FrameXML\UI.xsd">
+..\..\FrameXML\UI_shared.xsd">
 	<Script file="Blizzard_CategoryList.lua"/>
 
 	<Frame name="SettingsCategoryListSpacerTemplate" virtual="true">
@@ -80,9 +80,6 @@
 		<Frames>
 			<Frame parentKey="NewFeature" inherits="NewFeatureLabelTemplate" frameStrata="HIGH" scale=".8" frameLevel="100" hidden="true">
 				<Size x="1" y="1"/>
-				<Anchors>
-					<Anchor point="RIGHT" relativeKey="$parent.Label" relativePoint="LEFT" x="-37" y="3"/>
-				</Anchors>
 			</Frame>
 		</Frames>
 		<Scripts>

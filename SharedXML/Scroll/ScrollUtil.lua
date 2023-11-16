@@ -452,34 +452,43 @@ function SelectionBehaviorMixin:ToggleSelectElementData(elementData)
 	self:SetElementDataSelected_Internal(elementData, newSelected);
 end
 
-function SelectionBehaviorMixin:SelectFirstElementData()
-	local dataProvider = self.scrollBox:GetDataProvider();
-	if dataProvider then
-		local elementData = dataProvider:Find(1);
-		if elementData then
+function SelectionBehaviorMixin:SelectFirstElementData(predicate)
+	-- Select the first element which satisfies the predicate
+	for index, elementData in self.scrollBox:EnumerateDataProviderEntireRange() do
+		if not predicate or predicate(elementData) then
 			self:SelectElementData(elementData);
+			return;
 		end
 	end
 end
 
-function SelectionBehaviorMixin:SelectNextElementData()
-	return self:SelectOffsetElementData(1);
+function SelectionBehaviorMixin:SelectNextElementData(predicate)
+	return self:SelectOffsetElementData(1, predicate);
 end
 
-function SelectionBehaviorMixin:SelectPreviousElementData()
-	return self:SelectOffsetElementData(-1);
+function SelectionBehaviorMixin:SelectPreviousElementData(predicate)
+	return self:SelectOffsetElementData(-1, predicate);
 end
 
-function SelectionBehaviorMixin:SelectOffsetElementData(offset)
+function SelectionBehaviorMixin:SelectOffsetElementData(offset, predicate)
 	local dataProvider = self.scrollBox:GetDataProvider();
 	if dataProvider then
 		local currentElementData = self:GetFirstSelectedElementData();
 		local currentIndex = dataProvider:FindIndex(currentElementData);
 		local offsetIndex = currentIndex + offset;
+		local searchOffset = offset > 0 and 1 or -1;
+
+		-- Find the first element data which satisfies the predicate
+		-- Starting at the current offsetIndex and moving in the direction of the offset
 		local offsetElementData = dataProvider:Find(offsetIndex);
-		if offsetElementData then
-			self:SelectElementData(offsetElementData);
-			return offsetElementData, offsetIndex;
+		while offsetElementData do
+			if not predicate or predicate(offsetElementData) then
+				self:SelectElementData(offsetElementData);
+				return offsetElementData, offsetIndex;
+			end
+
+			offsetIndex = offsetIndex + searchOffset;
+			offsetElementData = dataProvider:Find(offsetIndex);
 		end
 	end
 end
@@ -1117,6 +1126,25 @@ function ScrollUtil.RegisterAlternateRowBehavior(scrollBox, callback)
 		end);
 	end;
 	scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnDataRangeChanged, OnDataRangeChanged, OnDataRangeChanged);
+end
+
+function ScrollUtil.AlternateDataValue(dataProvider, predicate, field, initValue)
+	if type(initValue) ~= boolean then
+		initValue = true;
+	end
+	if field == nil then
+		field = "odd";
+	end
+	local odd = initValue ~= nil and initValue or true;
+	for index, elementDataIter in dataProvider:EnumerateEntireRange() do
+		local data = elementDataIter:GetData();
+		if predicate and predicate(data) then
+			odd = initValue or true;
+		else
+			data[field] = odd;
+			odd = not odd;
+		end
+	end
 end
 
 function ScrollUtil.RegisterTableBuilder(scrollBox, tableBuilder, elementDataTranslator)

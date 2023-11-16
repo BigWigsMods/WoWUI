@@ -916,7 +916,8 @@ function ProfessionsCustomerOrderFormMixin:UpdateReagentSlots()
 
 					local canToggle = orderSource == Enum.CraftingOrderReagentSource.Any and not committed;
 					if not canToggle then
-						SetupSlotOverride(slot, orderSource, canAllocate, committed);
+						local alreadyModified = self.order.isRecraft and transaction:HasModification(reagentSlotSchematic.dataSlotIndex);
+						SetupSlotOverride(slot, orderSource, canAllocate or alreadyModified, committed);
 					end
 				end
 				
@@ -1626,7 +1627,6 @@ end
 function ProfessionsCustomerOrderFormMixin:RequestCurrentListings()
 	self.CurrentListings.OrderList.ResultsText:Hide();
 	self.CurrentListings.OrderList.LoadingSpinner:Show();
-	self.CurrentListings.OrderList.SpinnerAnim:Restart();
 	self.CurrentListings.OrderList.ScrollBox:Hide();
 
 	local selectedSkillLineAbility = self.order.skillLineAbilityID;
@@ -1676,7 +1676,6 @@ end
 
 function ProfessionsCustomerOrderFormMixin:DisplayCurrentListings(offset, isSorted)
 	self.CurrentListings.OrderList.LoadingSpinner:Hide();
-	self.CurrentListings.OrderList.SpinnerAnim:Stop();
 	self.CurrentListings.OrderList.ScrollBox:Show();
 
 	local orders = C_CraftingOrders.GetCustomerOrders();

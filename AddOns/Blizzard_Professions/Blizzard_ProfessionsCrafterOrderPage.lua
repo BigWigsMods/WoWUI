@@ -80,7 +80,7 @@ function ProfessionsCrafterOrderListElementMixin:Init(elementData)
 end
 
 
-ProfessionsCraftingOrderPageMixin = {};
+ProfessionsCraftingOrderPageMixin = CreateFromMixins(ProfessionsRecipeListPanelMixin);
 
 function ProfessionsCraftingOrderPageMixin:InitButtons()
 	self.BrowseFrame.FavoritesSearchButton.Icon:SetAtlas("auctionhouse-icon-favorite");
@@ -422,7 +422,6 @@ function ProfessionsCraftingOrderPageMixin:StartDefaultSearch()
 		self:RequestOrders(selectedRecipe, searchFavorites, initialNonPublicSearch);
 	else
 		self.BrowseFrame.OrderList.LoadingSpinner:Hide();
-		self.BrowseFrame.OrderList.SpinnerAnim:Stop();
 		self.BrowseFrame.BackButton:Hide();
 
 		self.BrowseFrame.OrderList.ResultsText:SetText(CRAFTER_CRAFTING_ORDERS_BROWSE_FAVORITES_TIP);
@@ -459,6 +458,8 @@ function ProfessionsCraftingOrderPageMixin:OnHide()
 	end
 
 	C_TradeSkillUI.SetOnlyShowAvailableForOrders(false);
+
+	self:StoreCollapses(self.BrowseFrame.RecipeList.ScrollBox);
 end
 
 function ProfessionsCraftingOrderPageMixin:UpdateOrdersRemaining()
@@ -559,7 +560,7 @@ function ProfessionsCraftingOrderPageMixin:Init(professionInfo)
 	end
 
 	local searching = self.BrowseFrame.RecipeList.SearchBox:HasText();
-	local dataProvider = Professions.GenerateCraftingDataProvider(self.professionInfo.professionID, searching);
+	local dataProvider = Professions.GenerateCraftingDataProvider(self.professionInfo.professionID, searching, false, self:GetCollapses());
 	
 	if searching or changedProfessionID then
 		self.BrowseFrame.RecipeList.ScrollBox:SetDataProvider(dataProvider, ScrollBoxConstants.DiscardScrollPosition);
@@ -622,7 +623,6 @@ function ProfessionsCraftingOrderPageMixin:SendOrderRequest(request)
 
 		self.BrowseFrame.OrderList.ResultsText:Hide();
 		self.BrowseFrame.OrderList.LoadingSpinner:Show();
-		self.BrowseFrame.OrderList.SpinnerAnim:Restart();
 		self.BrowseFrame.OrderList.ScrollBox:Hide();
 
 		if not request.selectedSkillLineAbility then
@@ -669,7 +669,6 @@ end
 
 function ProfessionsCraftingOrderPageMixin:ShowGeneric(orders, browseType, offset, isSorted)
 	self.BrowseFrame.OrderList.LoadingSpinner:Hide();
-	self.BrowseFrame.OrderList.SpinnerAnim:Stop();
 	self.BrowseFrame.OrderList.ScrollBox:Show();
 
 	local dataProvider;

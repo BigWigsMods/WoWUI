@@ -196,10 +196,20 @@ function CharacterCreateMixin:OnShow()
 	local instantRotate = true;
 	self:SetMode(CHAR_CREATE_MODE_CLASS_RACE, instantRotate);
 	self:ResetNavBlockers();
+	self:RefreshCurrentNavBlocker();
 
 	self:UpdateRecruitInfo();
 
 	RaceAndClassFrame:UpdateState(selectedFaction);
+
+	if IsKioskGlueEnabled() then
+		local templateIndex = Kiosk.GetCharacterTemplateSetIndex();
+		if templateIndex then
+			C_CharacterCreation.SetCharacterTemplate(templateIndex);
+		else
+			C_CharacterCreation.ClearCharacterTemplate();
+		end
+	end
 end
 
 local rafHelpTipInfo = {
@@ -1295,6 +1305,7 @@ end
 
 function CharacterCreateRaceAndClassMixin:CanTrialBoostCharacter()
 	return C_CharacterServices.IsTrialBoostEnabled() and
+		not IsKioskGlueEnabled() and
 		not C_CharacterCreation.IsNewPlayerRestricted() and
 		not C_CharacterCreation.IsTrialAccountRestricted() and
 		not CharacterCreateFrame:HasService() and

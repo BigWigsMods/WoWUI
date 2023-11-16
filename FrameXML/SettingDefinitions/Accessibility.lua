@@ -1,3 +1,23 @@
+QuestTextPreviewMixin = { };
+
+function QuestTextPreviewMixin:OnShow()
+	self:UpdatePreview(GetCVarNumberOrDefault("QuestTextContrast"));
+end
+
+function QuestTextPreviewMixin:UpdatePreview(value)
+	local atlas = QuestUtil.GetQuestBackgroundAtlas(value)
+	local useLightText = QuestUtil.ShouldQuestTextContrastSettingUseLightText(value)
+
+	self.Background:SetAtlas(atlas);
+
+	local textColor, titleTextColor = GetMaterialTextColors("Parchment");
+	if useLightText then
+		textColor, titleTextColor = GetMaterialTextColors("Stone");
+	end
+	self.TitleText:SetTextColor(titleTextColor[1], titleTextColor[2], titleTextColor[3]);
+	self.BodyText:SetTextColor(textColor[1], textColor[2], textColor[3]);
+end
+
 local function Register()
 	local category, layout = Settings.RegisterVerticalLayoutCategory(ACCESSIBILITY_GENERAL_LABEL);
 
@@ -11,9 +31,50 @@ local function Register()
 	-- Alternate Full Screen Effects
 	AccessibilityOverrides.CreatePhotosensitivitySetting(category);
 
-	if C_CVar.GetCVar("empowerTapControls") then
-		-- Quest Text Contrast
-		Settings.SetupCVarCheckBox(category, "questTextContrast", ENABLE_QUEST_TEXT_CONTRAST, OPTION_TOOLTIP_ENABLE_QUEST_TEXT_CONTRAST);
+	-- Quest Text Contrast
+	if C_CVar.GetCVar("questTextContrast") then
+		do
+			local function GetValue()
+				return GetCVarNumberOrDefault("questTextContrast");
+			end
+			
+			local function SetValue(value)
+				SetCVar("questTextContrast", value);
+			end
+
+			local function OnEntryEnter(value)
+				SettingsPanel.QuestTextPreview:UpdatePreview(value);
+			end
+		
+			local function GetOptions()
+				local container = Settings.CreateControlTextContainer();
+				container:Add(0, QUEST_BG_DEFAULT);
+				container:Add(1, QUEST_BG_LIGHT1);
+				container:Add(2, QUEST_BG_LIGHT2);
+				container:Add(3, QUEST_BG_LIGHT3);
+				container:Add(4, QUEST_BG_DARK);
+				local data = container:GetData();
+				for index, entryData in ipairs(data) do
+					entryData.OnEnter = OnEntryEnter;
+				end
+				return data;
+			end
+
+			local function OnShow()
+				SettingsPanel.QuestTextPreview:Show();
+			end
+
+			local function OnHide()
+				SettingsPanel.QuestTextPreview:Hide();
+			end
+			
+			local defaultValue = 0;
+			local setting = Settings.RegisterProxySetting(category, "PROXY_QUEST_TEXT_CONTRAST", Settings.DefaultVarLocation,
+				Settings.VarType.Number, ENABLE_QUEST_TEXT_CONTRAST, defaultValue, GetValue, SetValue);
+			setting.OnShow = OnShow;
+			setting.OnHide = OnHide;
+			Settings.CreateDropDown(category, setting, GetOptions, OPTION_TOOLTIP_ENABLE_QUEST_TEXT_CONTRAST);
+		end
 	end
 
 	-- Minimum Character Name Size
@@ -28,112 +89,20 @@ local function Register()
 	-- Motion Sickness
 	do
 		local function GetValue()
-			local keepCentered = GetCVarBool("CameraKeepCharacterCentered");
-			local reducedMovement = GetCVarBool("CameraReduceUnexpectedMovement");
-			if keepCentered and not reducedMovement then
-				return 1;
-			elseif not keepCentered and reducedMovement then
-				return 2;
-			elseif keepCentered and reducedMovement then
-				return 3;
-			elseif not keepCentered and not reducedMovement then
-				return 4;
-			end
+			return not GetCVarBool("CameraKeepCharacterCentered") 
+				and GetCVarBool("CameraReduceUnexpectedMovement");
 		end
 		
 		local function SetValue(value)
-			if value == 1 then
-				SetCVar("CameraKeepCharacterCentered", "1");
-				SetCVar("CameraReduceUnexpectedMovement", "0");
-			elseif value == 2 then
-				SetCVar("CameraKeepCharacterCentered", "0");
-				SetCVar("CameraReduceUnexpectedMovement", "1");
-			elseif value == 3 then
-				SetCVar("CameraKeepCharacterCentered", "1");
-				SetCVar("CameraReduceUnexpectedMovement", "1");
-			elseif value == 4 then
-				SetCVar("CameraKeepCharacterCentered", "0");
-				SetCVar("CameraReduceUnexpectedMovement", "0");
-			end
-		end
-		
-		local function GetOptions()
-			local container = Settings.CreateControlTextContainer();
-			container:Add(1, MOTION_SICKNESS_CHARACTER_CENTERED);
-			container:Add(2, MOTION_SICKNESS_REDUCE_CAMERA_MOTION);
-			container:Add(3, MOTION_SICKNESS_BOTH);
-			container:Add(4, MOTION_SICKNESS_NONE);
-			return container:GetData();
+			SetCVar("CameraKeepCharacterCentered", not value);
+			SetCVar("CameraReduceUnexpectedMovement", value);
 		end
 
-		local defaultValue = 1;
-		local setting = Settings.RegisterProxySetting(category, "PROXY_SICKNESS", Settings.DefaultVarLocation,
-			Settings.VarType.Number, MOTION_SICKNESS_DROPDOWN, defaultValue, GetValue, SetValue);
-		Settings.CreateDropDown(category, setting, GetOptions, OPTION_TOOLTIP_MOTION_SICKNESS);
-	end
-
-	-- Dragonriding Motion Sickness
-	if C_CVar.GetCVar("motionSicknessFocalCircle") and C_CVar.GetCVar("motionSicknessLandscapeDarkening") then
-		local function GetValue()
-			local focalCircle = GetCVarBool("motionSicknessFocalCircle");
-			local landscapeDarkening = GetCVarBool("motionSicknessLandscapeDarkening");
-			if focalCircle and not landscapeDarkening then
-				return 1;
-			elseif not focalCircle and landscapeDarkening then
-				return 2;
-			elseif focalCircle and landscapeDarkening then
-				return 3;
-			elseif not focalCircle and not landscapeDarkening then
-				return 4;
-			end
-		end
-		
-		local function SetValue(value)
-			if value == 1 then
-				SetCVar("motionSicknessFocalCircle", "1");
-				SetCVar("motionSicknessLandscapeDarkening", "0");
-			elseif value == 2 then
-				SetCVar("motionSicknessFocalCircle", "0");
-				SetCVar("motionSicknessLandscapeDarkening", "1");
-			elseif value == 3 then
-				SetCVar("motionSicknessFocalCircle", "1");
-				SetCVar("motionSicknessLandscapeDarkening", "1");
-			elseif value == 4 then
-				SetCVar("motionSicknessFocalCircle", "0");
-				SetCVar("motionSicknessLandscapeDarkening", "0");
-			end
-		end
-		
-		local function GetOptions()
-			local container = Settings.CreateControlTextContainer();
-			container:Add(4, DEFAULT);
-			container:Add(2, MOTION_SICKNESS_DRAGONRIDING_LANDSCAPE_DARKENING);			
-			container:Add(1, MOTION_SICKNESS_DRAGONRIDING_FOCAL_CIRCLE);
-			container:Add(3, MOTION_SICKNESS_DRAGONRIDING_BOTH);
-			return container:GetData();
-		end
-
-		local defaultValue = 4;
-		local setting = Settings.RegisterProxySetting(category, "PROXY_DRAGONRIDING_SICKNESS", Settings.DefaultVarLocation,
-			Settings.VarType.Number, MOTION_SICKNESS_DRAGONRIDING, defaultValue, GetValue, SetValue);
-		Settings.CreateDropDown(category, setting, GetOptions, OPTION_TOOLTIP_MOTION_SICKNESS_DRAGONRIDING);
-	end
-
-	--Dragonriding High Speed Motion Sickness Option
-	if C_CVar.GetCVar("DisableAdvancedFlyingVelocityVFX") then
-		local function GetValue()
-			return not GetCVarBool("DisableAdvancedFlyingVelocityVFX");
-		end
-		
-		local function SetValue(value)
-			SetCVar("DisableAdvancedFlyingVelocityVFX", not value);
-		end
-		
-		local defaultValue = true;
-		local setting = Settings.RegisterProxySetting(category, "PROXY_DISABLE_ADV_FLYING_VEL_VFX", Settings.DefaultVarLocation, 
-			Settings.VarType.Boolean, MOTION_SICKNESS_DRAGONRIDING_SPEED_EFFECTS, defaultValue, GetValue, SetValue);
-		local initializer = Settings.CreateCheckBox(category, setting, MOTION_SICKNESS_DRAGONRIDING_SPEED_EFFECTS_TOOLTIP);
-		initializer:AddSearchTags(MOTION_SICKNESS_DROPDOWN);
+		local defaultValue = false;
+		local setting = Settings.RegisterProxySetting(category, "PROXY_SICKNESS", Settings.DefaultVarLocation, 
+			Settings.VarType.Boolean, MOTION_SICKNESS_CHECKBOX, defaultValue, GetValue, SetValue);
+		local initializer = Settings.CreateCheckBox(category, setting, OPTION_TOOLTIP_MOTION_SICKNESS_CHECKBOX);
+		initializer:AddSearchTags(MOTION_SICKNESS_CHECKBOX);
 	end
 
 	-- Camera Shake
@@ -177,7 +146,8 @@ local function Register()
 		local defaultValue = 3;
 		local setting = Settings.RegisterProxySetting(category, "PROXY_SICKNESS_SHAKE", Settings.DefaultVarLocation,
 			Settings.VarType.Number, ADJUST_MOTION_SICKNESS_SHAKE, defaultValue, GetValue, SetValue);
-		Settings.CreateDropDown(category, setting, GetOptions, OPTION_TOOLTIP_ADJUST_MOTION_SICKNESS_SHAKE);
+		local initializer = Settings.CreateDropDown(category, setting, GetOptions, OPTION_TOOLTIP_ADJUST_MOTION_SICKNESS_SHAKE);
+		initializer:AddSearchTags(MOTION_SICKNESS_CHECKBOX);
 	end
 
 	-- Cursor Size
@@ -202,10 +172,16 @@ local function Register()
 
 	-- Enable Raid Self Highlight (Source in Combat)
 	layout:AddMirroredInitializer(Settings.RaidSelfHighlightInitializer);
+
 	-- Enable Spell Alert Opacity (Source in Combat)
-	layout:AddMirroredInitializer(Settings.SpellAlertOpacityInitializer);
+	if C_CVar.GetCVar("spellActivationOverlayOpacity") then
+		layout:AddMirroredInitializer(Settings.SpellAlertOpacityInitializer);
+	end
+
 	-- Enable Hold Button (Source in Combat)
-	layout:AddMirroredInitializer(Settings.PressAndHoldCastingInitializer);
+	if C_CVar.GetCVar("ActionButtonUseKeyHeldSpell") then
+		layout:AddMirroredInitializer(Settings.PressAndHoldCastingInitializer);
+	end
 
 	-- Enable Dracthyr Tap Controls (Source in Combat)
 	if C_CVar.GetCVar("empowerTapControls") then
