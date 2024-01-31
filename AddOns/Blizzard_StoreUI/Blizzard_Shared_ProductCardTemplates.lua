@@ -436,7 +436,7 @@ function StoreCardMixin:ShouldShowIcon(entryInfo)
 	local showAnyModel = self:ShouldShowModel(entryInfo);
 	local tryToShowTexture = not showAnyModel or bit.band(entryInfo.sharedData.flags, Enum.BattlepayDisplayFlag.CardAlwaysShowsTexture) == Enum.BattlepayDisplayFlag.CardAlwaysShowsTexture;
 
-	return tryToShowTexture;
+	return tryToShowTexture and entryInfo.productID ~= 1068;
 end
 
 function StoreCardMixin:ShouldShowModel(entryInfo)
