@@ -22,6 +22,7 @@ function AuraUtil.UnpackAuraData(auraData)
 		auraData.nameplateShowAll,
 		auraData.timeMod,
 		unpack(auraData.points);
+		-- TODO: Add data for SPELL_ATTRIBUTE_EX_G_UI_AURA_PRIORITY here when Classic updates Aura data.
 end
 
 local function FindAuraRecurse(predicate, unit, filter, auraIndex, predicateArg1, predicateArg2, predicateArg3, ...)
@@ -32,14 +33,14 @@ local function FindAuraRecurse(predicate, unit, filter, auraIndex, predicateArg1
 		return ...;
 	end
 	auraIndex = auraIndex + 1;
-	return FindAuraRecurse(predicate, unit, filter, auraIndex, predicateArg1, predicateArg2, predicateArg3, AuraUtil.UnpackAuraData(C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, filter)));
+	return FindAuraRecurse(predicate, unit, filter, auraIndex, predicateArg1, predicateArg2, predicateArg3, UnitAura(unit, auraIndex, filter));
 end
 
 -- Find an aura by any predicate, you can pass in up to 3 predicate specific parameters
 -- The predicate will also receive all aura params, if the aura data matches return true
 function AuraUtil.FindAura(predicate, unit, filter, predicateArg1, predicateArg2, predicateArg3)
 	local auraIndex = 1;
-	return FindAuraRecurse(predicate, unit, filter, auraIndex, predicateArg1, predicateArg2, predicateArg3, AuraUtil.UnpackAuraData(C_UnitAuras.GetAuraDataByIndex(unit, auraIndex, filter)));
+	return FindAuraRecurse(predicate, unit, filter, auraIndex, predicateArg1, predicateArg2, predicateArg3, UnitAura(unit, auraIndex, filter));
 end
 
 do
