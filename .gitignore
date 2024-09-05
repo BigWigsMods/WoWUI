@@ -1,3 +1,4 @@
 GlueXML/GlueLocalization.lua
 FrameXML/Localization.lua
 AddOns/Blizzard_Calendar/Localization.lua
+Interface/AddOns/Blizzard_LoadLocale/LoadLocale.lua
