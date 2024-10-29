@@ -17,6 +17,7 @@ DifficultyUtil.ID = {
 	DungeonMythic = 23,
 	DungeonTimewalker = 24,
 	RaidTimewalker = 33,
+	RaidStory = 220,
 };
 
 local DIFFICULTY_NAMES =
@@ -38,6 +39,7 @@ local DIFFICULTY_NAMES =
 	[DifficultyUtil.ID.DungeonTimewalker] = PLAYER_DIFFICULTY_TIMEWALKER,
 	[DifficultyUtil.ID.RaidTimewalker] = PLAYER_DIFFICULTY_TIMEWALKER,
 	[DifficultyUtil.ID.Raid40] = PLAYER_DIFFICULTY1,
+	[DifficultyUtil.ID.RaidStory] = QUEST_CLASSIFICATION_QUESTLINE,
 }
 
 local PRIMARY_RAIDS = { DifficultyUtil.ID.PrimaryRaidLFR, DifficultyUtil.ID.PrimaryRaidNormal, DifficultyUtil.ID.PrimaryRaidHeroic, DifficultyUtil.ID.PrimaryRaidMythic };
@@ -57,6 +59,11 @@ function DifficultyUtil.GetNextPrimaryRaidDifficultyID(difficultyID)
 		end
 	end
 	return nil;
+end
+
+function DifficultyUtil.InStoryRaid()
+	local difficultyID = select(3, GetInstanceInfo());
+	return difficultyID == DifficultyUtil.ID.RaidStory;
 end
 
 local difficultyToMaxPlayersMap = { };

@@ -65,9 +65,6 @@ UISpecialFrames = {
 };
 
 UIMenus = {
-	"ChatMenu",
-	"EmoteMenu",
-	"LanguageMenu",
 	"DropDownList1",
 	"DropDownList2",
 };
@@ -931,7 +928,7 @@ function FramePositionDelegate:UIParentManageFramePositions()
 		end
 	else
 		if (SlidingActionBarTexture0 and SlidingActionBarTexture1) then
-			if (PetActionBarFrame_IsAboveStance and PetActionBarFrame_IsAboveStance()) then
+			if ((MultiBarBottomRight and MultiBarBottomRight:IsShown()) or (PetActionBarFrame_IsAboveStance and PetActionBarFrame_IsAboveStance())) then
 				SlidingActionBarTexture0:Hide();
 				SlidingActionBarTexture1:Hide();
 			else
@@ -1348,7 +1345,7 @@ function RestoreUIPanelArea(currentFrame)
 end
 
 function IsOptionFrameOpen()
-	if ( GameMenuFrame:IsShown() or InterfaceOptionsFrame:IsShown() or (KeyBindingFrame and KeyBindingFrame:IsShown()) ) then
+	if ( GameMenuFrame:IsShown() or (KeyBindingFrame and KeyBindingFrame:IsShown()) ) then
 		return 1;
 	else
 		return nil;
