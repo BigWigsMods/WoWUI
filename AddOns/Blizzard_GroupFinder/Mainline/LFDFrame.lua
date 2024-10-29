@@ -500,8 +500,16 @@ function LFDQueueFrame_SetType(value)
 	LFDQueueFrame.TypeDropdown:GenerateMenu();
 end
 
+local function ResetLFDBackgroundToDefaultSizing()
+	LFDQueueFrameBackground:ClearAllPoints();
+	LFDQueueFrameBackground:SetWidth(512);
+	LFDQueueFrameBackground:SetHeight(256);
+	LFDQueueFrameBackground:SetPoint("BOTTOMLEFT", LFDQueueFrameBackground:GetParent(), "BOTTOMLEFT", 6, 26);
+end
+
 function LFDQueueFrame_SetTypeRandomDungeon(hideCooldown)
 	LFDQueueFrameBackground:SetTexture("Interface\\LFGFrame\\UI-LFG-BACKGROUND-QUESTPAPER")
+	ResetLFDBackgroundToDefaultSizing();
 	LFDQueueFrameSpecific:Hide();
 	LFDQueueFrameFollower:Hide();
 	LFDQueueFrameRandom:Show();
@@ -510,6 +518,7 @@ end
 
 function LFDQueueFrame_SetTypeSpecificDungeon()
 	LFDQueueFrameBackground:SetTexture("Interface\\LFGFrame\\UI-LFG-BACKGROUND-DUNGEONWALL");
+	ResetLFDBackgroundToDefaultSizing();
 	LFDQueueFrameRandom:Hide();
 	LFDQueueFrameFollower:Hide();
 	LFDQueueFrameSpecific:Show();
@@ -518,6 +527,7 @@ end
 
 function LFDQueueFrame_SetTypeFollowerDungeon()
 	LFDQueueFrameBackground:SetTexture("Interface\\LFGFrame\\UI-LFG-BACKGROUND-DUNGEONWALL");
+	ResetLFDBackgroundToDefaultSizing();
 	LFDQueueFrameRandom:Hide();
 	LFDQueueFrameSpecific:Hide();
 	LFDQueueFrameFollower:Show();
