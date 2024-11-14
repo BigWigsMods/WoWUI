@@ -1156,6 +1156,9 @@
 						<Anchors>
 							<Anchor point="LEFT" relativeKey="$parent.SearchBox" relativePoint="RIGHT" x="2" y="0"/>
 						</Anchors>
+						<KeyValues>
+							<KeyValue key="resizeToText" type="boolean" value="false"/>
+						</KeyValues>
 					</DropdownButton>
 					<Frame parentKey="AutoCompleteFrame" frameLevel="20">
 						<Size x="0" y="30"/>

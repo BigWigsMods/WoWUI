@@ -432,3 +432,13 @@ function BankFrame_ShowPanel(sidePanelName, selection)
 		end
 	end
 end
+
+BankFrameMixin = {};
+
+function BankFrameMixin:GetActiveBankType()
+	if not self:IsShown() then
+		return nil;
+	end
+
+	return Enum.BankType.Character;
+end
