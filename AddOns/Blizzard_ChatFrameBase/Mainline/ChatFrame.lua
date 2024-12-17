@@ -1843,10 +1843,18 @@ if not C_Glue.IsOnGlueScreen() then
 		return cleanString;
 	end
 	local pingNameToTypeTable = {
-		[CleanupPingTypeString(PING_TYPE_ASSIST)] = Enum.PingSubjectType.Assist,
+		["1"] = Enum.PingSubjectType.Attack,
 		[CleanupPingTypeString(PING_TYPE_ATTACK)] = Enum.PingSubjectType.Attack,
-		[CleanupPingTypeString(PING_TYPE_ON_MY_WAY)] = Enum.PingSubjectType.OnMyWay,
+		["2"] = Enum.PingSubjectType.Warning,
 		[CleanupPingTypeString(PING_TYPE_WARNING)] = Enum.PingSubjectType.Warning,
+		["3"] = Enum.PingSubjectType.OnMyWay,
+		[CleanupPingTypeString(PING_TYPE_ON_MY_WAY)] = Enum.PingSubjectType.OnMyWay,
+		["4"] = Enum.PingSubjectType.Assist,
+		[CleanupPingTypeString(PING_TYPE_ASSIST)] = Enum.PingSubjectType.Assist,
+		["5"] = Enum.PingSubjectType.AlertNotThreat,
+		[CleanupPingTypeString(PING_TYPE_NOT_THREAT)] = Enum.PingSubjectType.AlertNotThreat,
+		["6"] = Enum.PingSubjectType.AlertThreat,
+		[CleanupPingTypeString(PING_TYPE_THREAT)] = Enum.PingSubjectType.AlertThreat,
 	};
 	SecureCmdList["PING"] = function(msg)
 		local action, target = SecureCmdOptionParse(msg);
@@ -4633,6 +4641,11 @@ function ChatEdit_ResetChatType(self)
 	if ( self:GetAttribute("chatType") == "INSTANCE_CHAT" and (not IsInGroup(LE_PARTY_CATEGORY_INSTANCE)) ) then
 		self:SetAttribute("chatType", "SAY");
 	end
+
+	if ( C_Glue.IsOnGlueScreen() and C_GameEnvironmentManager.GetCurrentGameEnvironment() == Enum.GameEnvironment.WoWLabs and IsInGroup(LE_PARTY_CATEGORY_HOME) ) then
+		self:SetAttribute("chatType", "PARTY");
+	end
+
 	self.lastTabComplete = nil;
 	self.tabCompleteText = nil;
 	self.tabCompleteTableIndex = 1;

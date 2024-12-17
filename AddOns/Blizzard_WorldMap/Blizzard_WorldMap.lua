@@ -1,3 +1,8 @@
+
+local function ShouldWoWLabsAreaBeActive()
+	return WoWLabsAreaDataProviderMixin and C_GameRules.IsGameRuleActive(Enum.GameRule.PlunderstormAreaSelection);
+end
+
 WorldMapMixin = {};
 
 local TITLE_CANVAS_SPACER_FRAME_HEIGHT = 67;
@@ -110,11 +115,15 @@ function WorldMapMixin:SetupMinimizeMaximizeButton()
 end
 
 function WorldMapMixin:IsMaximized()
-	return self.isMaximized;
+	return self.isMaximized == true;
+end
+
+function WorldMapMixin:IsMinimized()
+	return self.isMaximized == false;
 end
 
 function WorldMapMixin:OnLoad()
-	UIPanelWindows[self:GetName()] = { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP" };
+	RegisterUIPanel(self, { area = "left", pushable = 0, xoffset = 0, yoffset = 0, whileDead = 1, minYOffset = 0, maximizePoint = "TOP", allowOtherPanels = 1 });
 
 	MapCanvasMixin.OnLoad(self);
 
@@ -128,6 +137,10 @@ function WorldMapMixin:OnLoad()
 
 	self:AddStandardDataProviders();
 	self:AddOverlayFrames();
+
+	if ShouldWoWLabsAreaBeActive() then
+		self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	end
 
 	self:RegisterEvent("VARIABLES_LOADED");
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
@@ -147,12 +160,13 @@ end
 function WorldMapMixin:OnEvent(event, ...)
 	MapCanvasMixin.OnEvent(self, event, ...);
 
-	if event == "VARIABLES_LOADED" then
-		if self:ShouldBeMinimized() then
-			self:Minimize();
-		else
-			self:Maximize();
-		end
+	if event == "PLAYER_ENTERING_WORLD" then
+		-- Query data for WoWLabsAreaDataProviderMixin.
+		C_WowLabsDataManager.QuerySelectedWoWLabsArea();
+		C_WowLabsDataManager.QueryWoWLabsAreaInfo();
+	elseif event == "VARIABLES_LOADED" then
+		local displayState = self:GetOpenDisplayState();
+		self:SetDisplayState(displayState);
 	elseif event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
 		if self:IsMaximized() then
 			self:UpdateMaximizedSize();
@@ -196,9 +210,15 @@ function WorldMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(CreateFromMixins(QuestSessionDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(WaypointLocationDataProviderMixin));
 	self:AddDataProvider(CreateFromMixins(DragonridingRaceDataProviderMixin));
+	self:AddDataProvider(CreateFromMixins(SuperTrackWaypointDataProviderMixin));
 
 	if C_GameRules.IsGameRuleActive(Enum.GameRule.MapPlunderstormCircle) then
 		self:AddDataProvider(CreateFromMixins(PlunderstormCircleDataProviderMixin));
+	end
+
+	-- WoWLabs areas only appear when in WoWLabs since these feature(s) aren't fully data-driven yet.
+	if ShouldWoWLabsAreaBeActive() then
+		self:AddDataProvider(CreateFromMixins(WoWLabsAreaDataProviderMixin));
 	end
 
 	if IsGMClient() then
@@ -219,6 +239,7 @@ function WorldMapMixin:AddStandardDataProviders()
 	self:AddDataProvider(worldQuestDataProvider);
 
 	local pinFrameLevelsManager = self:GetPinFrameLevelsManager();
+	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WOW_LABS_AREA");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_MAP_EXPLORATION");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_PLUNDERSTORM_CIRCLE");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_EVENT_OVERLAY");
@@ -254,7 +275,7 @@ function WorldMapMixin:AddStandardDataProviders()
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_CONTENT");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_SUPER_TRACKED_QUEST");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_VEHICLE_BELOW_GROUP_MEMBER");
-	
+
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_BATTLEFIELD_FLAG");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_WAYPOINT_LOCATION");
 	pinFrameLevelsManager:AddFrameLevel("PIN_FRAME_LEVEL_GROUP_MEMBER");
@@ -281,7 +302,10 @@ function WorldMapMixin:AddOverlayFrames()
 		topRightButtonPoolXOffset = topRightButtonPoolXOffset + topRightButtonPoolXOffsetAmount;
 	end
 
-	self:AddOverlayFrame("WorldMapShowLegendButtonTemplate", "BUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", topRightButtonPoolXOffset, -2);
+	local worldMapLegendDisabled = C_GameRules.IsGameRuleActive(Enum.GameRule.WorldMapLegendDisabled);
+	if not worldMapLegendDisabled then
+		self:AddOverlayFrame("WorldMapShowLegendButtonTemplate", "BUTTON", "TOPRIGHT", self:GetCanvasContainer(), "TOPRIGHT", topRightButtonPoolXOffset, -2);
+	end
 
 	self:AddOverlayFrame("WorldMapBountyBoardTemplate", "FRAME", nil, self:GetCanvasContainer());
 	self:AddOverlayFrame("WorldMapActionButtonTemplate", "FRAME", nil, self:GetCanvasContainer());
@@ -311,6 +335,11 @@ function WorldMapMixin:OnMapChanged()
 end
 
 function WorldMapMixin:OnShow()
+	local frameStrata = C_GameRules.GetGameRuleAsFrameStrata(Enum.GameRule.WorldMapFrameStrata);
+	if frameStrata and frameStrata ~= "UNKNOWN" then
+		self:SetFrameStrata(frameStrata);
+	end
+
 	local mapID = MapUtil.GetDisplayableMapForPlayer();
 	self:SetMapID(mapID);
 	MapCanvasMixin.OnShow(self);
@@ -345,7 +374,7 @@ function WorldMapMixin:OnHide()
 	self:CheckAndHideTutorialHelpInfo();
 
 	self:OnUIClose();
-	self:TriggerEvent("WorldMapOnHide");
+	EventRegistry:TriggerEvent("WorldMapOnHide");
 	C_Map.CloseWorldMapInteraction();
 
 	UpdateMicroButtons();

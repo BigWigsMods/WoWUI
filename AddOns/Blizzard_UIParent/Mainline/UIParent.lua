@@ -87,12 +87,7 @@ WORLD_QUEST_QUALITY_COLORS = {
 	[Enum.WorldQuestQuality.Epic] = ITEM_QUALITY_COLORS[Enum.ItemQuality.Epic];
 };
 
--- Protecting from addons since we use this in GetScaledCursorDelta which is used in secure code.
-local _UIParentGetEffectiveScale;
-local _UIParentRef;
 function UIParent_OnLoad(self)
-	_UIParentGetEffectiveScale = self.GetEffectiveScale;
-	_UIParentRef = self;
 	self:RegisterEvent("PLAYER_LOGIN");
 	self:RegisterEvent("PLAYER_DEAD");
 	self:RegisterEvent("SELF_RES_SPELL_CHANGED");
@@ -396,6 +391,9 @@ function UIParent_OnShow(self)
 	if ( UIParentRightManagedFrameContainer ) then
 		UIParentRightManagedFrameContainer:UpdateManagedFrames();
 	end
+
+	C_AddOns.LoadAddOn("Blizzard_AccountStore");
+	AccountStoreFrame:SetStoreFrontID(Constants.AccountStoreConsts.PlunderstormStoreFrontID);
 end
 
 function UIParent_OnHide(self)
@@ -1525,11 +1523,14 @@ function UIParent_OnEvent(self, event, ...)
 		StaticPopup_Hide("GUILD_INVITE");
 	elseif ( event == "PLAYER_CAMPING" ) then
 		StaticPopup_Show("CAMP");
+	elseif ( event == "PLAYER_PLUNDERSTORM_TRANSFERING" ) then
+		StaticPopup_Show("PLUNDERSTORM_LEAVE");
 	elseif ( event == "PLAYER_QUITING" ) then
 		StaticPopup_Show("QUIT");
 	elseif ( event == "LOGOUT_CANCEL" ) then
 		CancelLogout();
 		StaticPopup_Hide("CAMP");
+		StaticPopup_Hide("PLUNDERSTORM_LEAVE");
 		StaticPopup_Hide("QUIT");
 	elseif ( event == "LOOT_BIND_CONFIRM" ) then
 		local texture, item, quantity, currencyID, quality, locked = GetLootSlotInfo(arg1);
@@ -2744,7 +2745,7 @@ function GetScaledCursorPosition()
 end
 
 function GetScaledCursorDelta()
-	local uiScale = _UIParentGetEffectiveScale(_UIParentRef);
+	local uiScale = GetAppropriateTopLevelParent():GetEffectiveScale();
 	local x, y = GetCursorDelta();
 	return x / uiScale, y / uiScale;
 end
@@ -3549,7 +3550,7 @@ end
 
 
 function ConsolePrint(...)
-	ConsoleAddMessage(strjoin(" ", tostringall(...)));
+	ConsoleAddMessage(string.join(" ", tostringall(...)));
 end
 
 function LFD_IsEmpowered()
