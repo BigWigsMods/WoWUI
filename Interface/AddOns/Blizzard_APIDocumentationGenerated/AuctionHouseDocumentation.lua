@@ -84,10 +84,27 @@ local AuctionHouse =
 			Type = "Event",
 			LiteralName = "NEW_AUCTION_UPDATE",
 		},
+		{
+			Name = "OwnedAuctionsUpdated",
+			Type = "Event",
+			LiteralName = "OWNED_AUCTIONS_UPDATED",
+		},
 	},
 
 	Tables =
 	{
+		{
+			Name = "AuctionStatus",
+			Type = "Enumeration",
+			NumValues = 2,
+			MinValue = 0,
+			MaxValue = 1,
+			Fields =
+			{
+				{ Name = "Active", Type = "AuctionStatus", EnumValue = 0 },
+				{ Name = "Sold", Type = "AuctionStatus", EnumValue = 1 },
+			},
+		},
 		{
 			Name = "ItemKey",
 			Type = "Structure",
@@ -97,6 +114,23 @@ local AuctionHouse =
 				{ Name = "itemLevel", Type = "number", Nilable = false, Default = 0 },
 				{ Name = "itemSuffix", Type = "number", Nilable = false, Default = 0 },
 				{ Name = "battlePetSpeciesID", Type = "number", Nilable = false, Default = 0 },
+			},
+		},
+		{
+			Name = "OwnedAuctionInfo",
+			Type = "Structure",
+			Fields =
+			{
+				{ Name = "auctionID", Type = "number", Nilable = false },
+				{ Name = "itemKey", Type = "ItemKey", Nilable = false },
+				{ Name = "itemLink", Type = "string", Nilable = true },
+				{ Name = "status", Type = "AuctionStatus", Nilable = false },
+				{ Name = "quantity", Type = "number", Nilable = false },
+				{ Name = "timeLeftSeconds", Type = "number", Nilable = true },
+				{ Name = "timeLeft", Type = "AuctionHouseTimeLeftBand", Nilable = true },
+				{ Name = "bidAmount", Type = "BigUInteger", Nilable = true },
+				{ Name = "buyoutAmount", Type = "BigUInteger", Nilable = true },
+				{ Name = "bidder", Type = "string", Nilable = true },
 			},
 		},
 	},
