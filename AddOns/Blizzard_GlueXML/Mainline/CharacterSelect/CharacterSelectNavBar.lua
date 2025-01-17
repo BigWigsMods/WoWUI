@@ -57,7 +57,8 @@ local function ToggleAccountStoreUI()
 end
 
 local CharacterSelectNavBarEvents = {
-	"GLOBAL_MOUSE_DOWN"
+	"GLOBAL_MOUSE_DOWN",
+	"EVENT_REALM_QUEUES_UPDATED",
 };
 
 function CharacterSelectNavBarMixin:OnLoad()
@@ -140,6 +141,12 @@ function CharacterSelectNavBarMixin:OnEvent(event, ...)
 		if self.PlunderstoreButton then
 			self.PlunderstoreButton:SetEnabled(C_AccountStore.GetStoreFrontState(Constants.AccountStoreConsts.PlunderstormStoreFrontID) == Enum.AccountStoreState.Available);
 		end
+	elseif event == "EVENT_REALM_QUEUES_UPDATED" then
+		local eventRealmQueues = ...;
+		self.GameEnvironmentButton.TutorialBadge:Hide();
+		self.tryForceShowModes = not g_newGameModeAvailableAcknowledged and eventRealmQueues ~= Enum.EventRealmQueues.None;
+
+		self:UpdateGameEnvironmentTutorial();
 	end
 end
 
@@ -230,6 +237,18 @@ function CharacterSelectNavBarMixin:UpdateButtonDividerState(button)
 	button.Bar:SetAtlas(isDividerBarEnabled and "glues-characterselect-tophud-bg-divider" or "glues-characterselect-tophud-bg-divider-dis", TextureKitConstants.UseAtlasSize);
 end
 
+function CharacterSelectNavBarMixin:UpdateGameEnvironmentTutorial()
+	-- When a new mode is available we want to make sure the player knows
+	if self.GameEnvironmentButton:IsEnabled() and self.tryForceShowModes then
+		if not self.GameEnvironmentButton.SelectionDrawer:IsShown() then
+			ToggleGameEnvironmentDrawer(self);
+		end
+
+		self.tryForceShowModes = false;
+		self.GameEnvironmentButton.TutorialBadge:Show();
+	end
+end
+
 function CharacterSelectNavBarMixin:SetGameEnvironmentButtonEnabled(enabled)
 	self.GameEnvironmentButton:SetEnabled(enabled);
 
@@ -238,12 +257,7 @@ function CharacterSelectNavBarMixin:SetGameEnvironmentButtonEnabled(enabled)
 
 	self:UpdateButtonDividerState(self.StoreButton or self.PlunderstoreButton);
 
-	-- When a new mode is available we want to make sure the player knows
-	if enabled and self.tryForceShowModes then
-		ToggleGameEnvironmentDrawer(self);
-		self.tryForceShowModes = false;
-		self.GameEnvironmentButton.TutorialBadge:Show();
-	end
+	self:UpdateGameEnvironmentTutorial();
 end
 
 function CharacterSelectNavBarMixin:SetStoreButtonEnabled(enabled)
