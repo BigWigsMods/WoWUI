@@ -2072,6 +2072,62 @@ function SearchBoxListMixin:OnFocusGained()
 	self:SetSearchPreviewSelection(1);
 end
 
+LevelRangeFrameMixin = {};
+
+function LevelRangeFrameMixin:OnLoad()
+	self.MinLevel.nextEditBox = self.MaxLevel;
+	self.MaxLevel.nextEditBox = self.MinLevel;
+
+	local function OnTextChanged(...)
+		self:OnLevelRangeChanged();
+	end
+	self.MinLevel:SetScript("OnTextChanged", OnTextChanged);
+	self.MaxLevel:SetScript("OnTextChanged", OnTextChanged);
+end
+
+function LevelRangeFrameMixin:OnHide()
+	self:FixLevelRange();
+end
+
+function LevelRangeFrameMixin:SetLevelRangeChangedCallback(levelRangeChangedCallback)
+	self.levelRangeChangedCallback = levelRangeChangedCallback;
+end
+
+function LevelRangeFrameMixin:OnLevelRangeChanged()
+	if self.levelRangeChangedCallback then
+		local minLevel, maxLevel = self:GetLevelRange();
+		self.levelRangeChangedCallback(minLevel, maxLevel);
+	end
+end
+
+function LevelRangeFrameMixin:FixLevelRange()
+	local maxLevel = self.MaxLevel:GetNumber();
+	if maxLevel == 0 then
+		return;
+	end
+
+	local minLevel = self.MinLevel:GetNumber();
+	if minLevel > maxLevel then
+		self:SetMinLevel(maxLevel);
+	end
+end
+
+function LevelRangeFrameMixin:SetMinLevel(minLevel)
+	self.MinLevel:SetNumber(minLevel);
+end
+
+function LevelRangeFrameMixin:SetMaxLevel(maxLevel)
+	self.MaxLevel:SetNumber(maxLevel);
+end
+
+function LevelRangeFrameMixin:Reset()
+	self.MinLevel:SetText("");
+	self.MaxLevel:SetText("");
+end
+
+function LevelRangeFrameMixin:GetLevelRange()
+	return self.MinLevel:GetNumber(), self.MaxLevel:GetNumber();
+end
 
 -- Allows inheriting buttons to override OnLoad and OnShow
 ButtonControllerMixin = {};
