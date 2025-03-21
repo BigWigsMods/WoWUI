@@ -2,12 +2,42 @@ local Console =
 {
 	Name = "Console",
 	Type = "System",
-	Namespace = "C_Console",
 
 	Functions =
 	{
 		{
-			Name = "GetAllCommands",
+			Name = "ConsoleEcho",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "command", Type = "cstring", Nilable = false },
+				{ Name = "addToHistory", Type = "bool", Nilable = false, Default = false },
+				{ Name = "prefix", Type = "cstring", Nilable = true },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "ConsoleExec",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "command", Type = "cstring", Nilable = false },
+				{ Name = "addToHistory", Type = "bool", Nilable = false, Default = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "ConsoleGetAllCommands",
 			Type = "Function",
 
 			Returns =
@@ -16,7 +46,7 @@ local Console =
 			},
 		},
 		{
-			Name = "GetColorFromType",
+			Name = "ConsoleGetColorFromType",
 			Type = "Function",
 
 			Arguments =
@@ -30,7 +60,7 @@ local Console =
 			},
 		},
 		{
-			Name = "GetFontHeight",
+			Name = "ConsoleGetFontHeight",
 			Type = "Function",
 
 			Returns =
@@ -39,7 +69,7 @@ local Console =
 			},
 		},
 		{
-			Name = "PrintAllMatchingCommands",
+			Name = "ConsolePrintAllMatchingCommands",
 			Type = "Function",
 
 			Arguments =
@@ -48,12 +78,21 @@ local Console =
 			},
 		},
 		{
-			Name = "SetFontHeight",
+			Name = "ConsoleSetFontHeight",
 			Type = "Function",
 
 			Arguments =
 			{
 				{ Name = "fontHeightInPixels", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "SetConsoleKey",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "keystring", Type = "cstring", Nilable = false },
 			},
 		},
 	},
@@ -102,15 +141,6 @@ local Console =
 			{
 				{ Name = "eventName", Type = "cstring", Nilable = false },
 				{ Name = "value", Type = "cstring", Nilable = false },
-			},
-		},
-		{
-			Name = "GlueConsoleLog",
-			Type = "Event",
-			LiteralName = "GLUE_CONSOLE_LOG",
-			Payload =
-			{
-				{ Name = "message", Type = "cstring", Nilable = false },
 			},
 		},
 		{

@@ -20,7 +20,7 @@ local CurrencyConstants_Classic =
 				{ Name = "Garrison", Type = "CurrencyDestroyReason", EnumValue = 7 },
 				{ Name = "DroppedToCorpse", Type = "CurrencyDestroyReason", EnumValue = 8 },
 				{ Name = "BonusRoll", Type = "CurrencyDestroyReason", EnumValue = 9 },
-				{ Name = "Last", Type = "CurrencyDestroyReason", EnumValue = 10 },
+				{ Name = "LegacyConversion", Type = "CurrencyDestroyReason", EnumValue = 10 },
 			},
 		},
 		{
@@ -74,7 +74,7 @@ local CurrencyConstants_Classic =
 				{ Name = "PvPHonorQuestReward", Type = "CurrencySource", EnumValue = 40 },
 				{ Name = "AuctionDeposit", Type = "CurrencySource", EnumValue = 41 },
 				{ Name = "Barbershop", Type = "CurrencySource", EnumValue = 42 },
-				{ Name = "Last", Type = "CurrencySource", EnumValue = 43 },
+				{ Name = "SimulateLoot", Type = "CurrencySource", EnumValue = 43 },
 			},
 		},
 	},

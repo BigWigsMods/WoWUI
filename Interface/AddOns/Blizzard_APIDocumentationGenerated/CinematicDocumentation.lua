@@ -2,10 +2,57 @@ local Cinematic =
 {
 	Name = "Cinematic",
 	Type = "System",
-	Namespace = "C_Cinematic",
 
 	Functions =
 	{
+		{
+			Name = "CinematicFinished",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "movieType", Type = "CinematicType", Nilable = false },
+				{ Name = "userCanceled", Type = "bool", Nilable = false, Default = false },
+				{ Name = "didError", Type = "bool", Nilable = false, Default = false },
+			},
+		},
+		{
+			Name = "CinematicStarted",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "movieType", Type = "CinematicType", Nilable = false },
+				{ Name = "movieID", Type = "number", Nilable = false },
+				{ Name = "canCancel", Type = "bool", Nilable = false, Default = true },
+			},
+		},
+		{
+			Name = "InCinematic",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "inCinematic", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "MouseOverrideCinematicDisable",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "doOverride", Type = "bool", Nilable = false, Default = false },
+			},
+		},
+		{
+			Name = "OpeningCinematic",
+			Type = "Function",
+		},
+		{
+			Name = "StopCinematic",
+			Type = "Function",
+		},
 	},
 
 	Events =
@@ -37,6 +84,16 @@ local Cinematic =
 			Payload =
 			{
 				{ Name = "movieID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "ShowSubtitle",
+			Type = "Event",
+			LiteralName = "SHOW_SUBTITLE",
+			Payload =
+			{
+				{ Name = "subtitle", Type = "cstring", Nilable = false },
+				{ Name = "sender", Type = "cstring", Nilable = true },
 			},
 		},
 		{

@@ -9,6 +9,7 @@ local ActionBarFrame =
 		{
 			Name = "FindPetActionButtons",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -23,10 +24,12 @@ local ActionBarFrame =
 		{
 			Name = "FindSpellActionButtons",
 			Type = "Function",
+			MayReturnNothing = true,
+			Documentation = { "Returns the list of action bar slots that contain a specified spell." },
 
 			Arguments =
 			{
-				{ Name = "spellID", Type = "number", Nilable = false },
+				{ Name = "spellID", Type = "number", Nilable = false, Documentation = { "Expects a base spell, so if a spell is overridden the base ID should be provided." } },
 			},
 
 			Returns =
@@ -37,6 +40,7 @@ local ActionBarFrame =
 		{
 			Name = "GetPetActionPetBarIndices",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -205,6 +209,15 @@ local ActionBarFrame =
 			},
 		},
 		{
+			Name = "ActionUsableChanged",
+			Type = "Event",
+			LiteralName = "ACTION_USABLE_CHANGED",
+			Payload =
+			{
+				{ Name = "changes", Type = "table", InnerType = "ActionUsableState", Nilable = false },
+			},
+		},
+		{
 			Name = "ActionbarHidegrid",
 			Type = "Event",
 			LiteralName = "ACTIONBAR_HIDEGRID",
@@ -259,6 +272,11 @@ local ActionBarFrame =
 			LiteralName = "UPDATE_BONUS_ACTIONBAR",
 		},
 		{
+			Name = "UpdateExtraActionbar",
+			Type = "Event",
+			LiteralName = "UPDATE_EXTRA_ACTIONBAR",
+		},
+		{
 			Name = "UpdateMultiCastActionbar",
 			Type = "Event",
 			LiteralName = "UPDATE_MULTI_CAST_ACTIONBAR",
@@ -272,6 +290,16 @@ local ActionBarFrame =
 
 	Tables =
 	{
+		{
+			Name = "ActionUsableState",
+			Type = "Structure",
+			Fields =
+			{
+				{ Name = "slot", Type = "luaIndex", Nilable = false },
+				{ Name = "usable", Type = "bool", Nilable = false },
+				{ Name = "noMana", Type = "bool", Nilable = false },
+			},
+		},
 	},
 };
 

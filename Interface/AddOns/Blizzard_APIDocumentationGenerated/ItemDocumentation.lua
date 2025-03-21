@@ -7,6 +7,71 @@ local Item =
 	Functions =
 	{
 		{
+			Name = "ActionBindsItem",
+			Type = "Function",
+		},
+		{
+			Name = "BindEnchant",
+			Type = "Function",
+		},
+		{
+			Name = "CanBeRefunded",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemLocation", Type = "ItemLocation", Mixin = "ItemLocationMixin", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "canBeRefunded", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "CanItemTransmogAppearance",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemLoc", Type = "ItemLocation", Mixin = "ItemLocationMixin", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "canTransmog", Type = "bool", Nilable = false },
+				{ Name = "errorCode", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "ConfirmBindOnUse",
+			Type = "Function",
+		},
+		{
+			Name = "ConfirmNoRefundOnUse",
+			Type = "Function",
+		},
+		{
+			Name = "ConfirmOnUse",
+			Type = "Function",
+		},
+		{
+			Name = "DoesItemContainSpec",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "classID", Type = "number", Nilable = false },
+				{ Name = "specID", Type = "number", Nilable = false, Default = 0 },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "DoesItemExist",
 			Type = "Function",
 
@@ -35,6 +100,71 @@ local Item =
 			},
 		},
 		{
+			Name = "DropItemOnUnit",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unitGUID", Type = "UnitToken", Nilable = false },
+			},
+		},
+		{
+			Name = "EndBoundTradeable",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "type", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "EndRefund",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "type", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "EquipItemByName",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "dstSlot", Type = "luaIndex", Nilable = true },
+			},
+		},
+		{
+			Name = "GetAppliedItemTransmogInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemLoc", Type = "ItemLocation", Mixin = "ItemLocationMixin", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "info", Type = "ItemTransmogInfo", Mixin = "ItemTransmogInfoMixin", Nilable = true },
+			},
+		},
+		{
+			Name = "GetBaseItemTransmogInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemLoc", Type = "ItemLocation", Mixin = "ItemLocationMixin", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "info", Type = "ItemTransmogInfo", Mixin = "ItemTransmogInfoMixin", Nilable = true },
+			},
+		},
+		{
 			Name = "GetCurrentItemLevel",
 			Type = "Function",
 
@@ -49,6 +179,113 @@ local Item =
 			},
 		},
 		{
+			Name = "GetCurrentItemTransmogInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemLoc", Type = "ItemLocation", Mixin = "ItemLocationMixin", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "info", Type = "ItemTransmogInfo", Mixin = "ItemTransmogInfoMixin", Nilable = true },
+			},
+		},
+		{
+			Name = "GetDetailedItemLevelInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "actualItemLevel", Type = "number", Nilable = false },
+				{ Name = "previewLevel", Type = "bool", Nilable = false },
+				{ Name = "sparseItemLevel", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemChildInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "slotID", Type = "luaIndex", Nilable = true },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "table", InnerType = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemClassInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemClassID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemCount",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "includeBank", Type = "bool", Nilable = false, Default = false },
+				{ Name = "includeUses", Type = "bool", Nilable = false, Default = false },
+				{ Name = "includeReagentBank", Type = "bool", Nilable = false, Default = false },
+				{ Name = "includeAccountBank", Type = "bool", Nilable = false, Default = false },
+			},
+
+			Returns =
+			{
+				{ Name = "count", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemCreationContext",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "itemID", Type = "number", Nilable = false },
+				{ Name = "creationContext", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemFamily",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "number", Nilable = true },
+			},
+		},
+		{
 			Name = "GetItemGUID",
 			Type = "Function",
 
@@ -60,6 +297,39 @@ local Item =
 			Returns =
 			{
 				{ Name = "itemGUID", Type = "WOWGUID", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemGem",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "hyperlink", Type = "cstring", Nilable = false },
+				{ Name = "index", Type = "luaIndex", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "gemName", Type = "string", Nilable = false },
+				{ Name = "gemLink", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemGemID",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "index", Type = "luaIndex", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "gemID", Type = "number", Nilable = false },
 			},
 		},
 		{
@@ -116,6 +386,86 @@ local Item =
 			Returns =
 			{
 				{ Name = "icon", Type = "fileID", Nilable = true },
+			},
+		},
+		{
+			Name = "GetItemInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "itemName", Type = "cstring", Nilable = false },
+				{ Name = "itemLink", Type = "cstring", Nilable = false },
+				{ Name = "itemQuality", Type = "ItemQuality", Nilable = false },
+				{ Name = "itemLevel", Type = "number", Nilable = false },
+				{ Name = "itemMinLevel", Type = "number", Nilable = false },
+				{ Name = "itemType", Type = "cstring", Nilable = false },
+				{ Name = "itemSubType", Type = "cstring", Nilable = false },
+				{ Name = "itemStackCount", Type = "number", Nilable = false },
+				{ Name = "itemEquipLoc", Type = "cstring", Nilable = false },
+				{ Name = "itemTexture", Type = "fileID", Nilable = false },
+				{ Name = "sellPrice", Type = "number", Nilable = false },
+				{ Name = "classID", Type = "number", Nilable = false },
+				{ Name = "subclassID", Type = "number", Nilable = false },
+				{ Name = "bindType", Type = "number", Nilable = false },
+				{ Name = "expansionID", Type = "number", Nilable = false },
+				{ Name = "setID", Type = "number", Nilable = true },
+				{ Name = "isCraftingReagent", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemInfoInstant",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "itemID", Type = "number", Nilable = false },
+				{ Name = "itemType", Type = "cstring", Nilable = false },
+				{ Name = "itemSubType", Type = "cstring", Nilable = false },
+				{ Name = "itemEquipLoc", Type = "cstring", Nilable = false },
+				{ Name = "icon", Type = "fileID", Nilable = false },
+				{ Name = "classID", Type = "number", Nilable = false },
+				{ Name = "subClassID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemInventorySlotInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "inventorySlot", Type = "InventoryType", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemInventorySlotKey",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "inventorySlot", Type = "InventoryType", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "cstring", Nilable = false },
 			},
 		},
 		{
@@ -217,6 +567,34 @@ local Item =
 			},
 		},
 		{
+			Name = "GetItemNumAddedSockets",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "socketCount", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemNumSockets",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "socketCount", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "GetItemQuality",
 			Type = "Function",
 
@@ -245,6 +623,119 @@ local Item =
 			},
 		},
 		{
+			Name = "GetItemQualityColor",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "quality", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "colorRGBR", Type = "number", Nilable = false },
+				{ Name = "colorRGBG", Type = "number", Nilable = false },
+				{ Name = "colorRGBB", Type = "number", Nilable = false },
+				{ Name = "qualityString", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemSetInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "setID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "cstring", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemSpecInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "specTable", Type = "table", InnerType = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemSpell",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "spellName", Type = "cstring", Nilable = false },
+				{ Name = "spellID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemSubClassInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemClassID", Type = "number", Nilable = false },
+				{ Name = "itemSubClassID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "subClassName", Type = "cstring", Nilable = false },
+				{ Name = "subClassUsesInvType", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemUniqueness",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "limitCategory", Type = "number", Nilable = false },
+				{ Name = "limitMax", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetItemUniquenessByID",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "isUnique", Type = "bool", Nilable = false },
+				{ Name = "limitCategoryName", Type = "cstring", Nilable = true },
+				{ Name = "limitCategoryCount", Type = "number", Nilable = true },
+				{ Name = "limitCategoryID", Type = "number", Nilable = true },
+			},
+		},
+		{
 			Name = "GetStackCount",
 			Type = "Function",
 
@@ -259,6 +750,20 @@ local Item =
 			},
 		},
 		{
+			Name = "IsArtifactPowerItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "IsBound",
 			Type = "Function",
 
@@ -270,6 +775,118 @@ local Item =
 			Returns =
 			{
 				{ Name = "isBound", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsConsumableItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsCurrentItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsDressableItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsEquippableItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsEquippedItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsEquippedItemType",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "type", Type = "cstring", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsHarmfulItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsHelpfulItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -301,6 +918,21 @@ local Item =
 			},
 		},
 		{
+			Name = "IsItemInRange",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "targetToken", Type = "cstring", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = true },
+			},
+		},
+		{
 			Name = "IsLocked",
 			Type = "Function",
 
@@ -312,6 +944,35 @@ local Item =
 			Returns =
 			{
 				{ Name = "isLocked", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsUsableItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "usable", Type = "bool", Nilable = false },
+				{ Name = "noMana", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "ItemHasRange",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -331,6 +992,23 @@ local Item =
 			{
 				{ Name = "itemGUID", Type = "WOWGUID", Nilable = false },
 			},
+		},
+		{
+			Name = "PickupItem",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+			},
+		},
+		{
+			Name = "ReplaceEnchant",
+			Type = "Function",
+		},
+		{
+			Name = "ReplaceTradeEnchant",
+			Type = "Function",
 		},
 		{
 			Name = "RequestLoadItemData",
@@ -366,6 +1044,16 @@ local Item =
 			Arguments =
 			{
 				{ Name = "itemGUID", Type = "WOWGUID", Nilable = false },
+			},
+		},
+		{
+			Name = "UseItemByName",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "itemInfo", Type = "ItemInfo", Nilable = false },
+				{ Name = "target", Type = "cstring", Nilable = true },
 			},
 		},
 	},
@@ -490,6 +1178,30 @@ local Item =
 
 	Tables =
 	{
+		{
+			Name = "ItemInfoResult",
+			Type = "Structure",
+			Fields =
+			{
+				{ Name = "itemName", Type = "cstring", Nilable = false },
+				{ Name = "itemLink", Type = "cstring", Nilable = false },
+				{ Name = "itemQuality", Type = "ItemQuality", Nilable = false },
+				{ Name = "itemLevel", Type = "number", Nilable = false },
+				{ Name = "itemMinLevel", Type = "number", Nilable = false },
+				{ Name = "itemType", Type = "cstring", Nilable = false },
+				{ Name = "itemSubType", Type = "cstring", Nilable = false },
+				{ Name = "itemStackCount", Type = "number", Nilable = false },
+				{ Name = "itemEquipLoc", Type = "cstring", Nilable = false },
+				{ Name = "itemTexture", Type = "fileID", Nilable = false },
+				{ Name = "sellPrice", Type = "number", Nilable = false },
+				{ Name = "classID", Type = "number", Nilable = false },
+				{ Name = "subclassID", Type = "number", Nilable = false },
+				{ Name = "bindType", Type = "number", Nilable = false },
+				{ Name = "expansionID", Type = "number", Nilable = false },
+				{ Name = "setID", Type = "number", Nilable = true },
+				{ Name = "isCraftingReagent", Type = "bool", Nilable = false },
+			},
+		},
 	},
 };
 

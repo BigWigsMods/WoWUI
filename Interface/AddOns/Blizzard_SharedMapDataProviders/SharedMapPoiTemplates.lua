@@ -54,11 +54,12 @@ function BaseMapPoiPinMixin:SetTexture(poiInfo)
 end
 
 function BaseMapPoiPinMixin:OnAcquired(poiInfo)
+	self:SetDataProvider(poiInfo.dataProvider);
 	self:SetTexture(poiInfo);
 
 	self.name = poiInfo.name;
 	self.description = poiInfo.description;
-	self.widgetSetID = poiInfo.widgetSetID;
+	self.tooltipWidgetSet = poiInfo.tooltipWidgetSet;
 
 	self:SetPosition(poiInfo.position:GetXY());
 end

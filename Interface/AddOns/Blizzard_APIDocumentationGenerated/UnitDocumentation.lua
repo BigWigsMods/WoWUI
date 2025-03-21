@@ -6,6 +6,107 @@ local Unit =
 	Functions =
 	{
 		{
+			Name = "GetUnitPowerBarInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "info", Type = "UnitPowerBarInfo", Nilable = false },
+			},
+		},
+		{
+			Name = "GetUnitPowerBarInfoByID",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "barID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "info", Type = "UnitPowerBarInfo", Nilable = false },
+			},
+		},
+		{
+			Name = "GetUnitPowerBarStrings",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "name", Type = "cstring", Nilable = true },
+				{ Name = "tooltip", Type = "cstring", Nilable = true },
+				{ Name = "cost", Type = "cstring", Nilable = true },
+			},
+		},
+		{
+			Name = "GetUnitPowerBarStringsByID",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "barID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "name", Type = "cstring", Nilable = true },
+				{ Name = "tooltip", Type = "cstring", Nilable = true },
+				{ Name = "cost", Type = "cstring", Nilable = true },
+			},
+		},
+		{
+			Name = "GetUnitPowerBarTextureInfo",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
+				{ Name = "textureIndex", Type = "luaIndex", Nilable = false },
+				{ Name = "timerIndex", Type = "luaIndex", Nilable = true },
+			},
+
+			Returns =
+			{
+				{ Name = "texture", Type = "fileID", Nilable = false },
+				{ Name = "colorR", Type = "number", Nilable = false },
+				{ Name = "colorG", Type = "number", Nilable = false },
+				{ Name = "colorB", Type = "number", Nilable = false },
+				{ Name = "colorA", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetUnitPowerBarTextureInfoByID",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "barID", Type = "number", Nilable = false },
+				{ Name = "textureIndex", Type = "luaIndex", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "texture", Type = "fileID", Nilable = false },
+				{ Name = "colorR", Type = "number", Nilable = false },
+				{ Name = "colorG", Type = "number", Nilable = false },
+				{ Name = "colorB", Type = "number", Nilable = false },
+				{ Name = "colorA", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "IsPlayerInGuildFromGUID",
 			Type = "Function",
 
@@ -17,6 +118,20 @@ local Unit =
 			Returns =
 			{
 				{ Name = "IsInGuild", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsUnitModelReadyForUI",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "isReady", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -75,6 +190,7 @@ local Unit =
 		{
 			Name = "UnitClass",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -91,6 +207,7 @@ local Unit =
 		{
 			Name = "UnitClassBase",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -101,6 +218,34 @@ local Unit =
 			{
 				{ Name = "classFilename", Type = "cstring", Nilable = false },
 				{ Name = "classID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitGroupRolesAssignedEnum",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false, Default = "WOWGUID_NULL" },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitInPartyIsAI",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false, Default = "WOWGUID_NULL" },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -133,19 +278,66 @@ local Unit =
 			},
 		},
 		{
+			Name = "UnitNumPowerBarTimers",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "UnitPower",
 			Type = "Function",
 
 			Arguments =
 			{
 				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
-				{ Name = "powerType", Type = "PowerType", Nilable = false, Default = "NumPowerTypes" },
+				{ Name = "powerType", Type = "PowerType", Nilable = true },
 				{ Name = "unmodified", Type = "bool", Nilable = false, Default = false },
 			},
 
 			Returns =
 			{
 				{ Name = "power", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitPowerBarID",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "barID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitPowerBarTimerInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false },
+				{ Name = "index", Type = "luaIndex", Nilable = false, Default = 0 },
+			},
+
+			Returns =
+			{
+				{ Name = "duration", Type = "number", Nilable = false },
+				{ Name = "expiration", Type = "number", Nilable = false },
+				{ Name = "barID", Type = "number", Nilable = false },
+				{ Name = "auraID", Type = "number", Nilable = false },
 			},
 		},
 		{
@@ -169,7 +361,7 @@ local Unit =
 			Arguments =
 			{
 				{ Name = "unitToken", Type = "UnitToken", Nilable = false },
-				{ Name = "powerType", Type = "PowerType", Nilable = false, Default = "NumPowerTypes" },
+				{ Name = "powerType", Type = "PowerType", Nilable = true },
 				{ Name = "unmodified", Type = "bool", Nilable = false, Default = false },
 			},
 
@@ -190,6 +382,34 @@ local Unit =
 			Returns =
 			{
 				{ Name = "sex", Type = "number", Nilable = true },
+			},
+		},
+		{
+			Name = "UnitSpellHaste",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unit", Type = "UnitToken", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "result", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "UnitTokenFromGUID",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "unitGUID", Type = "WOWGUID", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "unitToken", Type = "string", Nilable = true },
 			},
 		},
 	},
@@ -241,6 +461,11 @@ local Unit =
 			LiteralName = "CANCEL_SUMMON",
 		},
 		{
+			Name = "ComboTargetChanged",
+			Type = "Event",
+			LiteralName = "COMBO_TARGET_CHANGED",
+		},
+		{
 			Name = "ConfirmBinder",
 			Type = "Event",
 			LiteralName = "CONFIRM_BINDER",
@@ -260,6 +485,15 @@ local Unit =
 			},
 		},
 		{
+			Name = "EclipseDirectionChange",
+			Type = "Event",
+			LiteralName = "ECLIPSE_DIRECTION_CHANGE",
+			Payload =
+			{
+				{ Name = "direction", Type = "cstring", Nilable = false },
+			},
+		},
+		{
 			Name = "HearthstoneBound",
 			Type = "Event",
 			LiteralName = "HEARTHSTONE_BOUND",
@@ -268,6 +502,15 @@ local Unit =
 			Name = "IncomingResurrectChanged",
 			Type = "Event",
 			LiteralName = "INCOMING_RESURRECT_CHANGED",
+			Payload =
+			{
+				{ Name = "unitTarget", Type = "UnitToken", Nilable = false },
+			},
+		},
+		{
+			Name = "KnownTitlesUpdate",
+			Type = "Event",
+			LiteralName = "KNOWN_TITLES_UPDATE",
 			Payload =
 			{
 				{ Name = "unitTarget", Type = "UnitToken", Nilable = false },
@@ -380,6 +623,20 @@ local Unit =
 			Name = "PlayerFocusChanged",
 			Type = "Event",
 			LiteralName = "PLAYER_FOCUS_CHANGED",
+		},
+		{
+			Name = "PlayerImpulseApplied",
+			Type = "Event",
+			LiteralName = "PLAYER_IMPULSE_APPLIED",
+		},
+		{
+			Name = "PlayerIsGlidingChanged",
+			Type = "Event",
+			LiteralName = "PLAYER_IS_GLIDING_CHANGED",
+			Payload =
+			{
+				{ Name = "isGliding", Type = "bool", Nilable = false },
+			},
 		},
 		{
 			Name = "PlayerLeaveCombat",
@@ -817,6 +1074,16 @@ local Unit =
 			},
 		},
 		{
+			Name = "UnitMaxHealthModifiersChanged",
+			Type = "Event",
+			LiteralName = "UNIT_MAX_HEALTH_MODIFIERS_CHANGED",
+			Payload =
+			{
+				{ Name = "unitTarget", Type = "UnitToken", Nilable = false },
+				{ Name = "percentMaxHealthAdjusted", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "UnitMaxhealth",
 			Type = "Event",
 			LiteralName = "UNIT_MAXHEALTH",
@@ -1202,42 +1469,27 @@ local Unit =
 	Tables =
 	{
 		{
-			Name = "PowerType",
-			Type = "Enumeration",
-			NumValues = 29,
-			MinValue = -2,
-			MaxValue = 26,
+			Name = "UnitPowerBarInfo",
+			Type = "Structure",
 			Fields =
 			{
-				{ Name = "HealthCost", Type = "PowerType", EnumValue = -2 },
-				{ Name = "None", Type = "PowerType", EnumValue = -1 },
-				{ Name = "Mana", Type = "PowerType", EnumValue = 0 },
-				{ Name = "Rage", Type = "PowerType", EnumValue = 1 },
-				{ Name = "Focus", Type = "PowerType", EnumValue = 2 },
-				{ Name = "Energy", Type = "PowerType", EnumValue = 3 },
-				{ Name = "Happiness", Type = "PowerType", EnumValue = 4 },
-				{ Name = "Runes", Type = "PowerType", EnumValue = 5 },
-				{ Name = "RunicPower", Type = "PowerType", EnumValue = 6 },
-				{ Name = "SoulShards", Type = "PowerType", EnumValue = 7 },
-				{ Name = "LunarPower", Type = "PowerType", EnumValue = 8 },
-				{ Name = "HolyPower", Type = "PowerType", EnumValue = 9 },
-				{ Name = "Alternate", Type = "PowerType", EnumValue = 10 },
-				{ Name = "Maelstrom", Type = "PowerType", EnumValue = 11 },
-				{ Name = "Chi", Type = "PowerType", EnumValue = 12 },
-				{ Name = "Insanity", Type = "PowerType", EnumValue = 13 },
-				{ Name = "ComboPoints", Type = "PowerType", EnumValue = 14 },
-				{ Name = "Obsolete2", Type = "PowerType", EnumValue = 15 },
-				{ Name = "ArcaneCharges", Type = "PowerType", EnumValue = 16 },
-				{ Name = "Fury", Type = "PowerType", EnumValue = 17 },
-				{ Name = "Pain", Type = "PowerType", EnumValue = 18 },
-				{ Name = "Essence", Type = "PowerType", EnumValue = 19 },
-				{ Name = "RuneBlood", Type = "PowerType", EnumValue = 20 },
-				{ Name = "RuneFrost", Type = "PowerType", EnumValue = 21 },
-				{ Name = "RuneUnholy", Type = "PowerType", EnumValue = 22 },
-				{ Name = "AlternateQuest", Type = "PowerType", EnumValue = 23 },
-				{ Name = "AlternateEncounter", Type = "PowerType", EnumValue = 24 },
-				{ Name = "AlternateMount", Type = "PowerType", EnumValue = 25 },
-				{ Name = "NumPowerTypes", Type = "PowerType", EnumValue = 26 },
+				{ Name = "ID", Type = "number", Nilable = false },
+				{ Name = "barType", Type = "number", Nilable = false },
+				{ Name = "minPower", Type = "number", Nilable = false },
+				{ Name = "startInset", Type = "number", Nilable = false },
+				{ Name = "endInset", Type = "number", Nilable = false },
+				{ Name = "smooth", Type = "bool", Nilable = false },
+				{ Name = "hideFromOthers", Type = "bool", Nilable = false },
+				{ Name = "showOnRaid", Type = "bool", Nilable = false },
+				{ Name = "opaqueSpark", Type = "bool", Nilable = false },
+				{ Name = "opaqueFlash", Type = "bool", Nilable = false },
+				{ Name = "anchorTop", Type = "bool", Nilable = false },
+				{ Name = "forcePercentage", Type = "bool", Nilable = false },
+				{ Name = "sparkUnderFrame", Type = "bool", Nilable = false },
+				{ Name = "flashAtMinPower", Type = "bool", Nilable = false },
+				{ Name = "fractionalCounter", Type = "bool", Nilable = false },
+				{ Name = "animateNumbers", Type = "bool", Nilable = false },
+				{ Name = "attachTooltipToBar", Type = "bool", Nilable = false },
 			},
 		},
 	},

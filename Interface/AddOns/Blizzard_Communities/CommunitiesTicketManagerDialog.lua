@@ -6,29 +6,42 @@ local COMMUNITIES_TICKET_MANAGER_DIALOG_EVENTS = {
 
 local INVITE_MANAGER_COLUMN_INFO = {
 	[1] = {
-		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_CHANNEL,
-		width = 60,
+		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_CREATOR,
+		width = 96,
 	},
 	
 	[2] = {
-		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_CREATOR,
-		width = 66,
+		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_LINK,
+		width = 284,
 	},
 	
 	[3] = {
-		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_LINK,
-		width = 254,
-	},
-	
-	[4] = {
 		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_EXPIRES,
 		width = 75,
 	},
 	
-	[5] = {
+	[4] = {
 		title = COMMUNITIES_INVITE_MANAGER_COLUMN_TITLE_USES,
 		width = 0,
 	},
+};
+
+local DEFAULT_EXPIRES_OPTION = 2;
+local EXPIRES_OPTIONS = {
+	10 * 60, -- 10 minutes
+	30 * 60, -- 30 minutes
+	1 * 60 * 60, -- 1 hour
+	24 * 60 * 60, -- 1 day
+	0, -- never
+};
+
+local DEFAULT_USES_OPTION = 3;
+local USES_OPTIONS = {
+	1,
+	10,
+	50,
+	100,
+	0, -- unlimited
 };
 
 function CommunitiesTicketManagerDialog_Open(clubId, streamId)
@@ -56,12 +69,23 @@ function ClubTicketUtil.FormatTimeRemaining(expirationTime)
 end
 
 function ClubTicketUtil.FormatTicket(clubInfo, ticketId)
-	local currentRegionName = GetCurrentRegionName();
-	local factionGroupTag, localizedFaction = UnitFactionGroup("player");
-	if currentRegionName == "CN" then
-		return COMMUNITIES_INVITE_MANAGER_TICKET_FORMAT_CN:format(ticketId, currentRegionName, factionGroupTag);
-	else
-		return COMMUNITIES_INVITE_MANAGER_TICKET_FORMAT:format(ticketId, currentRegionName, factionGroupTag);
+	if clubInfo.clubType == Enum.ClubType.BattleNet then
+		local currentRegionName = GetCurrentRegionName();
+		local factionGroupTag, localizedFaction = UnitFactionGroup("player");
+		if currentRegionName == "CN" then
+			return COMMUNITIES_INVITE_MANAGER_TICKET_FORMAT_CN:format(ticketId, currentRegionName, factionGroupTag);
+		else
+			return COMMUNITIES_INVITE_MANAGER_TICKET_FORMAT:format(ticketId, currentRegionName, factionGroupTag);
+		end
+	elseif clubInfo.clubType == Enum.ClubType.Character then
+		local currentRegionName = GetCurrentRegionName();
+		local factionGroupTag, localizedFaction = UnitFactionGroup("player");
+		if currentRegionName == "CN" then
+			return COMMUNITIES_INVITE_MANAGER_TICKET_FORMAT_CHARACTER_CN:format(ticketId, currentRegionName, factionGroupTag);
+		else
+			return COMMUNITIES_INVITE_MANAGER_TICKET_FORMAT_CHARACTER:format(ticketId, currentRegionName, factionGroupTag);
+		end
+	-- else -- This is an error case. We don't support tickets for other club types right now.
 	end
 end
 
@@ -69,82 +93,10 @@ function ClubTicketUtil.IsTicketExpired(ticket)
 	return ticket.expirationTime ~= 0 and ticket.expirationTime / 1000000 < GetServerTime()
 end
 
-local DEFAULT_USES_OPTION = 3;
-local USES_OPTIONS = {
-	1,
-	10,
-	50,
-	100,
-	0, -- unlimited
-};
-
-function CommunitiesTicketManagerDialogUsesDropDown_Initialize(self)
-	for i, option in ipairs(USES_OPTIONS) do
-		local info = UIDropDownMenu_CreateInfo();
-		local text = nil;
-		if option == 0 then
-			text = COMMUNITIES_INVITE_MANAGER_USES_UNLIMITED;
-		else
-			text = COMMUNITIES_INVITE_MANAGER_USES:format(option);
-		end
-		
-		info.text = text;
-		info.value = i;
-		info.func = function (button)
-			CommunitiesTicketManagerDialog:SetUses(option);
-			UIDropDownMenu_SetSelectedValue(self, button.value);
-		end;
-		
-		info.checked = function()
-			return CommunitiesTicketManagerDialog:GetUses() == option;
-		end;
-		
-		UIDropDownMenu_AddButton(info);
-	end
-end
-
-local DEFAULT_EXPIRES_OPTION = 2;
-local EXPIRES_OPTIONS = {
-	10 * 60, -- 10 minutes
-	30 * 60, -- 30 minutes
-	1 * 60 * 60, -- 1 hour
-	24 * 60 * 60, -- 1 day
-	0, -- never
-};
-
-function CommunitiesTicketManagerDialogExpiresDropDown_Initialize(self)
-	for i, option in ipairs(EXPIRES_OPTIONS) do
-		local info = UIDropDownMenu_CreateInfo();
-		local text = nil;
-		if option == 0 then
-			text = COMMUNITIES_INVITE_MANAGER_EXPIRES_NEVER;
-		else
-			text = SecondsToTime(option, true, true);
-		end
-		
-		info.text = text;
-		info.value = i;
-		info.func = function (button)
-			CommunitiesTicketManagerDialog:SetExpirationTime(option);
-			UIDropDownMenu_SetSelectedValue(self, button.value);
-		end;
-		
-		info.checked = function()
-			return CommunitiesTicketManagerDialog:GetExpirationTime() == option;
-		end;
-		
-		UIDropDownMenu_AddButton(info);
-	end
-end
-
 CommunitiesTicketEntryMixin = {};
 
 function CommunitiesTicketEntryMixin:OnUpdate()
-	if self.Channel:IsTruncated() and self.Channel:IsMouseOver() then
-		GameTooltip:SetOwner(self);
-		GameTooltip:AddLine(self.Channel:GetText(), HIGHLIGHT_FONT_COLOR);
-		GameTooltip:Show();
-	elseif self.Creator:IsTruncated() and self.Creator:IsMouseOver() then
+	if self.Creator:IsTruncated() and self.Creator:IsMouseOver() then
 		GameTooltip:SetOwner(self);
 		GameTooltip:AddLine(self.Creator:GetText(), HIGHLIGHT_FONT_COLOR);
 		GameTooltip:Show();
@@ -156,13 +108,13 @@ end
 function CommunitiesTicketEntryMixin:OnEnter()
 	self.CopyLinkButton:Show();
 	
-	if self.Channel:IsTruncated() or self.Creator:IsTruncated() then
+	if self.Creator:IsTruncated() then
 		self:SetScript("OnUpdate", CommunitiesTicketEntryMixin.OnUpdate);
 	end
 end
 
 function CommunitiesTicketEntryMixin:OnLeave()
-	if GetMouseFocus() ~= self.CopyLinkButton then
+	if not self.CopyLinkButton:IsMouseMotionFocus() then
 		self.CopyLinkButton:Hide();
 	end
 	
@@ -189,15 +141,7 @@ function CommunitiesTicketEntryMixin:SetTicket(ticketInfo)
 	
 	self.Creator:SetText(ticketInfo.creator.name or "");
 	self.Creator:SetTextColor(CommunitiesUtil.GetMemberRGB(ticketInfo.creator));
-	
-	self.Channel:SetText(COMMUNITIES_INVITE_MANAGER_NO_CHANNEL);
-	if ticketInfo.defaultStreamId then
-		local streamInfo = C_Club.GetStreamInfo(clubId, ticketInfo.defaultStreamId);
-		if streamInfo then
-			self.Channel:SetText(streamInfo.name);
-		end
-	end
-	
+		
 	self.Link:SetText(ClubTicketUtil.FormatTicket(clubInfo, ticketInfo.ticketId));
 	
 	if ticketInfo.allowedRedeemCount == 0 then
@@ -252,22 +196,57 @@ function CommunitiesTicketManagerDialogMixin:OnLoad()
 	self:SetUses(USES_OPTIONS[DEFAULT_USES_OPTION]);
 	self:SetExpirationTime(EXPIRES_OPTIONS[DEFAULT_EXPIRES_OPTION]);
 	
-	local scrollFrame = self.InviteManager.ListScrollFrame;
-	HybridScrollFrame_CreateButtons(scrollFrame, "CommunitiesTicketEntryTemplate", 0, 0);
-	scrollFrame.scrollBar.doNotHide = true;
-	scrollFrame.update = function() 
-		self:Update(); 
-	end;
-	
-	UIDropDownMenu_SetWidth(self.UsesDropDownMenu, 115);
-	self.UsesDropDownMenu.Text:SetJustifyH("LEFT");
-	UIDropDownMenu_Initialize(self.UsesDropDownMenu, CommunitiesTicketManagerDialogUsesDropDown_Initialize);
-	UIDropDownMenu_SetSelectedValue(self.UsesDropDownMenu, DEFAULT_USES_OPTION);
-	
-	UIDropDownMenu_SetWidth(self.ExpiresDropDownMenu, 115);
-	self.ExpiresDropDownMenu.Text:SetJustifyH("LEFT");
-	UIDropDownMenu_Initialize(self.ExpiresDropDownMenu, CommunitiesTicketManagerDialogExpiresDropDown_Initialize);
-	UIDropDownMenu_SetSelectedValue(self.ExpiresDropDownMenu, DEFAULT_EXPIRES_OPTION);
+	local view = CreateScrollBoxListLinearView();
+	view:SetElementInitializer("CommunitiesTicketEntryTemplate", function(button, elementData)
+		button:SetClubId(self:GetClubId());
+		button:SetTicket(elementData);
+	end);
+
+	ScrollUtil.InitScrollBoxListWithScrollBar(self.InviteManager.ScrollBox, self.InviteManager.ScrollBar, view);
+
+	self.UsesDropdown:SetWidth(135);
+	self.ExpiresDropdown:SetWidth(135);
+
+	self:SetupUsesDropdown();
+	self:SetupExpiresDropdown();
+end
+
+function CommunitiesTicketManagerDialogMixin:SetupUsesDropdown()
+	local function IsSelected(option)
+		return CommunitiesTicketManagerDialog:GetUses() == option;
+	end
+
+	local function SetSelected(option)
+		CommunitiesTicketManagerDialog:SetUses(option);
+	end
+
+	self.UsesDropdown:SetupMenu(function(dropdown, rootDescription)
+		rootDescription:SetTag("MENU_COMMUNITIES_DIALOG_USES");
+
+		for index, option in ipairs(USES_OPTIONS) do
+			local text = (option == 0) and COMMUNITIES_INVITE_MANAGER_USES_UNLIMITED or COMMUNITIES_INVITE_MANAGER_USES:format(option);
+			rootDescription:CreateRadio(text, IsSelected, SetSelected, option);
+		end
+	end);
+end
+
+function CommunitiesTicketManagerDialogMixin:SetupExpiresDropdown()
+	local function IsSelected(option)
+		return CommunitiesTicketManagerDialog:GetExpirationTime() == option;
+	end
+
+	local function SetSelected(option)
+		CommunitiesTicketManagerDialog:SetExpirationTime(option);
+	end
+
+	self.ExpiresDropdown:SetupMenu(function(dropdown, rootDescription)
+		rootDescription:SetTag("MENU_COMMUNITIES_DIALOG_EXPIRES");
+
+		for index, option in ipairs(EXPIRES_OPTIONS) do
+			local text = (option == 0) and COMMUNITIES_INVITE_MANAGER_EXPIRES_NEVER or SecondsToTime(option, true, true);
+			rootDescription:CreateRadio(text, IsSelected, SetSelected, option);
+		end
+	end);
 end
 
 function CommunitiesTicketManagerDialogMixin:OnShow()
@@ -279,7 +258,7 @@ function CommunitiesTicketManagerDialogMixin:OnShow()
 	local clubInfo = C_Club.GetClubInfo(clubId);
 	if clubInfo then
 		self.DialogLabel:SetFormattedText(COMMUNITIES_INVITE_MANAGER_LABEL, clubInfo.name);
-		self.IconRing:SetAtlas("communities-ring-blue");
+		self.IconRing:SetAtlas(self.clubType == Enum.ClubType.BattleNet and "communities-ring-blue" or "communities-ring-gold");
 		C_Club.SetAvatarTexture(self.Icon, clubInfo.avatarId, clubInfo.clubType);
 	end
 	
@@ -361,44 +340,16 @@ function CommunitiesTicketManagerDialogMixin:Update()
 	self.LinkToChat:SetEnabled(hasTickets);
 	self.Copy:SetEnabled(hasTickets);
 	
-	local scrollFrame = self.InviteManager.ListScrollFrame;
-	local offset = HybridScrollFrame_GetOffset(scrollFrame);
-	local buttons = scrollFrame.buttons;
-	local displayedHeight = 0;
-	local buttonHeight = buttons[1]:GetHeight();
-	local ticketIndex = offset + 1;
-	for i = 1, #buttons do
-		local button = buttons[i];
-		if ticketIndex <= #tickets then
-			local ticket = tickets[ticketIndex];			
-			if ticket then
-				button:SetClubId(self:GetClubId());
-				button:SetTicket(ticket);
-				displayedHeight = displayedHeight + buttonHeight;
-				ticketIndex = ticketIndex + 1;
-				button:Show();
-			else
-				button:Hide();
-			end
-		else
-			button:Hide();
-		end
-	end
-	
-	HybridScrollFrame_Update(scrollFrame, #tickets * buttonHeight, displayedHeight);
+	local dataProvider = CreateDataProvider(tickets);
+	self.InviteManager.ScrollBox:SetDataProvider(dataProvider);
 end
 
 function CommunitiesTicketManagerDialogMixin:Refresh()
 	self:RefreshLink();
 	
-	local buttons = self.InviteManager.ListScrollFrame.buttons;
-	for i, button in ipairs(buttons) do
-		if button:IsShown() then
-			button:Refresh();
-		else
-			break;
-		end
-	end
+	self.InviteManager.ScrollBox:ForEachFrame(function(button, ticketInfo)
+		button:SetTicket(ticketInfo);
+	end);
 end
 
 function CommunitiesTicketManagerDialogMixin:OnTicketRevoked(ticketId)
@@ -436,10 +387,10 @@ local PIECES_SHOWN_IN_EXPANDED_VIEW = {
 	Separator = true,
 	InviteManager = true,
 	NewLinkLabel = true,
-	ExpiresDropDownLabel = true,
-	ExpiresDropDownMenu = true,
-	UsesDropDownLabel = true,
-	UsesDropDownMenu = true,
+	ExpiresDropdownLabel = true,
+	ExpiresDropdown = true,
+	UsesDropdownLabel = true,
+	UsesDropdown = true,
 	GenerateLinkButton = true,
 };
 
@@ -483,7 +434,8 @@ function CommunitiesTicketManagerDialogMixin:GenerateLink(overrideUses, override
 	
 	local streamId = overrideStreamId or self:GetStreamId();
 	local clubId = self:GetClubId();
-	C_Club.CreateTicket(clubId, uses, expirationTime, streamId);
+	local clubInfo = C_Club.GetClubInfo(clubId);
+	C_Club.CreateTicket(clubId, uses, expirationTime, streamId, clubInfo.crossFaction);
 end
 
 function CommunitiesTicketManagerDialogMixin:GetFirstTicketInfo()

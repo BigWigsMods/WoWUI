@@ -34,6 +34,15 @@ local VoiceChat =
 			},
 		},
 		{
+			Name = "CanAccessSettings",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "canAccess", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "CanPlayerUseVoiceChat",
 			Type = "Function",
 
@@ -311,6 +320,7 @@ local VoiceChat =
 		{
 			Name = "GetProcesses",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Returns =
 			{
@@ -521,6 +531,15 @@ local VoiceChat =
 			Returns =
 			{
 				{ Name = "isAllowed", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsTranscribing",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "isTranscribing", Type = "bool", Nilable = false },
 			},
 		},
 		{

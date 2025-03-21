@@ -13,12 +13,27 @@ local PartyInfo =
 
 			Arguments =
 			{
-				{ Name = "category", Type = "number", Nilable = true },
+				{ Name = "category", Type = "luaIndex", Nilable = true },
+			},
+		},
+		{
+			Name = "DoCountdown",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "seconds", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "success", Type = "bool", Nilable = false },
 			},
 		},
 		{
 			Name = "GetActiveCategories",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Returns =
 			{
@@ -28,6 +43,7 @@ local PartyInfo =
 		{
 			Name = "GetInviteConfirmationInvalidQueues",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -40,12 +56,22 @@ local PartyInfo =
 			},
 		},
 		{
+			Name = "InviteUnit",
+			Type = "Function",
+			Documentation = { "Attempt to invite the named unit to a party, requires confirmation in some cases (e.g. the party will convert to a raid, or if there is a party sync in progress)." },
+
+			Arguments =
+			{
+				{ Name = "targetName", Type = "cstring", Nilable = false },
+			},
+		},
+		{
 			Name = "IsCrossFactionParty",
 			Type = "Function",
 
 			Arguments =
 			{
-				{ Name = "category", Type = "number", Nilable = true, Documentation = { "If not provided, the active party is used" } },
+				{ Name = "category", Type = "luaIndex", Nilable = true, Documentation = { "If not provided, the active party is used" } },
 			},
 
 			Returns =
@@ -59,7 +85,7 @@ local PartyInfo =
 
 			Arguments =
 			{
-				{ Name = "category", Type = "number", Nilable = true, Documentation = { "If not provided, the active party is used" } },
+				{ Name = "category", Type = "luaIndex", Nilable = true, Documentation = { "If not provided, the active party is used" } },
 			},
 
 			Returns =
@@ -71,6 +97,19 @@ local PartyInfo =
 
 	Events =
 	{
+		{
+			Name = "BnetRequestInviteConfirmation",
+			Type = "Event",
+			LiteralName = "BNET_REQUEST_INVITE_CONFIRMATION",
+			Payload =
+			{
+				{ Name = "gameAccountID", Type = "number", Nilable = false },
+				{ Name = "questSessionActive", Type = "bool", Nilable = false },
+				{ Name = "tank", Type = "bool", Nilable = false },
+				{ Name = "healer", Type = "bool", Nilable = false },
+				{ Name = "dps", Type = "bool", Nilable = false },
+			},
+		},
 		{
 			Name = "EnteredDifferentInstanceFromParty",
 			Type = "Event",
@@ -221,27 +260,6 @@ local PartyInfo =
 			Payload =
 			{
 				{ Name = "preempted", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "RoleChangedInform",
-			Type = "Event",
-			LiteralName = "ROLE_CHANGED_INFORM",
-			Payload =
-			{
-				{ Name = "changedName", Type = "cstring", Nilable = false },
-				{ Name = "fromName", Type = "cstring", Nilable = false },
-				{ Name = "oldRole", Type = "cstring", Nilable = false },
-				{ Name = "newRole", Type = "cstring", Nilable = false },
-			},
-		},
-		{
-			Name = "RolePollBegin",
-			Type = "Event",
-			LiteralName = "ROLE_POLL_BEGIN",
-			Payload =
-			{
-				{ Name = "fromName", Type = "cstring", Nilable = false },
 			},
 		},
 		{

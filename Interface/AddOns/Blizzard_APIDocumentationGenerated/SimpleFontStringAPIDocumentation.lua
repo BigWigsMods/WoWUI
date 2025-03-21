@@ -49,6 +49,7 @@ local SimpleFontStringAPI =
 		{
 			Name = "FindCharacterIndexAtCoordinate",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -126,7 +127,7 @@ local SimpleFontStringAPI =
 
 			Returns =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyH", Type = "JustifyHorizontal", Nilable = false },
 			},
 		},
 		{
@@ -139,7 +140,7 @@ local SimpleFontStringAPI =
 
 			Returns =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyV", Type = "JustifyVertical", Nilable = false },
 			},
 		},
 		{
@@ -279,6 +280,7 @@ local SimpleFontStringAPI =
 		{
 			Name = "GetTextColor",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -412,7 +414,7 @@ local SimpleFontStringAPI =
 
 			Arguments =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyH", Type = "JustifyHorizontal", Nilable = false },
 			},
 		},
 		{
@@ -421,7 +423,7 @@ local SimpleFontStringAPI =
 
 			Arguments =
 			{
-				{ Name = "justifyV", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyV", Type = "JustifyVertical", Nilable = false },
 			},
 		},
 		{
@@ -519,6 +521,15 @@ local SimpleFontStringAPI =
 			Arguments =
 			{
 				{ Name = "textScale", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "SetTextToFit",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "text", Type = "cstring", Nilable = false, Default = "" },
 			},
 		},
 		{

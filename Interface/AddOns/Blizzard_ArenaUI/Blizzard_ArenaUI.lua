@@ -1,5 +1,8 @@
 MAX_ARENA_ENEMIES = 5;
 
+CVarCallbackRegistry:SetCVarCachable("showPartyBackground");
+CVarCallbackRegistry:SetCVarCachable("showArenaEnemyPets");
+
 function ArenaEnemyFrames_OnLoad(self)
 	self:RegisterEvent("CVAR_UPDATE");
 	self:RegisterEvent("VARIABLES_LOADED");
@@ -15,7 +18,7 @@ function ArenaEnemyFrames_OnLoad(self)
 		CastingBarFrame_UpdateIsShown(castFrame);
 	end
 	
-	UpdateArenaEnemyBackground(GetCVarBool("showPartyBackground"));
+	UpdateArenaEnemyBackground();
 	ArenaEnemyBackground_SetOpacity(tonumber(GetCVar("partyBackgroundOpacity")));
 	ArenaEnemyFrames_UpdateVisible();
 	ArenaEnemyFrames_ResetCrowdControlCooldownData();
@@ -35,9 +38,9 @@ function ArenaEnemyFrames_OnEvent(self, event, ...)
 			CastingBarFrame_UpdateIsShown(castFrame);
 		end
 		for i=1, MAX_ARENA_ENEMIES do
-			ArenaEnemyFrame_UpdatePet(_G["ArenaEnemyFrame"..i], i, true);
+			ArenaEnemyFrame_UpdatePet(_G["ArenaEnemyFrame"..i], i);
 		end
-		UpdateArenaEnemyBackground(GetCVarBool("showPartyBackground"));
+		UpdateArenaEnemyBackground();
 		ArenaEnemyBackground_SetOpacity(tonumber(GetCVar("partyBackgroundOpacity")));
 	elseif ( event == "PLAYER_ENTERING_WORLD" ) then
 		ArenaEnemyFrames_CheckEffectiveEnableState(self);
@@ -127,15 +130,14 @@ function ArenaEnemyFrame_OnLoad(self)
 	self:RegisterEvent("UNIT_NAME_UPDATE");
 	self:RegisterEvent("ARENA_COOLDOWNS_UPDATE");
 	self:RegisterEvent("ARENA_CROWD_CONTROL_SPELL_UPDATE");
-	
-	UIDropDownMenu_Initialize(self.DropDown, ArenaEnemyDropDown_Initialize, "MENU");
+	self:RegisterEvent("UNIT_MAXHEALTH");
+	self:RegisterEvent("UNIT_HEAL_PREDICTION");
 	
 	local setfocus = function()
 		FocusUnit("arena"..self:GetID());
 	end
 	SecureUnitButton_OnLoad(self, "arena"..self:GetID(), setfocus);
 	
-	local id = self:GetID();
 	if ( UnitClass("arena"..id) and (not UnitExists("arena"..id))) then	--It is possible for the unit itself to no longer exist on the client, but some of the information to remain (after reloading the UI)
 		self:Show();
 		ArenaEnemyFrame_Lock(self);
@@ -250,13 +252,15 @@ function ArenaEnemyFrame_OnEvent(self, event, unit, ...)
 			ArenaEnemyFrame_UpdatePlayer(self);
 		elseif ( event == "ARENA_COOLDOWNS_UPDATE" ) then
 			ArenaEnemyFrame_UpdateCrowdControl(self);
+		elseif ( event == "UNIT_MAXHEALTH" or event == "UNIT_HEAL_PREDICTION" ) then
+			ArenaEnemyFrame_UpdatePredictionBars(self);
 		elseif ( event == "ARENA_CROWD_CONTROL_SPELL_UPDATE" ) then
 			local unitTarget, spellID, itemID = ...;
 			if (spellID ~= self.CC.spellID) then
 				self.CC.spellID = spellID;
 
-				if(itemID ~= 0) then
-					local itemTexture = GetItemIcon(itemID);
+				if (itemID and itemID ~= 0) then
+					local itemTexture = C_Item.GetItemIconByID(itemID);
 					self.CC.Icon:SetTexture(itemTexture);
 				else
 					local spellTexture, spellTextureNoOverride = GetSpellTexture(spellID);
@@ -273,8 +277,8 @@ function ArenaEnemyFrame_UpdateCrowdControl(self)
 		if (spellID ~= self.CC.spellID) then
 			self.CC.spellID = spellID;
 
-			if(itemID ~= 0) then
-				local itemTexture = GetItemIcon(itemID);
+			if (itemID and itemID ~= 0) then
+				local itemTexture = C_Item.GetItemIconByID(itemID);
 				self.CC.Icon:SetTexture(itemTexture);
 			else
 				local spellTexture, spellTextureNoOverride = GetSpellTexture(spellID);
@@ -289,6 +293,130 @@ function ArenaEnemyFrame_UpdateCrowdControl(self)
 	end
 end
 
+--WARNING: This function is very similar to the function UnitFrameHealPredictionBars_Update in UnitFrame.lua.
+--If you are making changes here, it is possible you may want to make changes there as well.
+--In mainline, this is a mixin so we end up using the same method.  Long-term we should convert this to be the same.
+local MAX_INCOMING_HEAL_OVERFLOW = 1.0;
+function ArenaEnemyFrame_UpdatePredictionBars(frame)
+	if ( not frame.myHealPredictionBar and not frame.otherHealPredictionBar and not frame.healAbsorbBar and not frame.totalAbsorbBar ) then
+		return;
+	end
+
+	local _, maxHealth = frame.healthbar:GetMinMaxValues();
+	local health = frame.healthbar:GetValue();
+	if ( maxHealth <= 0 ) then
+		return;
+	end
+
+	local myIncomingHeal = UnitGetIncomingHeals(frame.unit, "player") or 0;
+	local allIncomingHeal = UnitGetIncomingHeals(frame.unit) or 0;
+	local totalAbsorb = 0;
+
+	local myCurrentHealAbsorb = 0;
+	if ( frame.healAbsorbBar ) then
+		totalAbsorb = UnitGetTotalAbsorbs(frame.unit) or 0;
+		myCurrentHealAbsorb = UnitGetTotalHealAbsorbs(frame.unit) or 0;
+
+		--We don't fill outside the health bar with healAbsorbs.  Instead, an overHealAbsorbGlow is shown.
+		if ( health < myCurrentHealAbsorb ) then
+			frame.overHealAbsorbGlow:Show();
+			myCurrentHealAbsorb = health;
+		else
+			frame.overHealAbsorbGlow:Hide();
+		end
+	end
+
+	--See how far we're going over the health bar and make sure we don't go too far out of the frame.
+	if ( health - myCurrentHealAbsorb + allIncomingHeal > maxHealth * MAX_INCOMING_HEAL_OVERFLOW ) then
+		allIncomingHeal = maxHealth * MAX_INCOMING_HEAL_OVERFLOW - health + myCurrentHealAbsorb;
+	end
+
+	local otherIncomingHeal = 0;
+
+	--Split up incoming heals.
+	if ( allIncomingHeal >= myIncomingHeal ) then
+		otherIncomingHeal = allIncomingHeal - myIncomingHeal;
+	else
+		myIncomingHeal = allIncomingHeal;
+	end
+
+	--We don't fill outside the the health bar with absorbs.  Instead, an overAbsorbGlow is shown.
+	local overAbsorb = false;
+	if ( health - myCurrentHealAbsorb + allIncomingHeal + totalAbsorb >= maxHealth or health + totalAbsorb >= maxHealth ) then
+		if ( totalAbsorb > 0 ) then
+			overAbsorb = true;
+		end
+
+		if ( allIncomingHeal > myCurrentHealAbsorb ) then
+			totalAbsorb = max(0,maxHealth - (health - myCurrentHealAbsorb + allIncomingHeal));
+		else
+			totalAbsorb = max(0,maxHealth - health);
+		end
+	end
+
+	if (frame.overAbsorbGlow) then
+		if ( overAbsorb ) then
+			frame.overAbsorbGlow:Show();
+		else
+			frame.overAbsorbGlow:Hide();
+		end
+	end
+
+	local healthTexture = frame.healthbar:GetStatusBarTexture();
+	local myCurrentHealAbsorbPercent = 0;
+	local healAbsorbTexture = nil;
+
+	if ( frame.healAbsorbBar ) then
+		myCurrentHealAbsorbPercent = myCurrentHealAbsorb / maxHealth;
+
+		--If allIncomingHeal is greater than myCurrentHealAbsorb, then the current
+		--heal absorb will be completely overlayed by the incoming heals so we don't show it.
+		if ( myCurrentHealAbsorb > allIncomingHeal ) then
+			local shownHealAbsorb = myCurrentHealAbsorb - allIncomingHeal;
+			local shownHealAbsorbPercent = shownHealAbsorb / maxHealth;
+
+			healAbsorbTexture = frame.healAbsorbBar:UpdateFillPosition(healthTexture, shownHealAbsorb, -shownHealAbsorbPercent);
+
+			--If there are incoming heals the left shadow would be overlayed by the incoming heals
+			--so it isn't shown.
+			frame.healAbsorbBar.LeftShadow:SetShown(allIncomingHeal <= 0);
+
+			-- The right shadow is only shown if there are absorbs on the health bar.
+			frame.healAbsorbBar.RightShadow:SetShown(totalAbsorb > 0)
+		else
+			frame.healAbsorbBar:Hide();
+		end
+	end
+
+	--Show myIncomingHeal on the health bar.
+	local incomingHealTexture;
+	if (frame.myHealPredictionBar and (frame.myHealPredictionBar.UpdateFillPosition ~= nil)) then
+		incomingHealTexture = frame.myHealPredictionBar:UpdateFillPosition(healthTexture, myIncomingHeal, -myCurrentHealAbsorbPercent);
+	end
+
+	local otherHealLeftTexture = (myIncomingHeal > 0) and incomingHealTexture or healthTexture;
+	local xOffset = (myIncomingHeal > 0) and 0 or -myCurrentHealAbsorbPercent;
+
+	--Append otherIncomingHeal on the health bar
+	if ( frame.otherHealPredictionBar and (frame.otherHealPredictionBar.UpdateFillPosition ~= nil) ) then
+		incomingHealTexture = frame.otherHealPredictionBar:UpdateFillPosition(otherHealLeftTexture, otherIncomingHeal, xOffset);
+	end
+
+	--Append absorbs to the correct section of the health bar.
+	local appendTexture = nil;
+	if ( healAbsorbTexture ) then
+		--If there is a healAbsorb part shown, append the absorb to the end of that.
+		appendTexture = healAbsorbTexture;
+	else
+		--Otherwise, append the absorb to the end of the the incomingHeals or health part;
+		appendTexture = incomingHealTexture or healthTexture;
+	end
+
+	if ( frame.totalAbsorbBar and (frame.totalAbsorbBar.UpdateFillPosition ~= nil) ) then
+		frame.totalAbsorbBar:UpdateFillPosition(appendTexture, totalAbsorb);
+	end
+end
+
 function ArenaEnemyFrame_OnShow(self)
 	self:SetFrameLevel(2);
 
@@ -299,7 +427,7 @@ function ArenaEnemyFrames_GetBestAnchorUnitFrameForOppponent(opponentNumber)
 	return _G["ArenaEnemyFrame" .. math.min(opponentNumber, MAX_ARENA_ENEMIES)];
 end
 
-function ArenaEnemyFrame_UpdatePet(self, id, useCVars)	--At some points, we need to use CVars instead of UVars even though UVars are faster.
+function ArenaEnemyFrame_UpdatePet(self, id)
 	if ( not id ) then
 		id = self:GetID();
 	end
@@ -307,11 +435,7 @@ function ArenaEnemyFrame_UpdatePet(self, id, useCVars)	--At some points, we need
 	local unitFrame = _G["ArenaEnemyFrame"..id];
 	local petFrame = _G["ArenaEnemyFrame"..id.."PetFrame"];
 	
-	local showArenaEnemyPets = (SHOW_ARENA_ENEMY_PETS == "1");
-	if ( useCVars ) then
-		showArenaEnemyPets = GetCVarBool("showArenaEnemyPets");
-	end
-	
+	local showArenaEnemyPets = CVarCallbackRegistry:GetCVarValueBool("showArenaEnemyPets");
 	if ( UnitGUID(petFrame.unit) and showArenaEnemyPets) then
 		petFrame:Show();
 	else
@@ -332,11 +456,9 @@ function ArenaEnemyPetFrame_OnLoad(self)
 	SecureUnitButton_OnLoad(self, unit);
 	self:SetID(id);
 	self:SetParent(ArenaEnemyFrames);
-	ArenaEnemyFrame_UpdatePet(self, id, true);
+	ArenaEnemyFrame_UpdatePet(self, id);
 	self:RegisterEvent("ARENA_OPPONENT_UPDATE");
 	self:RegisterEvent("UNIT_CLASSIFICATION_CHANGED");
-	
-	UIDropDownMenu_Initialize(self.DropDown, ArenaEnemyPetDropDown_Initialize, "MENU");
 	
 	local setfocus = function()
 		FocusUnit("arenapet"..self:GetID());
@@ -380,16 +502,8 @@ function ArenaEnemyPetFrame_OnEvent(self, event, ...)
 	UnitFrame_OnEvent(self, event, ...);
 end
 
-function ArenaEnemyDropDown_Initialize(self)
-	UnitPopup_ShowMenu(self, "ARENAENEMY", "arena"..self:GetParent():GetID());
-end
-
-function ArenaEnemyPetDropDown_Initialize(self)
-	UnitPopup_ShowMenu(self, "ARENAENEMY", "arenapet"..self:GetParent():GetID());
-end
-
-function UpdateArenaEnemyBackground(force)
-	if ( (SHOW_PARTY_BACKGROUND == "1") or force ) then
+function UpdateArenaEnemyBackground()
+	if (CVarCallbackRegistry:GetCVarValueBool("showPartyBackground")) then
 		ArenaEnemyBackground:Show();
 		local numOpps = min(GetNumArenaOpponents(), MAX_ARENA_ENEMIES);
 		if ( numOpps > 0 ) then
@@ -456,8 +570,8 @@ function ArenaPrepFrames_UpdateFrames()
 	
 end
 
-function ArenaPrepFrames_UpdateBackground(force)
-	if ( (SHOW_PARTY_BACKGROUND == "1") or force ) then
+function ArenaPrepFrames_UpdateBackground()
+	if (CVarCallbackRegistry:GetCVarValueBool("showPartyBackground")) then
 		ArenaPrepBackground:Show();
 		local numOpps = GetNumArenaOpponents();
 		if ( numOpps > 0 ) then

@@ -5,9 +5,9 @@ local GossipConstants =
 		{
 			Name = "GossipNpcOption",
 			Type = "Enumeration",
-			NumValues = 54,
+			NumValues = 63,
 			MinValue = 0,
-			MaxValue = 53,
+			MaxValue = 62,
 			Fields =
 			{
 				{ Name = "None", Type = "GossipNpcOption", EnumValue = 0 },
@@ -18,7 +18,7 @@ local GossipConstants =
 				{ Name = "Binder", Type = "GossipNpcOption", EnumValue = 5 },
 				{ Name = "Banker", Type = "GossipNpcOption", EnumValue = 6 },
 				{ Name = "PetitionVendor", Type = "GossipNpcOption", EnumValue = 7 },
-				{ Name = "TabardVendor", Type = "GossipNpcOption", EnumValue = 8 },
+				{ Name = "GuildTabardVendor", Type = "GossipNpcOption", EnumValue = 8 },
 				{ Name = "Battlemaster", Type = "GossipNpcOption", EnumValue = 9 },
 				{ Name = "Auctioneer", Type = "GossipNpcOption", EnumValue = 10 },
 				{ Name = "TalentMaster", Type = "GossipNpcOption", EnumValue = 11 },
@@ -64,6 +64,15 @@ local GossipConstants =
 				{ Name = "TraitSystem", Type = "GossipNpcOption", EnumValue = 51 },
 				{ Name = "BarbersChoice", Type = "GossipNpcOption", EnumValue = 52 },
 				{ Name = "MajorFactionRenown", Type = "GossipNpcOption", EnumValue = 53 },
+				{ Name = "PersonalTabardVendor", Type = "GossipNpcOption", EnumValue = 54 },
+				{ Name = "ForgeMaster", Type = "GossipNpcOption", EnumValue = 55 },
+				{ Name = "CharacterBanker", Type = "GossipNpcOption", EnumValue = 56 },
+				{ Name = "AccountBanker", Type = "GossipNpcOption", EnumValue = 57 },
+				{ Name = "ProfessionRespec", Type = "GossipNpcOption", EnumValue = 58 },
+				{ Name = "Placeholder_1", Type = "GossipNpcOption", EnumValue = 59 },
+				{ Name = "Placeholder_2", Type = "GossipNpcOption", EnumValue = 60 },
+				{ Name = "Placeholder_3", Type = "GossipNpcOption", EnumValue = 61 },
+				{ Name = "Placeholder_4", Type = "GossipNpcOption", EnumValue = 62 },
 			},
 		},
 		{
@@ -80,13 +89,14 @@ local GossipConstants =
 		{
 			Name = "GossipOptionRecFlags",
 			Type = "Enumeration",
-			NumValues = 2,
+			NumValues = 3,
 			MinValue = 1,
-			MaxValue = 2,
+			MaxValue = 4,
 			Fields =
 			{
 				{ Name = "QuestLabelPrepend", Type = "GossipOptionRecFlags", EnumValue = 1 },
 				{ Name = "HideOptionIDFromClient", Type = "GossipOptionRecFlags", EnumValue = 2 },
+				{ Name = "PlayMovieLabelPrepend", Type = "GossipOptionRecFlags", EnumValue = 4 },
 			},
 		},
 	},

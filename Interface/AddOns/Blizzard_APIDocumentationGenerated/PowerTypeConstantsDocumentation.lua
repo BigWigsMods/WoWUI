@@ -3,18 +3,30 @@ local PowerTypeConstants =
 	Tables =
 	{
 		{
+			Name = "BalanceType",
+			Type = "Enumeration",
+			NumValues = 2,
+			MinValue = -1,
+			MaxValue = 0,
+			Fields =
+			{
+				{ Name = "None", Type = "BalanceType", EnumValue = -1 },
+				{ Name = "Eclipse", Type = "BalanceType", EnumValue = 0 },
+			},
+		},
+		{
 			Name = "PowerType",
 			Type = "Enumeration",
-			NumValues = 26,
+			NumValues = 30,
 			MinValue = 0,
-			MaxValue = 25,
+			MaxValue = 29,
 			Fields =
 			{
 				{ Name = "Mana", Type = "PowerType", EnumValue = 0 },
 				{ Name = "Rage", Type = "PowerType", EnumValue = 1 },
 				{ Name = "Focus", Type = "PowerType", EnumValue = 2 },
 				{ Name = "Energy", Type = "PowerType", EnumValue = 3 },
-				{ Name = "Happiness", Type = "PowerType", EnumValue = 4 },
+				{ Name = "ComboPoints", Type = "PowerType", EnumValue = 4 },
 				{ Name = "Runes", Type = "PowerType", EnumValue = 5 },
 				{ Name = "RunicPower", Type = "PowerType", EnumValue = 6 },
 				{ Name = "SoulShards", Type = "PowerType", EnumValue = 7 },
@@ -24,8 +36,8 @@ local PowerTypeConstants =
 				{ Name = "Maelstrom", Type = "PowerType", EnumValue = 11 },
 				{ Name = "Chi", Type = "PowerType", EnumValue = 12 },
 				{ Name = "Insanity", Type = "PowerType", EnumValue = 13 },
-				{ Name = "ComboPoints", Type = "PowerType", EnumValue = 14 },
-				{ Name = "Obsolete2", Type = "PowerType", EnumValue = 15 },
+				{ Name = "BurningEmbers", Type = "PowerType", EnumValue = 14 },
+				{ Name = "DemonicFury", Type = "PowerType", EnumValue = 15 },
 				{ Name = "ArcaneCharges", Type = "PowerType", EnumValue = 16 },
 				{ Name = "Fury", Type = "PowerType", EnumValue = 17 },
 				{ Name = "Pain", Type = "PowerType", EnumValue = 18 },
@@ -36,6 +48,23 @@ local PowerTypeConstants =
 				{ Name = "AlternateQuest", Type = "PowerType", EnumValue = 23 },
 				{ Name = "AlternateEncounter", Type = "PowerType", EnumValue = 24 },
 				{ Name = "AlternateMount", Type = "PowerType", EnumValue = 25 },
+				{ Name = "Balance", Type = "PowerType", EnumValue = 26 },
+				{ Name = "Happiness", Type = "PowerType", EnumValue = 27 },
+				{ Name = "ShadowOrbs", Type = "PowerType", EnumValue = 28 },
+				{ Name = "RuneChromatic", Type = "PowerType", EnumValue = 29 },
+			},
+		},
+		{
+			Name = "PowerTypeSign",
+			Type = "Enumeration",
+			NumValues = 3,
+			MinValue = -1,
+			MaxValue = 1,
+			Fields =
+			{
+				{ Name = "None", Type = "PowerTypeSign", EnumValue = -1 },
+				{ Name = "Positive", Type = "PowerTypeSign", EnumValue = 0 },
+				{ Name = "Negative", Type = "PowerTypeSign", EnumValue = 1 },
 			},
 		},
 		{

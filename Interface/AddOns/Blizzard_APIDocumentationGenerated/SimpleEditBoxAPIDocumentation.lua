@@ -96,6 +96,7 @@ local SimpleEditBoxAPI =
 		{
 			Name = "GetDisplayText",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -199,7 +200,7 @@ local SimpleEditBoxAPI =
 
 			Returns =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyH", Type = "JustifyHorizontal", Nilable = false },
 			},
 		},
 		{
@@ -212,7 +213,7 @@ local SimpleEditBoxAPI =
 
 			Returns =
 			{
-				{ Name = "justifyV", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyV", Type = "JustifyVertical", Nilable = false },
 			},
 		},
 		{
@@ -244,6 +245,7 @@ local SimpleEditBoxAPI =
 		{
 			Name = "GetNumLetters",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -252,6 +254,19 @@ local SimpleEditBoxAPI =
 			Returns =
 			{
 				{ Name = "numLetters", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetNumLines",
+			Type = "Function",
+
+			Arguments =
+			{
+			},
+
+			Returns =
+			{
+				{ Name = "lines", Type = "number", Nilable = false },
 			},
 		},
 		{
@@ -661,6 +676,15 @@ local SimpleEditBoxAPI =
 			},
 		},
 		{
+			Name = "SetFontStringIgnoreParentAlpha",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "ignoreParentAlpha", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "SetHighlightColor",
 			Type = "Function",
 
@@ -696,7 +720,7 @@ local SimpleEditBoxAPI =
 
 			Arguments =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyH", Type = "JustifyHorizontal", Nilable = false },
 			},
 		},
 		{
@@ -705,7 +729,7 @@ local SimpleEditBoxAPI =
 
 			Arguments =
 			{
-				{ Name = "justifyV", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyV", Type = "JustifyVertical", Nilable = false },
 			},
 		},
 		{

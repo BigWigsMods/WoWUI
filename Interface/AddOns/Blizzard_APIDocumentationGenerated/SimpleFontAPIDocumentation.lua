@@ -56,6 +56,20 @@ local SimpleFontAPI =
 			},
 		},
 		{
+			Name = "GetFontObjectForAlphabet",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "alphabet", Type = "FontAlphabet", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "font", Type = "SimpleFont", Nilable = false },
+			},
+		},
+		{
 			Name = "GetIndentedWordWrap",
 			Type = "Function",
 
@@ -78,7 +92,7 @@ local SimpleFontAPI =
 
 			Returns =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyH", Type = "JustifyHorizontal", Nilable = false },
 			},
 		},
 		{
@@ -91,7 +105,7 @@ local SimpleFontAPI =
 
 			Returns =
 			{
-				{ Name = "justifyV", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyV", Type = "JustifyVertical", Nilable = false },
 			},
 		},
 		{
@@ -174,6 +188,15 @@ local SimpleFontAPI =
 			},
 		},
 		{
+			Name = "SetFontHeight",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "height", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "SetFontObject",
 			Type = "Function",
 
@@ -197,7 +220,7 @@ local SimpleFontAPI =
 
 			Arguments =
 			{
-				{ Name = "justifyH", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyH", Type = "JustifyHorizontal", Nilable = false },
 			},
 		},
 		{
@@ -206,7 +229,7 @@ local SimpleFontAPI =
 
 			Arguments =
 			{
-				{ Name = "justifyV", Type = "TBFStyleFlags", Nilable = false },
+				{ Name = "justifyV", Type = "JustifyVertical", Nilable = false },
 			},
 		},
 		{

@@ -9,6 +9,7 @@ local XMLUtil =
 		{
 			Name = "GetTemplateInfo",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -47,6 +48,7 @@ local XMLUtil =
 				{ Name = "height", Type = "number", Nilable = false },
 				{ Name = "keyValues", Type = "table", InnerType = "XMLTemplateKeyValue", Nilable = false },
 				{ Name = "inherits", Type = "cstring", Nilable = true },
+				{ Name = "sourceLocation", Type = "string", Nilable = false },
 			},
 		},
 		{

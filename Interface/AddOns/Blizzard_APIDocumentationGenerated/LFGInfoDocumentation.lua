@@ -47,6 +47,31 @@ local LFGInfo =
 			},
 		},
 		{
+			Name = "CanPlayerUseScenarioFinder",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "canUse", Type = "bool", Nilable = false },
+				{ Name = "failureReason", Type = "string", Nilable = false },
+			},
+		},
+		{
+			Name = "GetDungeonInfo",
+			Type = "Function",
+			MayReturnNothing = true,
+
+			Arguments =
+			{
+				{ Name = "lfgDungeonID", Type = "number", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "dungeonInfo", Type = "LFGDungeonInfo", Nilable = false },
+			},
+		},
+		{
 			Name = "GetLFDLockStates",
 			Type = "Function",
 
@@ -75,6 +100,15 @@ local LFGInfo =
 			},
 		},
 		{
+			Name = "IsInLFGFollowerDungeon",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "result", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "IsLFDEnabled",
 			Type = "Function",
 
@@ -84,16 +118,21 @@ local LFGInfo =
 			},
 		},
 		{
-			Name = "IsLFREnabled",
+			Name = "IsLFGFollowerDungeon",
 			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "dungeonID", Type = "number", Nilable = false },
+			},
 
 			Returns =
 			{
-				{ Name = "enabled", Type = "bool", Nilable = false },
+				{ Name = "result", Type = "bool", Nilable = false },
 			},
 		},
 		{
-			Name = "IsPremadeGroupEnabled",
+			Name = "IsLFREnabled",
 			Type = "Function",
 
 			Returns =
@@ -124,6 +163,11 @@ local LFGInfo =
 			Name = "LfgCompletionReward",
 			Type = "Event",
 			LiteralName = "LFG_COMPLETION_REWARD",
+		},
+		{
+			Name = "LfgEnabledStateChanged",
+			Type = "Event",
+			LiteralName = "LFG_ENABLED_STATE_CHANGED",
 		},
 		{
 			Name = "LfgInvalidErrorMessage",

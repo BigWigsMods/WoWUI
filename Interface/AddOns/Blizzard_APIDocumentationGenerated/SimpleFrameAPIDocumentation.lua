@@ -126,6 +126,20 @@ local SimpleFrameAPI =
 			},
 		},
 		{
+			Name = "DoesHyperlinkPropagateToParent",
+			Type = "Function",
+			Documentation = { "Returns whether hyperlink events (ex. OnHyperlinkEnter, OnHyperlinkLeave, OnHyperlinkClick) are propagated to this frame's parent." },
+
+			Arguments =
+			{
+			},
+
+			Returns =
+			{
+				{ Name = "canPropagate", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "EnableDrawLayer",
 			Type = "Function",
 
@@ -422,6 +436,19 @@ local SimpleFrameAPI =
 			},
 		},
 		{
+			Name = "GetRaisedFrameLevel",
+			Type = "Function",
+
+			Arguments =
+			{
+			},
+
+			Returns =
+			{
+				{ Name = "frameLevel", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "GetRegions",
 			Type = "Function",
 
@@ -461,6 +488,19 @@ local SimpleFrameAPI =
 			Returns =
 			{
 				{ Name = "frameScale", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetWindow",
+			Type = "Function",
+
+			Arguments =
+			{
+			},
+
+			Returns =
+			{
+				{ Name = "window", Type = "SimpleWindow", Nilable = false },
 			},
 		},
 		{
@@ -505,6 +545,11 @@ local SimpleFrameAPI =
 			{
 				{ Name = "delegate", Type = "SimpleFrame", Nilable = false },
 			},
+
+			Returns =
+			{
+				{ Name = "success", Type = "bool", Nilable = false },
+			},
 		},
 		{
 			Name = "IsClampedToScreen",
@@ -517,6 +562,20 @@ local SimpleFrameAPI =
 			Returns =
 			{
 				{ Name = "clampedToScreen", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsDrawLayerEnabled",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "layer", Type = "DrawLayer", Nilable = false },
+			},
+
+			Returns =
+			{
+				{ Name = "isEnabled", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -678,6 +737,19 @@ local SimpleFrameAPI =
 			},
 		},
 		{
+			Name = "IsUsingParentLevel",
+			Type = "Function",
+
+			Arguments =
+			{
+			},
+
+			Returns =
+			{
+				{ Name = "usingParentLevel", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "IsVisible",
 			Type = "Function",
 
@@ -688,6 +760,14 @@ local SimpleFrameAPI =
 			Returns =
 			{
 				{ Name = "isVisible", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "LockHighlight",
+			Type = "Function",
+
+			Arguments =
+			{
 			},
 		},
 		{
@@ -887,6 +967,15 @@ local SimpleFrameAPI =
 			},
 		},
 		{
+			Name = "SetHighlightLocked",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "locked", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "SetHitRectInsets",
 			Type = "Function",
 
@@ -896,6 +985,16 @@ local SimpleFrameAPI =
 				{ Name = "right", Type = "uiUnit", Nilable = false },
 				{ Name = "top", Type = "uiUnit", Nilable = false },
 				{ Name = "bottom", Type = "uiUnit", Nilable = false },
+			},
+		},
+		{
+			Name = "SetHyperlinkPropagateToParent",
+			Type = "Function",
+			Documentation = { "Enables or disables propagating hyperlink events (ex. OnHyperlinkEnter, OnHyperlinkLeave, OnHyperlinkClick) to this frame's parent." },
+
+			Arguments =
+			{
+				{ Name = "canPropagate", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -1019,6 +1118,24 @@ local SimpleFrameAPI =
 			},
 		},
 		{
+			Name = "SetUsingParentLevel",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "usingParentLevel", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "SetWindow",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "window", Type = "SimpleWindow", Nilable = true },
+			},
+		},
+		{
 			Name = "Show",
 			Type = "Function",
 
@@ -1047,6 +1164,14 @@ local SimpleFrameAPI =
 		},
 		{
 			Name = "StopMovingOrSizing",
+			Type = "Function",
+
+			Arguments =
+			{
+			},
+		},
+		{
+			Name = "UnlockHighlight",
 			Type = "Function",
 
 			Arguments =

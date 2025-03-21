@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\..\FrameXML\UI.xsd">
+..\..\..\..\..\WoW\Data\Interface\AddOns\Blizzard_SharedXML\UI.xsd">
 	<Script file="Blizzard_CommentatorScoreboard.lua"/>
 
 	<Frame name="CommentatorScoreboardScoreTemplate" virtual="true">
@@ -96,8 +96,8 @@
 						<Alpha fromAlpha="0" toAlpha="0" duration="0" order="1" childKey="Label"/>
 						<Alpha fromAlpha="1" toAlpha="0" duration="0.25" order="2" startDelay="2" childKey="Icon"/>
 						<Alpha fromAlpha="0" toAlpha="1" duration="0.25" order="2" startDelay="2" childKey="Label"/>
-						<Alpha fromAlpha="0" toAlpha="1" duration="0.25" order="3" startDelay="15" setToFinalAlpha="1" childKey="Icon"/>
-						<Alpha fromAlpha="1" toAlpha="0" duration="0.25" order="3" startDelay="15" setToFinalAlpha="1" childKey="Label"/>
+						<Alpha fromAlpha="0" toAlpha="1" duration="0.25" order="3" startDelay="15" childKey="Icon"/>
+						<Alpha fromAlpha="1" toAlpha="0" duration="0.25" order="3" startDelay="15" childKey="Label"/>
 					</AnimationGroup>
 				</Animations>
 			</Frame>

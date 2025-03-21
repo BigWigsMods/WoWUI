@@ -40,6 +40,15 @@ local PlayerInfo =
 			},
 		},
 		{
+			Name = "GetNativeDisplayID",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "nativeDisplayID", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "GetPetStableCreatureDisplayInfoID",
 			Type = "Function",
 
@@ -56,6 +65,7 @@ local PlayerInfo =
 		{
 			Name = "GetPlayerCharacterData",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Returns =
 			{
@@ -77,12 +87,39 @@ local PlayerInfo =
 			},
 		},
 		{
+			Name = "IsDisplayRaceNative",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "isDisplayRaceNative", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsMirrorImage",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "isMirrorImage", Type = "bool", Nilable = false },
+			},
+		},
+		{
 			Name = "IsPlayerNPERestricted",
 			Type = "Function",
 
 			Returns =
 			{
 				{ Name = "isRestricted", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "IsSelfFoundActive",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "active", Type = "bool", Nilable = false },
 			},
 		},
 		{

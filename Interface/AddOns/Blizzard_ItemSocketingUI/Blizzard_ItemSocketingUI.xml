@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\..\FrameXML\UI.xsd">
+..\..\..\..\..\WoW\Data\Interface\AddOns\Blizzard_SharedXML\UI.xsd">
 	<Script file="Blizzard_ItemSocketingUI.lua"/>
 	<Button name="ItemSocketingSocketButtonTemplate" virtual="true">
 		<Size>
@@ -143,7 +143,7 @@
 	<Frame name="ItemSocketingFrame" toplevel="true" parent="UIParent" enableMouse="true" hidden="true">
 		<Size>
 			<AbsDimension x="354" y="467"/>
-		</Size>l
+		</Size>
 		<Anchors>
 			<Anchor point="TOPLEFT">
 				<Offset>
