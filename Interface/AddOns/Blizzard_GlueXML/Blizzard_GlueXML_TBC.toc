@@ -25,7 +25,8 @@ Shared\AccountReactivate.xml
 Classic\KioskModeSplash.lua
 Classic\KioskModeSplash.xml
 Classic\CharacterServicesShared.lua
-CharacterServicesTemplates.lua
+Classic\CharacterServicesTemplatesUtil.lua
+Shared\CharacterServicesTemplates.lua
 Classic\CharacterServicesTemplates.xml
 Classic\CharacterServicesFlowMixin.lua
 Classic\CharacterServices.lua
