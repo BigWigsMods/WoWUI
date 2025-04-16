@@ -483,7 +483,6 @@ end
 do -- Gems (Added in TBC)
 	if ClassicExpansionAtLeast(LE_EXPANSION_BURNING_CRUSADE) then
 		local gemsCategory = AuctionFrame_CreateCategory(AUCTION_CATEGORY_GEMS);
-		gemsCategory:GenerateSubCategoriesAndFiltersFromSubClass(Enum.ItemClass.Gem);
 		if HasValidSubClasses(Enum.ItemClass.Gem)then
 			gemsCategory:GenerateSubCategoriesAndFiltersFromSubClass(Enum.ItemClass.Gem);
 		else
