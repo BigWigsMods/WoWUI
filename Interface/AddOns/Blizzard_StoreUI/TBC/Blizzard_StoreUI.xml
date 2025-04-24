@@ -706,6 +706,17 @@
 						<OnLeave function="StoreProductCardCheckmark_OnLeave"/>
 					</Scripts>
 				</Frame>
+				<Button parentKey="BuyButton" inherits="StoreButtonTemplate" motionScriptsWhileDisabled="true">
+					<Size x="210" y="35" />
+					<Anchors>
+						<Anchor point="BOTTOM" x="0" y="22" />
+					</Anchors>
+					<Scripts>
+						<OnClick function="StoreFrameBuyButton_OnClick" />
+						<OnEnter function="StoreProductCardBuyButton_OnEnter" />
+						<OnLeave function="StoreProductCardBuyButton_OnLeave" />
+					</Scripts>
+				</Button>
 			</Frames>
 			<Scripts>
 				<OnEnter function="StoreProductCard_OnEnter" />
