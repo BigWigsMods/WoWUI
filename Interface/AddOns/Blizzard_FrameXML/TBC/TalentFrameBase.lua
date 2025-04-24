@@ -15,6 +15,9 @@ INITIAL_TALENT_OFFSET_Y = 20;
 
 
 function TalentFrame_Update(TalentFrame)
+	if ( not TalentFrame ) then
+		return;
+	end
 
 	if ( TalentFrame.updateFunction ) then
 		TalentFrame.updateFunction();
@@ -28,7 +31,7 @@ function TalentFrame_Update(TalentFrame)
 
 	-- Setup Frame
 	local base;
-	local _, name, _, texture, points, fileName = GetTalentTabInfo(TalentFrame.currentSelectedTab, TalentFrame.inspect);
+	local _, name, _, texture, _, _, points, fileName = C_SpecializationInfo.GetSpecializationInfo(TalentFrame.currentSelectedTab, TalentFrame.inspect);
 	if ( name ) then
 		base = "Interface\\TalentFrame\\"..fileName.."-";
 	else
@@ -105,7 +108,7 @@ function TalentFrame_Update(TalentFrame)
 		end
 	end
 	
-	-- Draw the prerq branches
+	-- Draw the prereq branches
 	local node;
 	local textureIndex = 1;
 	local xOffset, yOffset;

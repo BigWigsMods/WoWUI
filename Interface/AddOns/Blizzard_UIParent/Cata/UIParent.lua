@@ -177,9 +177,6 @@ function UIParent_OnLoad(self)
 	self:RegisterEvent("TRIAL_CAP_REACHED_MONEY");
 	self:RegisterEvent("TRIAL_CAP_REACHED_LEVEL");
 
-	-- Lua warnings
-	self:RegisterEvent("LUA_WARNING");
-
 	-- debug menu
 	self:RegisterEvent("DEBUG_MENU_TOGGLED");
 
@@ -427,7 +424,7 @@ function ToggleAchievementFrame(stats)
 end
 
 function ToggleTalentFrame()
-	if (UnitLevel("player") < SHOW_TALENT_LEVEL) then
+	if (not C_SpecializationInfo.CanPlayerUseTalentSpecUI()) then
 		return;
 	end
 
@@ -684,6 +681,7 @@ function UIParent_OnEvent(self, event, ...)
 		TargetFrame_OnVariablesLoaded();
 
 		StoreFrame_CheckForFree(event);
+		EventUtil.TriggerOnVariablesLoaded();
 	elseif ( event == "PLAYER_LOGIN" ) then
 		TimeManager_LoadUI();
 		-- You can override this if you want a Combat Log replacement
@@ -1077,7 +1075,7 @@ function UIParent_OnEvent(self, event, ...)
 			-- exactly which talent spec he is wiping
 			TalentFrame_LoadUI();
 			if ( PlayerTalentFrame_Open ) then
-				PlayerTalentFrame_Open(false, GetActiveTalentGroup());
+				PlayerTalentFrame_Open(false, C_SpecializationInfo.GetActiveSpecGroup());
 			end
 		end
 	elseif ( event == "CONFIRM_BARBERS_CHOICE" ) then
@@ -1446,8 +1444,6 @@ function UIParent_OnEvent(self, event, ...)
 			QuestChoice_LoadUI();
 			QuestChoiceFrame:TryShow();
 		end
-	elseif ( event == "LUA_WARNING" ) then
-		HandleLuaWarning(...);
 	elseif ( event == "GARRISON_ARCHITECT_OPENED") then
 		if (not GarrisonBuildingFrame) then
 			Garrison_LoadUI();
@@ -2359,10 +2355,6 @@ function AnimatedShine_OnUpdate(elapsed)
 			shine4:SetPoint("CENTER", parent, "BOTTOMRIGHT", -(value.timer-speed*3)/speed*distance, 0);
 		end
 	end
-end
-
-function ConsolePrint(...)
-	ConsoleAddMessage(string.join(" ", tostringall(...)));
 end
 
 function LFD_IsEmpowered()

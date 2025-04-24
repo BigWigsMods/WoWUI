@@ -9,6 +9,7 @@ local PvpInfo =
 		{
 			Name = "GetArenaCrowdControlInfo",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -26,6 +27,7 @@ local PvpInfo =
 		{
 			Name = "GetArenaRewards",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -44,6 +46,7 @@ local PvpInfo =
 		{
 			Name = "GetBattlefieldVehicleInfo",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -59,6 +62,7 @@ local PvpInfo =
 		{
 			Name = "GetBattlefieldVehicles",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -166,6 +170,7 @@ local PvpInfo =
 		{
 			Name = "GetZonePVPInfo",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Returns =
 			{
@@ -245,6 +250,11 @@ local PvpInfo =
 				{ Name = "unitToken", Type = "cstring", Nilable = false },
 				{ Name = "updateReason", Type = "cstring", Nilable = false },
 			},
+		},
+		{
+			Name = "ArenaPrepOpponentSpecializations",
+			Type = "Event",
+			LiteralName = "ARENA_PREP_OPPONENT_SPECIALIZATIONS",
 		},
 		{
 			Name = "ArenaRegistrarClosed",

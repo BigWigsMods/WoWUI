@@ -170,9 +170,6 @@ function UIParent_OnLoad(self)
 	self:RegisterEvent("TRIAL_CAP_REACHED_MONEY");
 	self:RegisterEvent("TRIAL_CAP_REACHED_LEVEL");
 
-	-- Lua warnings
-	self:RegisterEvent("LUA_WARNING");
-
 	-- debug menu
 	self:RegisterEvent("DEBUG_MENU_TOGGLED");
 
@@ -408,7 +405,7 @@ function ToggleAchievementFrame(stats)
 end
 
 function ToggleTalentFrame()
-	if (UnitLevel("player") < SHOW_TALENT_LEVEL) then
+	if (not C_SpecializationInfo.CanPlayerUseTalentUI()) then
 		return;
 	end
 
@@ -655,6 +652,7 @@ function UIParent_OnEvent(self, event, ...)
 		TargetFrame_OnVariablesLoaded();
 
 		StoreFrame_CheckForFree(event);
+		EventUtil.TriggerOnVariablesLoaded();
 	elseif ( event == "PLAYER_LOGIN" ) then
 		TimeManager_LoadUI();
 		-- You can override this if you want a Combat Log replacement
@@ -1037,7 +1035,7 @@ function UIParent_OnEvent(self, event, ...)
 			-- exactly which talent spec he is wiping
 			TalentFrame_LoadUI();
 			if ( PlayerTalentFrame_Open ) then
-				PlayerTalentFrame_Open(false, GetActiveTalentGroup());
+				PlayerTalentFrame_Open(false, C_SpecializationInfo.GetActiveSpecGroup());
 			end
 		end
 	elseif ( event == "CONFIRM_BARBERS_CHOICE" ) then
@@ -1382,8 +1380,6 @@ function UIParent_OnEvent(self, event, ...)
 			QuestChoice_LoadUI();
 			QuestChoiceFrame:TryShow();
 		end
-	elseif ( event == "LUA_WARNING" ) then
-		HandleLuaWarning(...);
 	elseif ( event == "GARRISON_ARCHITECT_OPENED") then
 		if (not GarrisonBuildingFrame) then
 			Garrison_LoadUI();
@@ -2297,10 +2293,6 @@ function AnimatedShine_OnUpdate(elapsed)
 	end
 end
 
-function ConsolePrint(...)
-	ConsoleAddMessage(string.join(" ", tostringall(...)));
-end
-
 function LFD_IsEmpowered()
 	--Solo players are always empowered.
 	if ( not IsInGroup() ) then
@@ -2541,17 +2533,7 @@ NUMBER_ABBREVIATION_DATA = {
 	{ breakpoint = 1000000,		abbreviation = SECOND_NUMBER_CAP_NO_SPACE,	significandDivisor = 100000,		fractionDivisor = 10 },
 	{ breakpoint = 10000,		abbreviation = FIRST_NUMBER_CAP_NO_SPACE,	significandDivisor = 1000,		fractionDivisor = 1 },
 	{ breakpoint = 1000,		abbreviation = FIRST_NUMBER_CAP_NO_SPACE,	significandDivisor = 100,		fractionDivisor = 10 },
-}
-
-function AbbreviateNumbers(value)
-	for i, data in ipairs(NUMBER_ABBREVIATION_DATA) do
-		if value >= data.breakpoint then
-			local finalValue = math.floor(value / data.significandDivisor) / data.fractionDivisor;
-			return finalValue .. data.abbreviation;
-		end
-	end
-	return tostring(value);
-end
+};
 
 function IsInLFDBattlefield()
 	return false;

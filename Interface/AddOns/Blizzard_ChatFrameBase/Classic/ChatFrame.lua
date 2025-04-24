@@ -20,6 +20,10 @@ LAST_ACTIVE_CHAT_EDIT_BOX = nil;
 
 CHAT_SHOW_IME = false;
 
+DevTools_AddMessageHandler(function(msg)
+	DEFAULT_CHAT_FRAME:AddMessage(msg);
+end);
+
 function GetChatTimestampFormat()
 	local value = Settings.GetValue("showTimestamps");
 	if value ~= "none" then
@@ -2552,11 +2556,11 @@ SlashCmdList["SPECTATOR_WARGAME"] = function(msg)
 
 	local bnetIDGameAccount1 = BNet_GetBNetIDAccountFromCharacterName(target1) or BNet_GetBNetIDAccount(target1);
 	if not bnetIDGameAccount1 then
-		ConsolePrint("Failed to find StartSpectatorWarGame target1:", target1);
+		C_Log.LogErrorMessage("Failed to find StartSpectatorWarGame target1:", target1);
 	end
 	local bnetIDGameAccount2 = BNet_GetBNetIDAccountFromCharacterName(target2) or BNet_GetBNetIDAccount(target2);
 	if not bnetIDGameAccount2 then
-		ConsolePrint("Failed to find StartSpectatorWarGame target2:", target2);
+		C_Log.LogErrorMessage("Failed to find StartSpectatorWarGame target2:", target2);
 	end
 	if (area == "" or area == "nil" or area == "0") then area = nil end
 	StartSpectatorWarGame(bnetIDGameAccount1 or target1, bnetIDGameAccount2 or target2, size, area, ValueToBoolean(isTournamentMode));

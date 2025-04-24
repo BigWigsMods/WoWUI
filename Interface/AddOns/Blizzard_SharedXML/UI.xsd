@@ -155,6 +155,7 @@
 		<xs:restriction base="xs:NMTOKEN">
 			<xs:enumeration value="Motion"/>
 			<xs:enumeration value="Clicks"/>
+			<xs:enumeration value="Blocked"/>
 			<xs:enumeration value="Both"/>
 		</xs:restriction>
 	</xs:simpleType>
@@ -942,7 +943,7 @@
 	<xs:complexType name="ColorSelectType">
 		<xs:complexContent>
 			<xs:extension base="FrameType">
-				<xs:sequence>
+				<xs:sequence minOccurs="0">
 					<xs:choice maxOccurs="unbounded">
 						<xs:element name="ColorWheelTexture" type="TextureType"/>
 						<xs:element name="ColorWheelThumbTexture" type="TextureType"/>
@@ -1597,4 +1598,5 @@
 	<xs:element name="EventButton" type="ButtonType" substitutionGroup="ui:FrameRef"/>
 	<xs:element name="ItemButton" type="ButtonType" substitutionGroup="ui:FrameRef"/>
 	<xs:element name="TestFrame" type="FrameType" substitutionGroup="ui:FrameRef"/>
+	<xs:element name="UIThemeContainerFrame" type="FrameType" substitutionGroup="ui:FrameRef"/>
 </xs:schema>

@@ -513,7 +513,7 @@ function PaperDollFrame_OnEvent (self, event, ...)
 			CharacterFrame:Expand();
 		end
 		
-		local activeSpec = GetActiveTalentGroup();
+		local activeSpec = C_SpecializationInfo.GetActiveSpecGroup();
 		if (activeSpec == 1) then
 			PaperDoll_InitStatCategories(PAPERDOLL_STATCATEGORY_DEFAULTORDER, "statCategoryOrder", "statCategoriesCollapsed", "player");
 		else
@@ -528,14 +528,14 @@ function PaperDollFrame_OnEvent (self, event, ...)
 end
 
 function PaperDollFrame_SetLevel()
-	local primaryTalentTree = GetPrimaryTalentTree();
+	local primaryTalentTree = C_SpecializationInfo.GetSpecialization();
 	local classDisplayName, class = UnitClass("player"); 
 	local classColor = RAID_CLASS_COLORS[class];
 	local classColorString = format("ff%.2x%.2x%.2x", classColor.r * 255, classColor.g * 255, classColor.b * 255);
 	local specName, _;
 	
 	if (primaryTalentTree) then
-		_, specName = GetTalentTabInfo(primaryTalentTree);
+		_, specName = C_SpecializationInfo.GetSpecializationInfo(primaryTalentTree);
 	end
 	
 	if (specName and specName ~= "") then
@@ -2000,15 +2000,16 @@ function Mastery_OnEnter(statFrame)
 	GameTooltip:SetText(title);
 	
 	local masteryKnown = IsSpellKnown(CLASS_MASTERY_SPELLS[class]);
-	local primaryTalentTree = GetPrimaryTalentTree();
+	local primaryTalentTree = C_SpecializationInfo.GetSpecialization();
 	if (masteryKnown and primaryTalentTree) then
-		local masterySpell, masterySpell2 = GetTalentTreeMasterySpells(primaryTalentTree);
-		if (masterySpell) then
+		local masterySpells = C_SpecializationInfo.GetSpecializationMasterySpells(primaryTalentTree);
+		local hasAddedAnyMasterySpell = false;
+		for i, masterySpell in ipairs(masterySpells) do
+			if hasAddedAnyMasterySpell then
+				GameTooltip:AddLine(" ");
+			end
 			GameTooltip:AddSpellByID(masterySpell);
-		end
-		if (masterySpell2) then
-			GameTooltip:AddLine(" ");
-			GameTooltip:AddSpellByID(masterySpell2);
+			hasAddedAnyMasterySpell = true;
 		end
 		GameTooltip:AddLine(" ");
 		GameTooltip:AddLine(format(STAT_MASTERY_TOOLTIP, GetCombatRating(CR_MASTERY), masteryBonus), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
@@ -2224,7 +2225,7 @@ end
 function PaperDollFrame_OnShow (self)
 	CharacterStatsPane.initialOffsetY = 0;
 	PaperDollFrame_SetLevel();
-	local activeSpec = GetActiveTalentGroup();
+	local activeSpec = C_SpecializationInfo.GetActiveSpecGroup();
 	if (activeSpec == 1) then
 		PaperDoll_InitStatCategories(PAPERDOLL_STATCATEGORY_DEFAULTORDER, "statCategoryOrder", "statCategoriesCollapsed", "player");
 	else
@@ -3195,7 +3196,7 @@ function GearSetEditButton_OnMouseDown(self, button)
 		rootDescription:CreateTitle(EQUIPMENT_SET_ASSIGN_TO_SPEC);
 
 		for i = 1, GetNumSpecializations() do
-			local specID = GetSpecializationInfo(i);
+			local specID = C_SpecializationInfo.GetSpecializationInfo(i);
 			local text = select(2, GetSpecializationInfoByID(specID));
 			rootDescription:CreateRadio(text, IsSelected, SetSelected, i);
 		end
@@ -3229,7 +3230,7 @@ function GearSetButton_UpdateSpecInfo(self)
 		return;
 	end
 
-	local specID = GetSpecializationInfo(specIndex);
+	local specID = C_SpecializationInfo.GetSpecializationInfo(specIndex);
 	GearSetButton_SetSpecInfo(self, specID);
 end
 

@@ -829,7 +829,8 @@ function UnitPopupGuildPromoteButtonMixin:CanShow(contextData)
 		return false;
 	end
 
-	return contextData.name ~= UnitNameUnmodified("player");
+	local playerName, playerServer = UnitFullName("player");
+	return playerName ~= contextData.name or playerServer ~= contextData.server;
 end
 
 function UnitPopupGuildPromoteButtonMixin:OnClick(contextData)
@@ -1679,7 +1680,7 @@ function UnitPopupSelectLootSpecializationButtonMixin:GetTooltipText()
 end
 
 function UnitPopupSelectLootSpecializationButtonMixin:CanShow(contextData)
-	return GetSpecialization();
+	return C_SpecializationInfo.GetSpecialization();
 end
 
 function UnitPopupSelectLootSpecializationButtonMixin:GetEntries()
@@ -1696,11 +1697,11 @@ end
 UnitPopupLootSpecializationDefaultButtonMixin = CreateFromMixins(UnitPopupRadioButtonMixin);
 
 function UnitPopupLootSpecializationDefaultButtonMixin:GetText(contextData)
-	local specIndex = GetSpecialization();
+	local specIndex = C_SpecializationInfo.GetSpecialization();
 	if specIndex then
 	local sex = UnitSex("player");
 		local isInspect, isPet, inspectTarget = false, false, false;
-		local specID, specName = GetSpecializationInfo(specIndex, isInspect, isPet, inspectTarget, sex);
+		local specID, specName = C_SpecializationInfo.GetSpecializationInfo(specIndex, isInspect, isPet, inspectTarget, sex);
 		if specName then
 			return format(LOOT_SPECIALIZATION_DEFAULT, specName);
 		end
@@ -1728,7 +1729,7 @@ function UnitPopupLootSpecialization1ButtonMixin:GetText(contextData)
 	if specIndex then
 	local sex = UnitSex("player");
 		local isInspect, isPet, inspectTarget = false, false, false;
-		local specID, specName = GetSpecializationInfo(specIndex, isInspect, isPet, inspectTarget, sex);
+		local specID, specName = C_SpecializationInfo.GetSpecializationInfo(specIndex, isInspect, isPet, inspectTarget, sex);
 		if specName then
 			return specName;
 		end
@@ -1744,7 +1745,7 @@ function UnitPopupLootSpecialization1ButtonMixin:GetSpecID()
 	local specIndex = self:GetSpecIndex();
 	local sex = UnitSex("player");
 	local isInspect, isPet, inspectTarget = false, false, false;
-	local specID = GetSpecializationInfo(specIndex, isInspect, isPet, inspectTarget, sex);
+	local specID = C_SpecializationInfo.GetSpecializationInfo(specIndex, isInspect, isPet, inspectTarget, sex);
 	return specID or -1;
 end
 
@@ -3342,9 +3343,9 @@ function UnitPopupItemQuality2DescButtonMixin:GetText(contextData)
 end
 
 function UnitPopupItemQuality2DescButtonMixin:GetColor()
-	local itemQualityColor = ITEM_QUALITY_COLORS[self:GetID()];
-	if itemQualityColor then
-		return itemQualityColor.color:GetRGB();
+	local colorData = ColorManager.GetColorDataForItemQuality(self:GetID());
+	if colorData then
+		return colorData.color:GetRGB();
 	end
 	return 1, 1, 1;
 end

@@ -66,6 +66,7 @@ local PlayerScript =
 		{
 			Name = "CanLootUnit",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Arguments =
 			{
@@ -125,10 +126,6 @@ local PlayerScript =
 		},
 		{
 			Name = "ConfirmBinder",
-			Type = "Function",
-		},
-		{
-			Name = "ConfirmPetUnlearn",
 			Type = "Function",
 		},
 		{
@@ -221,6 +218,15 @@ local PlayerScript =
 			},
 		},
 		{
+			Name = "GetLootSpecialization",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "specializationID", Type = "number", Nilable = false },
+			},
+		},
+		{
 			Name = "GetMastery",
 			Type = "Function",
 
@@ -277,6 +283,7 @@ local PlayerScript =
 		{
 			Name = "GetRestState",
 			Type = "Function",
+			MayReturnNothing = true,
 
 			Returns =
 			{
@@ -543,6 +550,15 @@ local PlayerScript =
 			Arguments =
 			{
 				{ Name = "cemetaryID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "SetLootSpecialization",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "specializationID", Type = "number", Nilable = false },
 			},
 		},
 		{

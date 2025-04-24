@@ -6,7 +6,6 @@ MAX_NUM_TALENTS = 28;
 PLAYER_TALENTS_PER_TIER = 5;
 PET_TALENTS_PER_TIER = 3;
 
-DEFAULT_TALENT_SPEC = "spec1";
 DEFAULT_TALENT_TAB = 1;
 
 TALENT_BUTTON_SIZE_DEFAULT = 32;
@@ -17,9 +16,6 @@ INITIAL_TALENT_OFFSET_Y_DEFAULT = 20;
 TALENT_GOLD_BORDER_WIDTH = 5;
 
 TALENT_HYBRID_ICON = "Interface\\Icons\\Ability_DualWieldSpecialization";
-
-
-
 
 local min = min;
 local max = max;
@@ -44,11 +40,11 @@ function TalentFrame_Update(TalentFrame)
 		-- even though we have inspection data for more than one talent group, we're only showing one for now
 		isActiveTalentGroup = true;
 	else
-		isActiveTalentGroup = TalentFrame.talentGroup == GetActiveTalentGroup(TalentFrame.inspect, TalentFrame.pet);
+		isActiveTalentGroup = TalentFrame.talentGroup == C_SpecializationInfo.GetActiveSpecGroup(TalentFrame.inspect, TalentFrame.pet);
 	end
 	-- Setup Frame
 	local base;
-	local id, name, description, icon, pointsSpent, background, previewPointsSpent, isUnlocked = GetTalentTabInfo(selectedTab, TalentFrame.inspect, TalentFrame.pet, TalentFrame.talentGroup);
+	local id, name, description, icon, _, _, pointsSpent, background, previewPointsSpent, isUnlocked = C_SpecializationInfo.GetSpecializationInfo(selectedTab, TalentFrame.inspect, TalentFrame.pet, nil, nil, TalentFrame.talentGroup);
 	if ( name ) then
 		base = "Interface\\TalentFrame\\"..background.."-";
 	else

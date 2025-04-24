@@ -141,7 +141,7 @@ function CharacterSelectLockedButtonMixin:OnClick()
 end
 
 local function ShouldShowHighResButton()
-	return not C_BattleNet.AreHighResTexturesInstalled();
+	return AreHighResTexturesAvailable() and not C_BattleNet.AreHighResTexturesInstalled();
 end
 
 function CharacterSelectStoreButton_OnLoad(self)
@@ -246,11 +246,14 @@ function CharacterSelect_OnLoad(self)
 	self:RegisterEvent("SOCIAL_CONTRACT_STATUS_UPDATE");
     self:RegisterEvent("ACCOUNT_SAVE_ENABLED_UPDATE");
     self:RegisterEvent("ACCOUNT_LOCKED_POST_SAVE_UPDATE");
+	self:RegisterEvent("NAV_BAR_ENABLED_CHANGED");
     SetCharSelectModelFrame("CharacterSelectModel");
 
     CHARACTER_SELECT_BACK_FROM_CREATE = false;
 
     CHARACTER_LIST_OFFSET = 0;
+
+	CharacterSelect_RefreshNavBarEnabledState();
 end
 
 local translationTable = { };	-- for character reordering: key = button index, value = character ID
@@ -273,6 +276,12 @@ function CharacterSelect_OnEvent(self, event, ...)
             self.undeleteNoCharacters = true;
             return;
         elseif (not CHARACTER_SELECT_BACK_FROM_CREATE and numChars == 0) then
+			local connectedToWoW = select(2, C_Login.GetState());
+			if not connectedToWoW then
+				-- If we're disconnected, don't change screens. We either DC'd or are switching realms and will get a new character list soon.
+				return;
+			end
+
             if (IsKioskGlueEnabled()) then
                 GlueParent_SetScreen("kioskmodesplash");
             elseif not IsWowTokenLimitedModeEnabled() then
@@ -426,12 +435,31 @@ function CharacterSelect_OnEvent(self, event, ...)
         CharacterSelect_ConditionallyLoadAccountSaveUI();
     elseif ( event == "ACCOUNT_LOCKED_POST_SAVE_UPDATE") then
         CharacterSelect_UpdateIfUpdateIsNotPending();
+	elseif ( event == "NAV_BAR_ENABLED_CHANGED" ) then
+		CharacterSelect_RefreshNavBarEnabledState();
 	end
 end
 
 function CharacterSelect_UpdateIfUpdateIsNotPending()
 	if ( not IsCharacterListUpdatePending() ) then
 		UpdateCharacterList();
+	end
+end
+
+function CharacterSelect_RefreshNavBarEnabledState()
+	if ( not CharacterSelectUI.VisibilityFramesContainer.NavBar ) then
+		return;
+	end
+
+	CharacterSelectUI.useNavBar = IsNavBarEnabled();
+	if CharacterSelectUI.useNavBar then
+		CharacterSelectUI.VisibilityFramesContainer.NavBar:Show();
+		CharacterSelectMenuButton:Hide();
+		StoreButton:Hide();
+	else
+		CharacterSelectUI.VisibilityFramesContainer.NavBar:Hide();
+		CharacterSelectMenuButton:Show();
+		StoreButton:Show();
 	end
 end
 
@@ -673,12 +701,20 @@ function CharacterSelect_SaveCharacterOrder()
     end
 end
 
+-- This hack enables shared code to call this Mainline API despite Classic not implementing it.
+CharacterSelectListUtil = {};
+CharacterSelectListUtil.SaveCharacterOrder = CharacterSelect_SaveCharacterOrder;
+
 function CharacterSelect_SetRetrievingCharacters(retrieving, success)
     if ( retrieving ~= CharacterSelect.retrievingCharacters ) then
         CharacterSelect.retrievingCharacters = retrieving;
 
         if ( retrieving ) then
-            GlueDialog_Show("RETRIEVING_CHARACTER_LIST");
+			-- Do not stop showing the login queue dialog if currently showing.
+			local visibleGlueDialog = GlueDialog_GetVisible();
+			if ( visibleGlueDialog ~= "QUEUED_WITH_FCM" and visibleGlueDialog ~= "QUEUED_NORMAL" ) then
+				GlueDialog_Show("RETRIEVING_CHARACTER_LIST");
+			end
         else
             if ( success ) then
                 GlueDialog_Hide("RETRIEVING_CHARACTER_LIST");
@@ -748,7 +784,7 @@ end
 function CharacterSelect_OnKeyDown(self,key)
     if ( key == "ESCAPE" ) then
         if (C_Login.IsLauncherLogin() ) then
-            GlueMenuFrame:SetShown(not GlueMenuFrame:IsShown());
+            GlueMenuFrameUtil.ToggleMenu();
         elseif (CharSelectServicesFlowFrame:IsShown()) then
             CharSelectServicesFlowFrame:Hide();
         elseif ( CopyCharacterFrame:IsShown() ) then
@@ -2095,11 +2131,17 @@ function CharacterSelect_IsStoreAvailable()
 end
 
 function CharacterSelect_UpdateStoreButton()
-    if ( CharacterSelect_IsStoreAvailable() and not Kiosk.IsEnabled()) then
-        StoreButton:Show();
-    else
-        StoreButton:Hide();
-    end
+	local enabled = CharacterSelect_IsStoreAvailable() and not Kiosk.IsEnabled();
+	if CharacterSelectUI.useNavBar then
+		StoreButton:Hide();
+		CharacterSelectUI.VisibilityFramesContainer.NavBar:SetStoreButtonEnabled(enabled);
+	else
+		if enabled then
+			StoreButton:Show();
+		else
+			StoreButton:Hide();
+		end
+	end
 end
 
 StaticPopupDialogs["TOKEN_GAME_TIME_OPTION_NOT_AVAILABLE"] = {
@@ -2144,6 +2186,7 @@ function CharacterSelect_UpdateButtonState()
 	local canCreateCharacter = CanCreateCharacter();
     local boostInProgress = select(19,GetCharacterInfo(GetCharacterSelection()));
     local isAccountLocked = CharacterSelect_IsAccountLocked();
+	local isStoreAvailable = CharacterSelect_IsStoreAvailable();
 
     CharSelectEnterWorldButton:SetEnabled(CharacterSelect_AllowedToEnterWorld());
     CharacterSelectBackButton:SetEnabled(servicesEnabled and not undeleting and not boostInProgress);
@@ -2157,7 +2200,12 @@ function CharacterSelect_UpdateButtonState()
     CharacterTemplatesFrame.CreateTemplateButton:SetEnabled(servicesEnabled and not undeleting and not redemptionInProgress and not isAccountLocked);
     CharacterSelectMenuButton:SetEnabled(servicesEnabled and not redemptionInProgress);
     CharSelectCreateCharacterButton:SetEnabled(canCreateCharacter and servicesEnabled and not redemptionInProgress and not isAccountLocked and not IsWowTokenLimitedModeEnabled());
-    StoreButton:SetEnabled(servicesEnabled and not undeleting and not redemptionInProgress and not isAccountLocked);
+	if StoreButton then
+		StoreButton:SetEnabled(servicesEnabled and not undeleting and not redemptionInProgress and not isAccountLocked and isStoreAvailable);
+	end
+	if CharacterSelectUI.VisibilityFramesContainer.NavBar then
+		CharacterSelectUI.VisibilityFramesContainer.NavBar:SetStoreButtonEnabled(servicesEnabled and not undeleting and not redemptionInProgress and not isAccountLocked and isStoreAvailable);
+	end
 
 	if CharacterSelect.VASPools then
 		for frame in CharacterSelect.VASPools:EnumerateActive() do
@@ -2225,7 +2273,11 @@ function CharacterSelect_ConditionallyLoadAccountSaveUI()
             AccountSaveFrame:Show();
 
             if (GameRoomBillingFrame:IsShown()) then
-                GameRoomBillingFrame:SetPoint("TOPLEFT", StoreButton, "TOPRIGHT");
+				if StoreButton then
+					GameRoomBillingFrame:SetPoint("TOPLEFT", StoreButton, "TOPRIGHT");
+				else
+					GameRoomBillingFrame:SetPoint("TOPLEFT", CharacterSelectAddonsButton, "TOPRIGHT");
+				end
             end
         end
     elseif AccountSaveFrame then
@@ -2816,25 +2868,22 @@ end
 GameLogoDarkBackdropMixin = {};
 
 function GameLogoDarkBackdropMixin:OnLoad()
-	self:RegisterEvent("GAME_MODE_CHANGED");
+	self:RegisterEvent("GAME_MODE_DISPLAY_INFO_UPDATED");
 	self:Update();
 end
 
 function GameLogoDarkBackdropMixin:OnEvent(event)
-	if event == "GAME_MODE_CHANGED" then
+	if event == "GAME_MODE_DISPLAY_INFO_UPDATED" then
 		self:Update();
 	end
 end
 
 function GameLogoDarkBackdropMixin:Update()
-	local gameModeRecordID = C_GameModeManager.GetCurrentGameModeRecordID();
-	if gameModeRecordID then
-		local gameModeDisplayInfo = C_GameModeManager.GetGameModeDisplayInfo(gameModeRecordID);
-		if gameModeDisplayInfo then
-			if gameModeDisplayInfo.logoUsesDarkBackdrop then
-				self.BackdropTexture:Show();
-				return;
-			end
+	local gameModeDisplayInfo = C_GameRules.GetCurrentGameModeDisplayInfo();
+	if gameModeDisplayInfo then
+		if gameModeDisplayInfo.logoUsesDarkBackdrop then
+			self.BackdropTexture:Show();
+			return;
 		end
 	end
 

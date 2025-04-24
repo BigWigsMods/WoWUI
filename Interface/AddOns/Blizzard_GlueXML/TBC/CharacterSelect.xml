@@ -886,6 +886,7 @@
 							<OnLeave function="CharacterSelectHighResButton_OnLeave"/>
 							<OnUpdate>
 								GlueButtonMaster_OnUpdate(self, elapsed);
+								GlueParent_DeathKnightButtonSwap(self);
 							</OnUpdate>
 						</Scripts>
 					</Button>
@@ -910,7 +911,7 @@
 								self:SetShown(C_Login.IsLauncherLogin());
 							</OnEvent>
 							<OnClick>
-								GlueMenuFrame_Show();
+								GlueMenuFrameUtil.ShowMenu();
 							</OnClick>
 							<OnUpdate>
 								GlueButtonMaster_OnUpdate(self, elapsed);

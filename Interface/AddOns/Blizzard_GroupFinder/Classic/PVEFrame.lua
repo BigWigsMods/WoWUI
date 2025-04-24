@@ -196,7 +196,7 @@ end
 -- GROUP FINDER
 ---------------------------------------------------------------
 
-local groupFrames = { "LFDParentFrame", "RaidFinderFrame", "LFGListPVEStub" }
+local groupFrames = { "LFDParentFrame", "RaidFinderFrame", "LFGListPVEStub", "ScenarioFinderFrame" }
 
 function GroupFinderFrame_OnLoad(self)
 	SetPortraitToTexture(self.groupButton1.icon, "Interface\\Icons\\INV_Helmet_08");
@@ -205,6 +205,8 @@ function GroupFinderFrame_OnLoad(self)
 	self.groupButton2.name:SetText(RAID_FINDER_PVEFRAME);
 	SetPortraitToTexture(self.groupButton3.icon, "Interface\\Icons\\Achievement_General_StayClassy");
 	self.groupButton3.name:SetText(LFGLIST_NAME);
+	SetPortraitToTexture(self.groupButton4.icon, "Interface\\Icons\\Icon_Scenarios");
+	self.groupButton4.name:SetText(SCENARIOS_PVEFRAME);
 
 	GroupFinderFrame_EvaluateButtonVisibility(self);
 
@@ -257,6 +259,20 @@ function GroupFinderFrame_EvaluateButtonVisibility(self)
 		self.groupButton3:Show();
 		self.groupButton3.tooltip = nil;
 		GroupFinderFrameButton_SetEnabled(self.groupButton3, true);
+	end
+
+	visible = (ScenariosList and #ScenariosList > 0) or false
+	canUse, failureReason = C_LFGInfo.CanPlayerUseScenarioFinder();
+	if not visible then
+		self.groupButton4:Hide();
+	elseif not canUse then
+		self.groupButton4:Show();
+		GroupFinderFrameButton_SetEnabled(self.groupButton4, false);
+		self.groupButton4.tooltip = failureReason;
+	else
+		self.groupButton4:Show();
+		self.groupButton4.tooltip = nil;
+		GroupFinderFrameButton_SetEnabled(self.groupButton4, true);
 	end
 end
 
@@ -315,6 +331,7 @@ function GroupFinderFrame_OnShow(self)
 	PVEFrame:SetTitle(GROUP_FINDER);
 	GroupFinderFrame_EvaluateButtonVisibility(self);
 	GroupFinderFrame_EvaluateHelpTips(self);
+	ScenarioQueueFrame_Update();
 end
 
 function GroupFinderFrame_ShowGroupFrame(frame)

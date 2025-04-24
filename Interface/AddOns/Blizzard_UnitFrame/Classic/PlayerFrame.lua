@@ -723,7 +723,7 @@ function PlayerFrame_HideVehicleTexture()
 	elseif ( class == "DEATHKNIGHT" ) then
 		RuneFrame:Show();
 	elseif ( class == "PRIEST" and PriestBarFrame) then
-		PriestBarFrame_CheckAndShow();
+		PriestBarFrame:CheckAndShow();
 	end
 end
 

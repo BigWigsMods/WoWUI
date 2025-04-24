@@ -7,11 +7,11 @@ function IsPlayerGuid(guid)
 end
 
 function IsPlayerInitialSpec()
-	if(GetSpecialization() == nil) then
-		return false
+	if(C_SpecializationInfo.GetSpecialization() == nil) then
+		return false;
 	end
 
-	return GetSpecialization() > GetNumSpecializations();
+	return C_SpecializationInfo.GetSpecialization() > GetNumSpecializations();
 end
 
 function GetNameAndServerNameFromGUID(unitGUID)
@@ -30,9 +30,9 @@ end
 PlayerUtil = {};
 
 function PlayerUtil.GetCurrentSpecID()
-	local currentSpecialization = GetSpecialization();
+	local currentSpecialization = C_SpecializationInfo.GetSpecialization();
 	if currentSpecialization then
-		return GetSpecializationInfo(currentSpecialization);
+		return C_SpecializationInfo.GetSpecializationInfo(currentSpecialization);
 	end
 
 	return nil;
