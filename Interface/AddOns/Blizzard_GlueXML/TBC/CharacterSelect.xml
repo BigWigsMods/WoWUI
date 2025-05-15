@@ -1664,6 +1664,72 @@
 									</Frame>
 								</Frames>
 							</Frame>
+							<Frame name="CharacterUpgradeMaxLevelWarningFrame" frameStrata="DIALOG" hidden="true">
+								<Size x="480" y="260"/>
+								<Anchors>
+									<Anchor point="CENTER" relativeTo="GlueParent" relativePoint="CENTER" x="0" y="0"/>
+								</Anchors>
+								<Frames>
+									<Frame name="CharacterUpgradeMaxLevelWarningBackground" inherits="BackdropTemplate">
+										<KeyValues>
+											<KeyValue key="backdropInfo" value="BACKDROP_DARK_DIALOG_32_32" type="global"/>
+										</KeyValues>
+										<Size x="480" y="261"/>
+										<Anchors>
+											<Anchor point="CENTER" x="0" y="0"/>
+										</Anchors>
+										<Layers>
+											<Layer level="ARTWORK">
+												<FontString parentKey="Text" inherits="GameFontNormalMed2" text="This Character is already max level">
+													<Size x="430" y="0"/>
+													<Anchors>
+														<Anchor point="TOP" x="0" y="-24"/>
+													</Anchors>
+													<Color r="1" g="1" b="1"/>
+												</FontString>
+												<FontString parentKey="CharacterDetails" inherits="GlueFontNormalHuge" text="Thrall Level 1 Orc Warrior">
+													<Size x="430" y="0"/>
+													<Anchors>
+														<Anchor point="TOP" relativeKey="$parent.Text" relativePoint="BOTTOM" x="0" y="-23"/>
+													</Anchors>
+												</FontString>
+											</Layer>
+										</Layers>
+										<Frames>
+											<Button parentKey="ConfirmButton" inherits="GlueButtonSmallTemplate" text="CHARACTER_UPGRADE_FINISH_LABEL">
+												<Size x="160" y="34"/>
+												<Anchors>
+													<Anchor point="BOTTOMRIGHT" relativeTo="CharacterUpgradeMaxLevelWarningBackground" relativePoint="BOTTOM">
+														<Offset x="20" y="16"/>
+													</Anchor>
+												</Anchors>
+												<Scripts>
+													<OnShow function="CharacterUpgradeMaxLevelWarningFrameConfirmButton_OnShow"/>
+													<OnClick function="CharacterUpgradeMaxLevelWarningFrameConfirmButton_OnClick"/>
+													<OnUpdate>
+														CharacterUpgradeMaxLevelWarningFrameConfirmButton_Update(self, elapsed);
+													</OnUpdate>
+												</Scripts>
+											</Button>
+											<Button parentKey="CancelButton" inherits="GlueButtonSmallTemplate" text="CANCEL">
+												<Size x="100" y="34"/>
+												<Anchors>
+													<Anchor point="LEFT" relativeKey="$parent.ConfirmButton" relativePoint="RIGHT" x="6" y="0"/>
+												</Anchors>
+												<Scripts>
+													<OnClick function="CharacterUpgradeMaxLevelWarningFrameCancelButton_OnClick"/>
+													<OnUpdate function="GlueParent_DeathKnightButtonSwap"/>
+												</Scripts>
+											</Button>
+										</Frames>
+										<Scripts>
+											<OnLoad inherit="prepend">
+												self.Text:SetSpacing(4);
+											</OnLoad>
+										</Scripts>
+									</Frame>
+								</Frames>
+							</Frame>
 						</Frames>
 						<Scripts>
 							<OnShow>
