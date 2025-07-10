@@ -829,7 +829,8 @@ function UnitPopupGuildPromoteButtonMixin:CanShow(contextData)
 		return false;
 	end
 
-	return contextData.name ~= UnitNameUnmodified("player");
+	local playerName, playerServer = UnitFullName("player");
+	return playerName ~= contextData.name or playerServer ~= contextData.server;
 end
 
 function UnitPopupGuildPromoteButtonMixin:OnClick(contextData)
@@ -3342,9 +3343,9 @@ function UnitPopupItemQuality2DescButtonMixin:GetText(contextData)
 end
 
 function UnitPopupItemQuality2DescButtonMixin:GetColor()
-	local itemQualityColor = ITEM_QUALITY_COLORS[self:GetID()];
-	if itemQualityColor then
-		return itemQualityColor.color:GetRGB();
+	local colorData = ColorManager.GetColorDataForItemQuality(self:GetID());
+	if colorData then
+		return colorData.color:GetRGB();
 	end
 	return 1, 1, 1;
 end
@@ -3538,6 +3539,10 @@ function UnitPopupSelectRoleButtonMixin:CanShow(contextData)
 	end
 
 	if HasLFGRestrictions() then
+		return false;
+	end
+
+	if UnitInPartyIsAI(contextData.unit) then
 		return false;
 	end
 

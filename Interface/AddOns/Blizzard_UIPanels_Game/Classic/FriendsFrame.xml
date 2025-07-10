@@ -634,7 +634,7 @@ TRAVEL PASS
 		</Size>
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString name="$parentText" inherits="GameFontNormalSmall">
+				<FontString name="$parentText" parentKey="Text" inherits="GameFontNormalSmall">
 					<Anchors>
 						<Anchor point="LEFT" relativePoint="RIGHT">
 							<Offset>
@@ -2771,7 +2771,7 @@ TRAVEL PASS
 								<DisabledTexture file="Interface\Buttons\UI-MinusButton-Disabled"/>
 								<HighlightTexture file="Interface\Buttons\UI-PlusButton-Hilight" alphaMode="ADD"/>
 							</Button>
-							<CheckButton name="GuildControlPopupFrameCheckbox1" inherits="GuildControlPopupFrameCheckboxTemplate" id="1">
+							<CheckButton name="GuildControlPopupFrameCheckbox1" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="1">
 								<Anchors>
 									<Anchor point="TOPLEFT">
 										<Offset>
@@ -2780,7 +2780,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox3" inherits="GuildControlPopupFrameCheckboxTemplate" id="3">
+							<CheckButton name="GuildControlPopupFrameCheckbox3" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="3">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox1" relativePoint="BOTTOM">
 										<Offset>
@@ -2789,7 +2789,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox5" inherits="GuildControlPopupFrameCheckboxTemplate" id="5">
+							<CheckButton name="GuildControlPopupFrameCheckbox5" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="5">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox3" relativePoint="BOTTOM">
 										<Offset>
@@ -2798,7 +2798,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox7" inherits="GuildControlPopupFrameCheckboxTemplate" id="7">
+							<CheckButton name="GuildControlPopupFrameCheckbox7" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="7">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox5" relativePoint="BOTTOM">
 										<Offset>
@@ -2807,7 +2807,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox9" inherits="GuildControlPopupFrameCheckboxTemplate" id="9">
+							<CheckButton name="GuildControlPopupFrameCheckbox9" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="9">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox7" relativePoint="BOTTOM">
 										<Offset>
@@ -2816,7 +2816,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox11" inherits="GuildControlPopupFrameCheckboxTemplate" id="11">
+							<CheckButton name="GuildControlPopupFrameCheckbox11" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="11">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox9" relativePoint="BOTTOM">
 										<Offset>
@@ -2825,7 +2825,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox13" inherits="GuildControlPopupFrameCheckboxTemplate" id="13">
+							<CheckButton name="GuildControlPopupFrameCheckbox13" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="13">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox11" relativePoint="BOTTOM">
 										<Offset>
@@ -2895,7 +2895,7 @@ TRAVEL PASS
 									</EditBox>
 								</Frames>
 							</Frame>
-							<CheckButton name="GuildControlPopupFrameCheckbox2" inherits="GuildControlPopupFrameCheckboxTemplate" id="2">
+							<CheckButton name="GuildControlPopupFrameCheckbox2" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="2">
 								<Anchors>
 									<Anchor point="LEFT" relativeTo="GuildControlPopupFrameCheckbox1" relativePoint="RIGHT">
 										<Offset>
@@ -2904,7 +2904,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox4" inherits="GuildControlPopupFrameCheckboxTemplate" id="4">
+							<CheckButton name="GuildControlPopupFrameCheckbox4" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="4">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox2" relativePoint="BOTTOM">
 										<Offset>
@@ -2913,7 +2913,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox6" inherits="GuildControlPopupFrameCheckboxTemplate" id="6">
+							<CheckButton name="GuildControlPopupFrameCheckbox6" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="6">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox4" relativePoint="BOTTOM">
 										<Offset>
@@ -2922,7 +2922,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox8" inherits="GuildControlPopupFrameCheckboxTemplate" id="8">
+							<CheckButton name="GuildControlPopupFrameCheckbox8" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="8">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox6" relativePoint="BOTTOM">
 										<Offset>
@@ -2931,7 +2931,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox10" inherits="GuildControlPopupFrameCheckboxTemplate" id="10">
+							<CheckButton name="GuildControlPopupFrameCheckbox10" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="10">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox8" relativePoint="BOTTOM">
 										<Offset>
@@ -2940,7 +2940,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox12" inherits="GuildControlPopupFrameCheckboxTemplate" id="12">
+							<CheckButton name="GuildControlPopupFrameCheckbox12" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="12">
 								<Anchors>
 									<Anchor point="TOP" relativeTo="GuildControlPopupFrameCheckbox10" relativePoint="BOTTOM">
 										<Offset>
@@ -2949,7 +2949,7 @@ TRAVEL PASS
 									</Anchor>
 								</Anchors>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox16" inherits="GuildControlPopupFrameCheckboxTemplate" id="16">
+							<CheckButton name="GuildControlPopupFrameCheckbox16" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="16">
 								<Anchors>
 									<Anchor point="LEFT" relativeTo="GuildControlWithdrawGoldText" relativePoint="RIGHT">
 										<Offset x="4" y="-1"/>
@@ -2964,7 +2964,6 @@ TRAVEL PASS
 										end
 										GuildControlSetRankFlag(self:GetID(), self:GetChecked());
 										GuildControlPopupAcceptButton:Enable();
-										WithdrawGoldEditBox_Update();
 									</OnClick>
 									<OnEnter>
 										GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -2975,7 +2974,7 @@ TRAVEL PASS
 									</OnLeave>
 								</Scripts>
 							</CheckButton>
-							<CheckButton name="GuildControlPopupFrameCheckbox15" inherits="GuildControlPopupFrameCheckboxTemplate" id="15">
+							<CheckButton name="GuildControlPopupFrameCheckbox15" inherits="GuildControlPopupFrameCheckboxTemplate" parentArray="PermissionCheckboxes" id="15">
 								<Anchors>
 									<Anchor point="LEFT" relativeTo="GuildControlPopupFrameCheckbox16Text" relativePoint="RIGHT">
 										<Offset x="12" y="-1"/>
@@ -2984,13 +2983,12 @@ TRAVEL PASS
 								<Scripts>
 									<OnClick>
 										if ( self:GetChecked() ) then
-										PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
+											PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
 										else
-										PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+											PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 										end
 										GuildControlSetRankFlag(self:GetID(), self:GetChecked());
 										GuildControlPopupAcceptButton:Enable();
-										WithdrawGoldEditBox_Update();
 									</OnClick>
 									<OnEnter>
 										GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -3140,7 +3138,7 @@ TRAVEL PASS
 									<OnClick>
 										SetPendingGuildBankTabPermissions(GuildControlPopupFrameTabPermissions.selectedTab, self:GetID(), self:GetChecked());
 										GuildControlPopupAcceptButton:Enable();
-										GuildControlPopup_UpdateDepositCheckbox();
+										GuildControlPopup_UpdateBankTabOptions(self:GetChecked());
 									</OnClick>
 								</Scripts>
 							</CheckButton>
@@ -3212,7 +3210,7 @@ TRAVEL PASS
 											<OnTextChanged>
 												local amount = self:GetText();
 												if(amount and amount ~= "" and amount ~= UNLIMITED) then
-												SetPendingGuildBankTabWithdraw(GuildControlPopupFrameTabPermissions.selectedTab, amount);
+													SetPendingGuildBankTabWithdraw(GuildControlPopupFrameTabPermissions.selectedTab, tonumber(amount));
 												end
 											</OnTextChanged>
 											<OnEnterPressed>

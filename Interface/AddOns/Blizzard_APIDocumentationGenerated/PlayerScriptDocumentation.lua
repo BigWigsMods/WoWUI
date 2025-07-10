@@ -129,10 +129,6 @@ local PlayerScript =
 			Type = "Function",
 		},
 		{
-			Name = "ConfirmPetUnlearn",
-			Type = "Function",
-		},
-		{
 			Name = "ConfirmTalentWipe",
 			Type = "Function",
 		},
@@ -219,6 +215,15 @@ local PlayerScript =
 			Returns =
 			{
 				{ Name = "result", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "GetLootSpecialization",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "specializationID", Type = "number", Nilable = false },
 			},
 		},
 		{
@@ -545,6 +550,15 @@ local PlayerScript =
 			Arguments =
 			{
 				{ Name = "cemetaryID", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "SetLootSpecialization",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "specializationID", Type = "number", Nilable = false },
 			},
 		},
 		{

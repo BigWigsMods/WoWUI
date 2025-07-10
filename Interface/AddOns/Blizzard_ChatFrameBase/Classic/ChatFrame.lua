@@ -2556,11 +2556,11 @@ SlashCmdList["SPECTATOR_WARGAME"] = function(msg)
 
 	local bnetIDGameAccount1 = BNet_GetBNetIDAccountFromCharacterName(target1) or BNet_GetBNetIDAccount(target1);
 	if not bnetIDGameAccount1 then
-		ConsolePrint("Failed to find StartSpectatorWarGame target1:", target1);
+		C_Log.LogErrorMessage("Failed to find StartSpectatorWarGame target1:", target1);
 	end
 	local bnetIDGameAccount2 = BNet_GetBNetIDAccountFromCharacterName(target2) or BNet_GetBNetIDAccount(target2);
 	if not bnetIDGameAccount2 then
-		ConsolePrint("Failed to find StartSpectatorWarGame target2:", target2);
+		C_Log.LogErrorMessage("Failed to find StartSpectatorWarGame target2:", target2);
 	end
 	if (area == "" or area == "nil" or area == "0") then area = nil end
 	StartSpectatorWarGame(bnetIDGameAccount1 or target1, bnetIDGameAccount2 or target2, size, area, ValueToBoolean(isTournamentMode));
@@ -4368,12 +4368,13 @@ function ChatEdit_DeactivateChat(editBox)
 end
 
 function ChatEdit_ChooseBoxForSend(preferredChatFrame)
-	if ( (not IsVoiceTranscription(ChatEdit_GetLastActiveWindow().chatFrame)) and GetCVar("chatStyle") == "classic" ) then
+	local lastActiveWindow = ChatEdit_GetLastActiveWindow();
+	if ( (not (lastActiveWindow and IsVoiceTranscription(lastActiveWindow.chatFrame))) and GetCVar("chatStyle") == "classic" ) then
 		return DEFAULT_CHAT_FRAME.editBox;
 	elseif ( preferredChatFrame and preferredChatFrame:IsShown() ) then
 		return preferredChatFrame.editBox;
-	elseif ( ChatEdit_GetLastActiveWindow()  and ChatEdit_GetLastActiveWindow():GetParent():IsShown() ) then
-		return ChatEdit_GetLastActiveWindow();
+	elseif ( lastActiveWindow  and lastActiveWindow:GetParent():IsShown() ) then
+		return lastActiveWindow;
 	else
 		return FCFDock_GetSelectedWindow(GENERAL_CHAT_DOCK).editBox;
 	end

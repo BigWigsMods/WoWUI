@@ -7,6 +7,26 @@ local SpecializationInfo =
 	Functions =
 	{
 		{
+			Name = "CanPlayerUseTalentSpecUI",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "canUse", Type = "bool", Nilable = false },
+				{ Name = "failureReason", Type = "string", Nilable = false },
+			},
+		},
+		{
+			Name = "CanPlayerUseTalentUI",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "canUse", Type = "bool", Nilable = false },
+				{ Name = "failureReason", Type = "string", Nilable = false },
+			},
+		},
+		{
 			Name = "GetNumSpecializationsForClassID",
 			Type = "Function",
 
@@ -20,10 +40,38 @@ local SpecializationInfo =
 				{ Name = "specCount", Type = "number", Nilable = false },
 			},
 		},
+		{
+			Name = "IsInitialized",
+			Type = "Function",
+
+			Returns =
+			{
+				{ Name = "isSpecializationDataInitialized", Type = "bool", Nilable = false },
+			},
+		},
+		{
+			Name = "SetActiveSpecGroup",
+			Type = "Function",
+
+			Arguments =
+			{
+				{ Name = "groupIndex", Type = "number", Nilable = false },
+			},
+		},
 	},
 
 	Events =
 	{
+		{
+			Name = "ActiveTalentGroupChanged",
+			Type = "Event",
+			LiteralName = "ACTIVE_TALENT_GROUP_CHANGED",
+			Payload =
+			{
+				{ Name = "curr", Type = "number", Nilable = false },
+				{ Name = "prev", Type = "number", Nilable = false },
+			},
+		},
 		{
 			Name = "ConfirmPetUnlearn",
 			Type = "Event",
@@ -41,6 +89,35 @@ local SpecializationInfo =
 			{
 				{ Name = "cost", Type = "number", Nilable = false },
 				{ Name = "respecType", Type = "number", Nilable = false },
+			},
+		},
+		{
+			Name = "PetSpecializationChanged",
+			Type = "Event",
+			LiteralName = "PET_SPECIALIZATION_CHANGED",
+		},
+		{
+			Name = "PlayerLearnPvpTalentFailed",
+			Type = "Event",
+			LiteralName = "PLAYER_LEARN_PVP_TALENT_FAILED",
+		},
+		{
+			Name = "PlayerLearnTalentFailed",
+			Type = "Event",
+			LiteralName = "PLAYER_LEARN_TALENT_FAILED",
+		},
+		{
+			Name = "PlayerTalentUpdate",
+			Type = "Event",
+			LiteralName = "PLAYER_TALENT_UPDATE",
+		},
+		{
+			Name = "SpecInvoluntarilyChanged",
+			Type = "Event",
+			LiteralName = "SPEC_INVOLUNTARILY_CHANGED",
+			Payload =
+			{
+				{ Name = "isPet", Type = "bool", Nilable = false },
 			},
 		},
 		{
