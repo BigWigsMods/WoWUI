@@ -129,6 +129,10 @@ local PlayerScript =
 			Type = "Function",
 		},
 		{
+			Name = "ConfirmPetUnlearn",
+			Type = "Function",
+		},
+		{
 			Name = "ConfirmTalentWipe",
 			Type = "Function",
 		},

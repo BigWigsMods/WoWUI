@@ -4579,6 +4579,14 @@ function ChatEdit_SetLastToldTarget(name, chatType)
 	ChatEdit_LastToldType = chatType;
 end
 
+
+local chatTypesThatRequireTellTarget = 
+{
+	BN_WHISPER = true,
+	WHISPER = true,
+	SMART_WHISPER = true,
+};
+
 function ChatEdit_UpdateHeader(editBox)
 	if IsMacroEditBox(editBox) then
 		return;
@@ -4586,6 +4594,11 @@ function ChatEdit_UpdateHeader(editBox)
 
 	local type = editBox:GetAttribute("chatType");
 	if ( not type ) then
+		return;
+	end
+
+	local tellTarget  = editBox:GetAttribute("tellTarget");
+	if not tellTarget and chatTypesThatRequireTellTarget[type] then
 		return;
 	end
 
@@ -4607,7 +4620,7 @@ function ChatEdit_UpdateHeader(editBox)
 	--BN_WHISPER FIXME
 	if ( type == "SMART_WHISPER" ) then
 		--If we have a bnetIDAccount or this name, it's a BN whisper.
-		if ( BNet_GetBNetIDAccount(editBox:GetAttribute("tellTarget")) ) then
+		if ( BNet_GetBNetIDAccount(tellTarget) ) then
 			editBox:SetAttribute("chatType", "BN_WHISPER");
 		else
 			editBox:SetAttribute("chatType", "WHISPER");
@@ -4615,11 +4628,9 @@ function ChatEdit_UpdateHeader(editBox)
 		ChatEdit_UpdateHeader(editBox);
 		return;
 	elseif ( type == "WHISPER" ) then
-		local tellTarget = editBox:GetAttribute("tellTarget");
 		header:SetFormattedText(CHAT_WHISPER_SEND, tellTarget);
 	elseif ( type == "BN_WHISPER" ) then
-		local name = editBox:GetAttribute("tellTarget");
-		header:SetFormattedText(CHAT_BN_WHISPER_SEND, name);
+		header:SetFormattedText(CHAT_BN_WHISPER_SEND, tellTarget);
 	elseif ( type == "EMOTE" ) then
 		header:SetFormattedText(CHAT_EMOTE_SEND, UnitName("player"));
 	elseif ( type == "CHANNEL" ) then
