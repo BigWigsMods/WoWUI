@@ -6,6 +6,7 @@ MINIMAP_RECORDING_INDICATOR_ON = false;
 
 MINIMAP_EXPANDER_MAXSIZE = 28;
 HUNTER_TRACKING = 1;
+TOWNSFOLK_TRACKING = 2;
 
 LFG_EYE_TEXTURES = { };
 LFG_EYE_TEXTURES["default"] = { file = "Interface\\LFGFrame\\LFG-Eye", width = 512, height = 256, frames = 29, iconSize = 64, delay = 0.1 };
@@ -13,6 +14,35 @@ LFG_EYE_TEXTURES["raid"] = { file = "Interface\\LFGFrame\\LFR-Anim", width = 256
 LFG_EYE_TEXTURES["unknown"] = { file = "Interface\\LFGFrame\\WaitAnim", width = 128, height = 128, frames = 4, iconSize = 64, delay = 0.25 };
 
 MAX_BATTLEFIELD_QUEUES = 3;
+
+local BATTLEFIELD_FRAME_FADE_TIME = 0.15
+
+-- Some tracking states require spell casts to complete before the
+-- state is recognized as active, causing the menu to appear unresponsive
+-- and/or delayed when toggling menu selections. This retains the last
+-- desired state so that the dropdown menu can reflect the user's intention.
+local function CreatePredictedTrackingState()
+	local tbl = {};
+	local state = {};
+
+	tbl.SetSelected = function(self, index, selected)
+		state[index] = selected;
+	end
+
+	tbl.IsSelected = function(self, index)
+		return state[index] == true;
+	end
+
+	tbl.ClearSelections = function(self)
+		state = {};
+
+		C_Minimap.ClearAllTracking();
+	end
+
+	return tbl;
+end
+
+local trackingState = CreatePredictedTrackingState();
 
 function Minimap_OnLoad(self)
 	self.fadeOut = nil;
@@ -145,31 +175,74 @@ function Minimap_ZoomOut()
 end
 
 function MiniMapLFGFrame_OnLoad(self)
-	self:RegisterEvent("LFG_LIST_ACTIVE_ENTRY_UPDATE");
+	self:RegisterEvent("PLAYER_ENTERING_WORLD");
+	self:RegisterEvent("GROUP_ROSTER_UPDATE");
+	self:RegisterEvent("LFG_UPDATE");
+	self:RegisterEvent("LFG_QUEUE_STATUS_UPDATE");
 	self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
 	self:SetFrameLevel(self:GetFrameLevel()+1)
 end
 
 function MiniMapLFGFrame_OnClick(self, button)
 	if ( button == "RightButton" ) then
-		MenuUtil.CreateContextMenu(MiniMapLFGFrame, function(dropdown, rootDescription)
-			rootDescription:SetTag("MENU_MINIMAP_LFG");
-
-			local unlistButton = rootDescription:CreateButton(LFG_LIST_UNLIST, function()
-				C_LFGList.RemoveListing();
-			end);
-			if not (C_LFGList.HasActiveEntryInfo() and LFGListUtil_IsAppEmpowered()) then
-				unlistButton:SetEnabled(false);
-			end
-		end);
+		QueueStatusDropdown_Show(self);
 	else
-		PVEFrame_ToggleFrame();
+		local inBattlefield, showScoreboard = QueueStatus_InActiveBattlefield();
+		if ( IsInLFDBattlefield() ) then
+			inBattlefield = true;
+			showScoreboard = true;
+		end
+		local lfgListActiveEntry = C_LFGList.HasActiveEntryInfo();
+		if ( inBattlefield ) then
+			if ( showScoreboard ) then
+				TogglePVPScoreboardOrResults();
+			end
+		elseif ( lfgListActiveEntry ) then
+			LFGListUtil_OpenBestWindow(true);
+		else
+			--See if we have any active LFGList applications
+			local apps = C_LFGList.GetApplications();
+			for i=1, #apps do
+				local _, appStatus = C_LFGList.GetApplicationInfo(apps[i]);
+				if ( appStatus == "applied" or appStatus == "invited" ) then
+					--We want to open to the LFGList screen
+					LFGListUtil_OpenBestWindow(true);
+					return;
+				end
+			end
+
+			PVEFrame_ShowFrame();
+		end
 	end
 end
 
-function MiniMapLFGFrame_OnEvent(self)
-	if ( event == "LFG_LIST_ACTIVE_ENTRY_UPDATE" ) then
-		if ( C_LFGList.HasActiveEntryInfo() ) then
+function MiniMapLFGFrame_OnEvent(self, event, ...)
+	if (	event == "PLAYER_ENTERING_WORLD" or
+			event == "GROUP_ROSTER_UPDATE" or
+			event == "LFG_UPDATE" or 
+			event == "LFG_QUEUE_STATUS_UPDATE" ) then
+		--Try each LFG type
+		local hasLFGMode = false;
+		for i=1, NUM_LE_LFG_CATEGORYS do
+			local mode, submode = GetLFGMode(i);
+			if ( mode and submode ~= "noteleport" ) then
+				hasLFGMode = true;
+				break;
+			end
+		end
+
+		--Try LFGList entries
+		local hasApp = false;
+		local apps = C_LFGList.GetApplications();
+		for i=1, #apps do
+			local _, appStatus = C_LFGList.GetApplicationInfo(apps[i]);
+			if ( appStatus == "applied" or appStatus == "invited" ) then
+				hasApp = true;
+				break;
+			end
+		end
+
+		if ( C_LFGList.HasActiveEntryInfo() or hasLFGMode or hasApp) then
 			self:Show();
 		else
 			self:Hide();
@@ -178,29 +251,11 @@ function MiniMapLFGFrame_OnEvent(self)
 end
 
 function MiniMapLFGFrame_OnEnter(self)
-	GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT");
-	local activeEntryInfo = C_LFGList.GetActiveEntryInfo();
-	if (activeEntryInfo) then
-		local text = "";
-		for i=1, #activeEntryInfo.activityIDs do
-			local activityInfo = C_LFGList.GetActivityInfoTable(activeEntryInfo.activityIDs[i]);
-			if (activityInfo and activityInfo.fullName ~= "") then
-				text = text .. activityInfo.fullName .. "\n"
-			end
-		end
-
-		if (text ~= "") then
-			GameTooltip:SetText(LFG_TITLE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			GameTooltip:AddLine(text);
-			GameTooltip:Show();
-		else
-			GameTooltip:Hide();
-		end
-	end
+	QueueStatusFrame:Show();
 end
 
 function MiniMapLFGFrame_OnLeave(self)
-	GameTooltip:Hide()
+	QueueStatusFrame:Hide();
 end
 
 function EyeTemplate_OnUpdate(self, elapsed)
@@ -226,7 +281,7 @@ function MinimapButton_OnMouseDown(self, mouseButton)
 		return;
 	end
 	local button = _G[self:GetName().."Icon"];
-	local point, relativeTo, relativePoint, offsetX, offsetY = button:GetPoint(1);
+	local point, relativeTo, relativePoint, offsetX, offsetY = button:GetPoint();
 	button:SetPoint(point, relativeTo, relativePoint, offsetX+1, offsetY-1);
 	self.isDown = 1;
 end
@@ -235,7 +290,7 @@ function MinimapButton_OnMouseUp(self)
 		return;
 	end
 	local button = _G[self:GetName().."Icon"];
-	local point, relativeTo, relativePoint, offsetX, offsetY = button:GetPoint(1);
+	local point, relativeTo, relativePoint, offsetX, offsetY = button:GetPoint();
 	button:SetPoint(point, relativeTo, relativePoint, offsetX-1, offsetY+1);
 	self.isDown = nil;
 end
@@ -289,16 +344,18 @@ function MiniMapTracking_Update()
 	local count = C_Minimap.GetNumTrackingTypes();
 	for id = 1, count do
 		local trackingInfo = C_Minimap.GetTrackingInfo(id);
-		if trackingInfo and trackingInfo.active then
-			if (trackingInfo.type == "spell") then
-				if (currentTexture == trackingInfo.texture) then
+		if trackingInfo then
+			if trackingInfo.active then
+				if (trackingInfo.type == "spell") then 
+					if (currentTexture == trackingInfo.texture) then
+						return;
+					end
+					MiniMapTrackingIcon:SetTexture(trackingInfo.texture);
+					MiniMapTrackingShineFadeIn();
 					return;
+				else
+					bestTexture = trackingInfo.texture;
 				end
-				MiniMapTrackingIcon:SetTexture(trackingInfo.texture);
-				MiniMapTrackingShineFadeIn();
-				return;
-			else
-				bestTexture = trackingInfo.texture;
 			end
 		end
 	end
@@ -306,40 +363,53 @@ function MiniMapTracking_Update()
 	MiniMapTrackingShineFadeIn();
 end
 
+local function ToggleTrackingSelected(info)
+	local selected = trackingState:IsSelected(info.index);
+	local newSelected = not selected;
+	C_Minimap.SetTracking(info.index, newSelected);
+	trackingState:SetSelected(info.index, newSelected);
+end
+
+local function IsTrackingActive(info)
+	return trackingState:IsSelected(info.index);
+end
+
 MiniMapTrackingButtonMixin = { };
 
 function MiniMapTrackingButtonMixin:OnLoad()
 	self:RegisterEvent("MINIMAP_UPDATE_TRACKING");
-	MiniMapTracking_Update();
+	self:RegisterEvent("VARIABLES_LOADED");
+	self:RegisterEvent("CVAR_UPDATE");
+	self:RegisterEvent("SPELLS_CHANGED");
 	MiniMapTrackingBackground:SetAlpha(0.6);
-	
-	local function IsSelected(trackingInfo)
-		local info = C_Minimap.GetTrackingInfo(trackingInfo.index);
-		return info and info.active;
-	end
-
-	local function SetSelected(trackingInfo)
-		local selected = IsSelected(trackingInfo);
-		C_Minimap.SetTracking(trackingInfo.index, not selected);
-	end
 
 	self:SetupMenu(function(dropdown, rootDescription)
 		rootDescription:SetTag("MENU_MINIMAP_TRACKING");
 
 		rootDescription:CreateButton(UNCHECK_ALL, function()
+			trackingState:ClearSelections();
 			C_Minimap.ClearAllTracking();
 			return MenuResponse.Refresh;
 		end);
 
 		local hunterInfo = {};
+		local townfolkInfo = {};
 		local regularInfo = {};
+
+		local class = select(2, UnitClass("player"));
+		local isHunterClass = class == "HUNTER";
 	
 		for index = 1, C_Minimap.GetNumTrackingTypes() do
 			local trackingInfo = C_Minimap.GetTrackingInfo(index);
 			if trackingInfo then
 				trackingInfo.index = index;
-				local tbl = (trackingInfo.subType == HUNTER_TRACKING) and hunterInfo or regularInfo;
-				table.insert(tbl, trackingInfo);
+				if isHunterClass and (trackingInfo.subType == HUNTER_TRACKING) then
+					table.insert(hunterInfo, trackingInfo);
+				elseif trackingInfo.subType == TOWNSFOLK_TRACKING then
+					table.insert(townfolkInfo, trackingInfo);
+				else
+					table.insert(regularInfo, trackingInfo);
+				end
 			end
 		end
 
@@ -350,8 +420,8 @@ function MiniMapTrackingButtonMixin:OnLoad()
 			local texture = trackingInfo.texture;
 			local desc = parentDescription:CreateCheckbox(
 				name,
-				IsSelected,
-				SetSelected,
+				IsTrackingActive,
+				ToggleTrackingSelected,
 				trackingInfo);
 	
 			desc:AddInitializer(function(button, description, menu)
@@ -387,16 +457,40 @@ function MiniMapTrackingButtonMixin:OnLoad()
 				CreateCheckboxWithIcon(hunterMenuDesc, info);
 			end
 		end
+
+		local townfolkCount = #townfolkInfo;
+		if townfolkCount > 0 then
+			local townfolkMenuDesc = rootDescription;
+			if townfolkCount > 1 then
+				townfolkMenuDesc = rootDescription:CreateButton(TOWNSFOLK_TRACKING_TEXT);
+			end
+
+			for index, info in ipairs(townfolkInfo) do
+				CreateCheckboxWithIcon(townfolkMenuDesc, info);
+			end
+		end
 	
 		for index, info in ipairs(regularInfo) do
 			CreateCheckboxWithIcon(rootDescription, info);
 		end
 	end);
+
+	MiniMapTracking_Update();
 end
 
 function MiniMapTrackingButtonMixin:OnEvent(event, arg1)
 	if event == "MINIMAP_UPDATE_TRACKING" then
 		MiniMapTracking_Update();
+	end
+
+	if event == "CVAR_UPDATE" or event == "VARIABLES_LOADED" or event == "SPELLS_CHANGED" or event == "MINIMAP_UPDATE_TRACKING" then
+		-- The initial tracking values are unavailable until these events have fired.
+		for index = 1, C_Minimap.GetNumTrackingTypes() do
+			local trackingInfo = C_Minimap.GetTrackingInfo(index);
+			if trackingInfo then
+				trackingState:SetSelected(index, trackingInfo.active);
+			end
+		end
 	end
 end
 
@@ -424,6 +518,134 @@ function MiniMapTrackingShineFadeOut()
 	UIFrameFadeOut(MiniMapTrackingShine, 0.5);
 end
 
+--
+-- Dungeon Difficulty
+--
+						
+IS_GUILD_GROUP = nil;
+
+function MiniMapInstanceDifficulty_OnEvent(self, event, ...)
+	if ( event == "GUILD_PARTY_STATE_UPDATED" ) then
+		local isGuildGroup = ...;
+		if ( isGuildGroup ~= IS_GUILD_GROUP ) then
+			IS_GUILD_GROUP = isGuildGroup;
+			MiniMapInstanceDifficulty_Update();
+		end
+	elseif ( event == "PLAYER_DIFFICULTY_CHANGED" ) then
+		MiniMapInstanceDifficulty_Update();
+	elseif ( event == "UPDATE_INSTANCE_INFO" ) then
+		RequestGuildPartyState();
+		MiniMapInstanceDifficulty_Update();
+	elseif ( event == "PLAYER_GUILD_UPDATE" ) then
+		local tabard = GuildInstanceDifficulty;
+		SetSmallGuildTabardTextures("player", tabard.emblem, tabard.background, tabard.border);
+		if ( IsInGuild() ) then
+			RequestGuildPartyState();
+		else
+			IS_GUILD_GROUP = nil;
+			MiniMapInstanceDifficulty_Update();
+		end
+	else
+		RequestGuildPartyState();
+	end
+end
+
+function MiniMapInstanceDifficulty_Update()
+	local _, instanceType, difficulty, _, maxPlayers, playerDifficulty, isDynamicInstance, _, instanceGroupSize = GetInstanceInfo();
+	local _, _, isHeroic, isChallengeMode = GetDifficultyInfo(difficulty);
+
+	if ( IS_GUILD_GROUP ) then
+		if ( instanceGroupSize == 0 ) then
+			GuildInstanceDifficultyText:SetText("");
+			GuildInstanceDifficultyDarkBackground:SetAlpha(0);
+			GuildInstanceDifficulty.emblem:SetPoint("TOPLEFT", 12, -16);
+		else
+			GuildInstanceDifficultyText:SetText(instanceGroupSize);
+			GuildInstanceDifficultyDarkBackground:SetAlpha(0.7);
+			GuildInstanceDifficulty.emblem:SetPoint("TOPLEFT", 12, -10);
+		end
+		GuildInstanceDifficultyText:ClearAllPoints();
+		if ( isHeroic or isChallengeMode ) then
+			local symbolTexture;
+			if ( isChallengeMode ) then
+				symbolTexture = GuildInstanceDifficultyChallengeModeTexture;
+				GuildInstanceDifficultyHeroicTexture:Hide();
+			else
+				symbolTexture = GuildInstanceDifficultyHeroicTexture;
+				GuildInstanceDifficultyChallengeModeTexture:Hide();
+			end
+			-- the 1 looks a little off when text is centered
+			if ( instanceGroupSize < 10 ) then
+				symbolTexture:SetPoint("BOTTOMLEFT", 11, 7);
+				GuildInstanceDifficultyText:SetPoint("BOTTOMLEFT", 23, 8);
+			elseif ( instanceGroupSize > 19 ) then
+				symbolTexture:SetPoint("BOTTOMLEFT", 8, 7);
+				GuildInstanceDifficultyText:SetPoint("BOTTOMLEFT", 20, 8);
+			else
+				symbolTexture:SetPoint("BOTTOMLEFT", 8, 7);
+				GuildInstanceDifficultyText:SetPoint("BOTTOMLEFT", 19, 8);
+			end
+			symbolTexture:Show();
+		else
+			GuildInstanceDifficultyHeroicTexture:Hide();
+			GuildInstanceDifficultyChallengeModeTexture:Hide();
+			GuildInstanceDifficultyText:SetPoint("BOTTOM", 2, 8);
+		end
+		MiniMapInstanceDifficulty:Hide();
+		SetSmallGuildTabardTextures("player", GuildInstanceDifficulty.emblem, GuildInstanceDifficulty.background, GuildInstanceDifficulty.border);
+		GuildInstanceDifficulty:Show();
+		MiniMapChallengeMode:Hide();
+	elseif ( isChallengeMode ) then
+		MiniMapChallengeMode:Show();
+		MiniMapInstanceDifficulty:Hide();
+		GuildInstanceDifficulty:Hide();
+	elseif ( instanceType == "raid" or isHeroic ) then
+		MiniMapInstanceDifficultyText:SetText(instanceGroupSize);
+		-- the 1 looks a little off when text is centered
+		local xOffset = 0;
+		if ( instanceGroupSize >= 10 and instanceGroupSize <= 19 ) then
+			xOffset = -1;
+		end
+		if ( isHeroic ) then
+			MiniMapInstanceDifficultyTexture:SetTexCoord(0, 0.25, 0.0703125, 0.4140625);
+			MiniMapInstanceDifficultyText:SetPoint("CENTER", xOffset, -9);
+		else
+			MiniMapInstanceDifficultyTexture:SetTexCoord(0, 0.25, 0.5703125, 0.9140625);
+			MiniMapInstanceDifficultyText:SetPoint("CENTER", xOffset, 5);
+		end
+		MiniMapInstanceDifficulty:Show();
+		GuildInstanceDifficulty:Hide();
+		MiniMapChallengeMode:Hide();
+	else
+		MiniMapInstanceDifficulty:Hide();
+		GuildInstanceDifficulty:Hide();
+		MiniMapChallengeMode:Hide();
+	end
+end
+
+function GuildInstanceDifficulty_OnEnter(self)
+	local guildName = GetGuildInfo("player") or 'None';
+	local _, instanceType, _, _, maxPlayers = GetInstanceInfo();
+	local _, numGuildPresent, numGuildRequired, xpMultiplier = InGuildParty();
+	-- hack alert
+	if ( instanceType == "arena" ) then
+		maxPlayers = numGuildRequired;
+	end
+	GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT", 8, 8);
+	GameTooltip:SetText(GUILD_GROUP, 1, 1, 1);
+	if ( xpMultiplier < 1 ) then
+		GameTooltip:AddLine(string.format(GUILD_ACHIEVEMENTS_ELIGIBLE_MINXP, numGuildRequired, maxPlayers, guildName, xpMultiplier * 100), nil, nil, nil, 1);
+	elseif ( xpMultiplier > 1 ) then
+		GameTooltip:AddLine(string.format(GUILD_ACHIEVEMENTS_ELIGIBLE_MAXXP, guildName, xpMultiplier * 100), nil, nil, nil, 1);
+	else
+		if ( instanceType == "party" and maxPlayers == 5 ) then
+			numGuildRequired = 4;
+		end
+		GameTooltip:AddLine(string.format(GUILD_ACHIEVEMENTS_ELIGIBLE, numGuildRequired, maxPlayers, guildName), nil, nil, nil, 1);
+	end
+	GameTooltip:Show();
+end
+
 -- ============================================ BATTLEFIELDS ===============================================================================
 function MiniMapBattlefieldFrame_OnClick(self, button)
 	-- Hide tooltip
@@ -436,7 +658,7 @@ function MiniMapBattlefieldFrame_OnClick(self, button)
 		else
 			ToggleWorldStateScoreFrame();
 		end
-    end
+	end
 end
 
 function MiniMapBattlefieldFrame_ShowContextMenu(owner)
@@ -504,7 +726,8 @@ function MiniMapBattlefieldFrame_ShowContextMenu(owner)
 	end);
 end
 
-function BattlefieldFrame_UpdateStatus(tooltipOnly)
+function BattlefieldFrame_UpdateStatus(tooltipOnly, mapIndex)
+	local status, mapName, instanceID, queueID, levelRangeMin, levelRangeMax, teamSize, registeredMatch, eligibleInQueue, waitingOnOtherActivity;
 	local numberQueues = 0;
 	local waitTime, timeInQueue;
 	local tooltip;
@@ -515,24 +738,24 @@ function BattlefieldFrame_UpdateStatus(tooltipOnly)
 	MiniMapBattlefieldFrame.tooltip = nil;
 	MiniMapBattlefieldFrame.waitTime = {};
 	MiniMapBattlefieldFrame.status = nil;
-
+	
 	-- Copy current queues into previous queues
 	if ( not tooltipOnly ) then
 		PREVIOUS_BATTLEFIELD_QUEUES = {};
-		for index, value in ipairs(CURRENT_BATTLEFIELD_QUEUES) do
+		for index, value in pairs(CURRENT_BATTLEFIELD_QUEUES) do
 			tinsert(PREVIOUS_BATTLEFIELD_QUEUES, value);
 		end
 		CURRENT_BATTLEFIELD_QUEUES = {};
 	end
-
-	for i=1, MAX_BATTLEFIELD_QUEUES do
-		local status, mapName, instanceID, levelRangeMin, levelRangeMax, teamSize, isRankedArena, _, _, bgtype = GetBattlefieldStatus(i);
+	
+	for i=1, GetMaxBattlefieldID() do
+		status, mapName, instanceID, levelRangeMin, levelRangeMax, teamSize, registeredMatch, eligibleInQueue, waitingOnOtherActivity = GetBattlefieldStatus(i);
 		if ( mapName ) then
 			if (  instanceID ~= 0 ) then
 				mapName = mapName.." "..instanceID;
 			end
 			if ( teamSize ~= 0 ) then
-				if ( isRankedArena ) then
+				if ( registeredMatch ) then
 					mapName = ARENA_RATED_MATCH.." "..format(PVP_TEAMSIZE, teamSize, teamSize);
 				else
 					mapName = ARENA_CASUAL.." "..format(PVP_TEAMSIZE, teamSize, teamSize);
@@ -549,41 +772,56 @@ function BattlefieldFrame_UpdateStatus(tooltipOnly)
 				timeInQueue = GetBattlefieldTimeWaited(i)/1000;
 				if ( waitTime == 0 ) then
 					waitTime = QUEUE_TIME_UNAVAILABLE;
-				elseif ( waitTime < 60000 ) then
+				elseif ( waitTime < 60000 ) then 
 					waitTime = LESS_THAN_ONE_MINUTE;
 				else
 					waitTime = SecondsToTime(waitTime/1000, 1);
 				end
 				MiniMapBattlefieldFrame.waitTime[i] = waitTime;
-				tooltip = format(BATTLEFIELD_IN_QUEUE, mapName, waitTime, SecondsToTime(timeInQueue));
-
+				if( registeredMatch and teamSize == 0 ) then
+					tooltip = format(BATTLEFIELD_IN_QUEUE_RATED, mapName, waitTime, SecondsToTime(timeInQueue));
+				else
+					tooltip = format(BATTLEFIELD_IN_QUEUE, mapName, waitTime, SecondsToTime(timeInQueue));
+				end
+				
 				if ( not tooltipOnly ) then
 					if ( not IsAlreadyInQueue(mapName) ) then
-						PlaySound(SOUNDKIT.PVP_ENTER_QUEUE);
-						UIFrameFadeIn(MiniMapBattlefieldFrame, CHAT_FRAME_FADE_TIME);
+						UIFrameFadeIn(MiniMapBattlefieldFrame, BATTLEFIELD_FRAME_FADE_TIME);
 						BattlegroundShineFadeIn();
+						PlaySound(SOUNDKIT.PVP_ENTER_QUEUE);
 					end
 					tinsert(CURRENT_BATTLEFIELD_QUEUES, mapName);
 				end
 				showRightClickText = 1;
 			elseif ( status == "confirm" ) then
 				-- Have been accepted show enter battleground dialog
-				tooltip = format(BATTLEFIELD_QUEUE_CONFIRM, mapName, SecondsToTime(GetBattlefieldPortExpiration(i)));
-				if ( not tooltipOnly ) then
+				local seconds = SecondsToTime(GetBattlefieldPortExpiration(i));
+				if ( seconds ~= "" ) then
+					tooltip = format(BATTLEFIELD_QUEUE_CONFIRM, mapName, seconds);
+				else
+					tooltip = format(BATTLEFIELD_QUEUE_PENDING_REMOVAL, mapName);
+				end
+				if ( (i==mapIndex) and (not tooltipOnly) ) then
+					-- Battlefield confirm entry popup handled by PVPHelper
 					MiniMapBattlefieldFrame:Show();
 				end
 				showRightClickText = 1;
+				PVPTimerFrame:SetScript("OnUpdate", PVPTimerFrame_OnUpdate);
+				PVPTimerFrame.updating = true;
 			elseif ( status == "active" ) then
 				-- In the battleground
 				if ( teamSize ~= 0 ) then
-					tooltip = mapName;
+					tooltip = mapName;			
 				else
 					tooltip = format(BATTLEFIELD_IN_BATTLEFIELD, mapName);
 				end
-
 				BATTLEFIELD_SHUTDOWN_TIMER = GetBattlefieldInstanceExpiration()/1000;
-				BATTLEFIELD_TIMER_THRESHOLD_INDEX = 1;
-				PREVIOUS_BATTLEFIELD_MOD = 0;
+				if ( BATTLEFIELD_SHUTDOWN_TIMER > 0 and not PVPTimerFrame.updating ) then
+					PVPTimerFrame:SetScript("OnUpdate", PVPTimerFrame_OnUpdate);
+					PVPTimerFrame.updating = true;
+					BATTLEFIELD_TIMER_THRESHOLD_INDEX = 1;
+					PREVIOUS_BATTLEFIELD_MOD = 0;
+				end
 				MiniMapBattlefieldFrame.status = status;
 			elseif ( status == "error" ) then
 				-- Should never happen haha
@@ -594,14 +832,23 @@ function BattlefieldFrame_UpdateStatus(tooltipOnly)
 				else
 					MiniMapBattlefieldFrame.tooltip = tooltip;
 				end
+				
+				if ( not eligibleInQueue and status ~= "active" and status ~= "confirm" ) then
+					if ( waitingOnOtherActivity ) then
+						MiniMapBattlefieldFrame.tooltip = MiniMapBattlefieldFrame.tooltip.."\n\n"..PVP_SUSPENDED_QUEUE_STATUS;
+					else
+						MiniMapBattlefieldFrame.tooltip = MiniMapBattlefieldFrame.tooltip.."\n\n"..PVP_INVALID_QUEUE_STATUS;
+					end
+				end
 			end
 		end
 	end
+	
 	-- See if should add right click message
 	if ( MiniMapBattlefieldFrame.tooltip and showRightClickText ) then
 		MiniMapBattlefieldFrame.tooltip = MiniMapBattlefieldFrame.tooltip.."\n"..RIGHT_CLICK_MESSAGE;
 	end
-
+	
 	if ( not tooltipOnly ) then
 		if ( numberQueues == 0 ) then
 			-- Clear everything out
@@ -609,29 +856,6 @@ function BattlefieldFrame_UpdateStatus(tooltipOnly)
 		else
 			MiniMapBattlefieldFrame:Show();
 		end
-
-		-- Set minimap icon here since it bugs out on login
-		if ( UnitFactionGroup("player") ) then
-			MiniMapBattlefieldIcon:SetTexture("Interface\\BattlefieldFrame\\Battleground-"..UnitFactionGroup("player"));
-		end
 	end
-
-	MiniMapBattlefieldFrame_isArena();
-end
-
-function MiniMapBattlefieldFrame_isArena()
-	-- Set minimap icon here since it bugs out on login
-	local _, _, _, _, _, _, isRankedArena  = GetBattlefieldStatus(1);
-	if (isRankedArena) then
-		MiniMapBattlefieldIcon:SetTexture("Interface\\PVPFrame\\PVP-ArenaPoints-Icon");
-		MiniMapBattlefieldIcon:SetWidth(19);
-		MiniMapBattlefieldIcon:SetHeight(19);
-		MiniMapBattlefieldIcon:SetPoint("CENTER", "MiniMapBattlefieldFrame", "CENTER", -1, 2);
-	elseif ( UnitFactionGroup("player") ) then
-		MiniMapBattlefieldIcon:SetTexture("Interface\\BattlefieldFrame\\Battleground-"..UnitFactionGroup("player"));
-		MiniMapBattlefieldIcon:SetTexCoord(0, 1, 0, 1);
-		MiniMapBattlefieldIcon:SetWidth(32);
-		MiniMapBattlefieldIcon:SetHeight(32);
-		MiniMapBattlefieldIcon:SetPoint("CENTER", "MiniMapBattlefieldFrame", "CENTER", -1, 0);
-	end
+	PVPFrame.numQueues = numberQueues;
 end
