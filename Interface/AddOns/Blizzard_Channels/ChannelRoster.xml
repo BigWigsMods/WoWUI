@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
-..\FrameXML\UI.xsd">
+..\..\..\..\..\WoW\Data\Interface\AddOns\Blizzard_SharedXML\UI.xsd">
 	<Script file="ChannelRoster.lua"/>
 
 	<Frame name="ChannelRosterTemplate" mixin="ChannelRosterMixin" virtual="true">
@@ -35,6 +35,12 @@
 					</Slider>
 				</Frames>
 			</ScrollFrame>
+			<Frame parentKey="Spinner" inherits="SpinnerTemplate" hidden="false">
+				<Size x="32" y="32"/>
+				<Anchors>
+					<Anchor point="CENTER" x="0" y="0"/>
+				</Anchors>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad method="OnLoad"/>

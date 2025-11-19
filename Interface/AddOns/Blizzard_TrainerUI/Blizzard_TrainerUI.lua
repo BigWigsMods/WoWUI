@@ -4,9 +4,9 @@ CLASS_TRAINER_SKILL_HEIGHT = 16;
 MAX_LEARNABLE_PROFESSIONS = 2;
 
 -- Trainer Filter Default Values
-TRAINER_FILTER_AVAILABLE = 1;
-TRAINER_FILTER_UNAVAILABLE = 1;
-TRAINER_FILTER_USED = 0;
+TRAINER_FILTER_AVAILABLE_BOOL = true;
+TRAINER_FILTER_UNAVAILABLE_BOOL = true;
+TRAINER_FILTER_USED_BOOL = false;
 
 SKILL_TEXT_WIDTH = 270;
 
@@ -14,18 +14,18 @@ StaticPopupDialogs["CONFIRM_PROFESSION"] = {
 	text = format(PROFESSION_CONFIRMATION1, "XXX"),
 	button1 = ACCEPT,
 	button2 = CANCEL,
-	OnAccept = function()
+	OnAccept = function(dialog, data)
 		BuyTrainerService(ClassTrainerFrame.selectedService);
-		ClassTrainerFrame.showSkillDetails = nil; 
+		ClassTrainerFrame.showSkillDetails = nil;
 		ClassTrainer_SetSelection(ClassTrainerFrame.selectedService);
 		ClassTrainerFrame_Update();
 	end,
-	OnShow = function(self)
+	OnShow = function(dialog, data)
 		local profCount = GetNumPrimaryProfessions();
 		if ( profCount == 0 ) then
-			_G[self:GetName().."Text"]:SetText(format(PROFESSION_CONFIRMATION1, GetTrainerServiceSkillLine(ClassTrainerFrame.selectedService)));
+			dialog:SetText(format(PROFESSION_CONFIRMATION1, GetTrainerServiceSkillLine(ClassTrainerFrame.selectedService)));
 		else
-			_G[self:GetName().."Text"]:SetText(format(PROFESSION_CONFIRMATION2, GetTrainerServiceSkillLine(ClassTrainerFrame.selectedService)));
+			dialog:SetText(format(PROFESSION_CONFIRMATION2, GetTrainerServiceSkillLine(ClassTrainerFrame.selectedService)));
 		end
 	end,
 	showAlert = 1,
@@ -33,22 +33,58 @@ StaticPopupDialogs["CONFIRM_PROFESSION"] = {
 	hideOnEscape = 1
 };
 
+local function IsSelected(filter)
+	return GetTrainerServiceTypeFilter(filter);
+end
+
+local function SetSelected(filter)
+	ClassTrainerFrame.filterPending = true;
+	SetTrainerServiceTypeFilter(filter, not IsSelected(filter));
+end
+
 function ClassTrainerFrame_Show()
 	ShowUIPanel(ClassTrainerFrame);
 	if ( not ClassTrainerFrame:IsVisible() ) then
 		CloseTrainer();
 		return;
 	end
+end
 
+function ClassTrainerFrame_OnShow(self)
 	ClassTrainerTrainButton:Disable();
 	--Reset scrollbar
-	ClassTrainerListScrollFrameScrollBar:SetMinMaxValues(0, 0); 
+	ClassTrainerListScrollFrameScrollBar:SetMinMaxValues(0, 0);
 	ClassTrainerListScrollFrameScrollBar:SetValue(0);
 
 	ClassTrainer_SelectFirstLearnableSkill();
 	ClassTrainerFrame_Update();
 	UpdateMicroButtons();
-	
+
+	SetTrainerServiceTypeFilter("available", TRAINER_FILTER_AVAILABLE_BOOL);
+	SetTrainerServiceTypeFilter("unavailable", TRAINER_FILTER_UNAVAILABLE_BOOL);
+	SetTrainerServiceTypeFilter("used", TRAINER_FILTER_USED_BOOL);
+
+	self.FilterDropdown:SetSelectionText(function(selections)
+		return FILTER;
+	end);
+	self.FilterDropdown:SetupMenu(function(dropdown, rootDescription)
+		rootDescription:SetTag("MENU_TRAINER_FILTER");
+
+		rootDescription:CreateCheckbox(GREEN_FONT_COLOR:WrapTextInColorCode(AVAILABLE), IsSelected, SetSelected, "available");
+		rootDescription:CreateCheckbox(RED_FONT_COLOR:WrapTextInColorCode(UNAVAILABLE), IsSelected, SetSelected, "unavailable");
+		rootDescription:CreateCheckbox(GRAY_FONT_COLOR:WrapTextInColorCode(USED), IsSelected, SetSelected, "used");
+	end);
+
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
+end
+
+function ClassTrainerFrame_OnHide()
+	CloseTrainer();
+	UpdateMicroButtons();
+	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
+	if ( StaticPopup_Visible("CONFIRM_PROFESSION") ) then
+		StaticPopup_Hide("CONFIRM_PROFESSION");
+	end
 end
 
 function ClassTrainerFrame_Hide()
@@ -61,14 +97,11 @@ function ClassTrainerFrame_OnLoad(self)
 	self:RegisterEvent("TRAINER_SERVICE_INFO_NAME_UPDATE");
 	self:RegisterEvent("ADDON_LOADED");
 	ClassTrainerDetailScrollFrame.scrollBarHideable = 1;
+
+	self.FilterDropdown:SetWidth(130);
 end
 
 function ClassTrainerFrame_OnEvent(self, event, ...)
-	if ( event == "ADDON_LOADED" and arg1 == "Blizzard_TrainerUI" ) then
-		SetTrainerServiceTypeFilter("available", TRAINER_FILTER_AVAILABLE);
-		SetTrainerServiceTypeFilter("unavailable", TRAINER_FILTER_UNAVAILABLE);
-		SetTrainerServiceTypeFilter("used", TRAINER_FILTER_USED);
-	end
 	if ( not self:IsVisible() ) then
 		return;
 	end
@@ -85,7 +118,7 @@ function ClassTrainerFrame_OnEvent(self, event, ...)
 				local currentSelection = ClassTrainerFrame.selectedService;
 				local currentServiceType = select(3, GetTrainerServiceInfo(currentSelection));
 				local numServices = GetNumTrainerServices();
-				
+
 				if currentServiceType ~= "available" then
 					-- Collapsed groups already accounted for in sorting prior to the event.
 					currentSelection = 0;
@@ -98,11 +131,11 @@ function ClassTrainerFrame_OnEvent(self, event, ...)
 						end
 					end
 				end
-				
+
 				if currentSelection <= numServices then
 					self.showSkillDetails = true;
 					ClassTrainer_SetSelection(currentSelection);
-					
+
 					-- Keep the entry in view.
 					local firstVisible = FauxScrollFrame_GetOffset(ClassTrainerListScrollFrame);
 					local lastVisible = firstVisible + CLASS_TRAINER_SKILLS_DISPLAYED;
@@ -131,7 +164,7 @@ function ClassTrainerFrame_Update()
 	ClassTrainerGreetingText:SetText(GetTrainerGreetingText());
 	local numTrainerServices = GetNumTrainerServices();
 	local skillOffset = FauxScrollFrame_GetOffset(ClassTrainerListScrollFrame);
-	
+
 	-- If no spells then clear everything out
 	if ( numTrainerServices == 0 ) then
 		ClassTrainerCollapseAllButton:Disable();
@@ -153,19 +186,19 @@ function ClassTrainerFrame_Update()
 
 	-- ScrollFrame update
 	FauxScrollFrame_Update(ClassTrainerListScrollFrame, numTrainerServices, CLASS_TRAINER_SKILLS_DISPLAYED, CLASS_TRAINER_SKILL_HEIGHT, nil, nil, nil, ClassTrainerSkillHighlightFrame, 293, 316 )
-	
+
 	--ClassTrainerUsedButton:Show();
 	ClassTrainerMoneyFrame:Show();
-	
+
 
 	ClassTrainerSkillHighlightFrame:Hide();
 	-- Fill in the skill buttons
 	for i=1, CLASS_TRAINER_SKILLS_DISPLAYED, 1 do
 		local skillIndex = i + skillOffset;
-		local skillButton = _G["ClassTrainerSkill"..i]; 
+		local skillButton = _G["ClassTrainerSkill"..i];
 		local serviceName, serviceSubText, serviceType, isExpanded;
 		local moneyCost;
-		if ( skillIndex <= numTrainerServices ) then	
+		if ( skillIndex <= numTrainerServices ) then
 			serviceName, serviceSubText, serviceType, isExpanded = GetTrainerServiceInfo(skillIndex);
 			if ( not serviceName ) then
 				serviceName = UNKNOWN;
@@ -192,7 +225,7 @@ function ClassTrainerFrame_Update()
 				end
 				_G["ClassTrainerSkill"..i.."Highlight"]:SetTexture("Interface\\Buttons\\UI-PlusButton-Hilight");
 			else
-				skillButton:SetNormalTexture("");
+				skillButton:ClearNormalTexture();
 				_G["ClassTrainerSkill"..i.."Highlight"]:SetTexture("");
 				local skillText = _G["ClassTrainerSkill"..i.."Text"];
 				skillText:SetText("  "..serviceName);
@@ -207,8 +240,9 @@ function ClassTrainerFrame_Update()
 					-- A bit of a hack. If there's no subtext, we'll set a width to ensure that we don't overflow.
 					skillText:SetWidth(SKILL_TEXT_WIDTH);
 				end
-				
+
 				-- Cost Stuff
+				local _;
 				moneyCost, _ = GetTrainerServiceCost(skillIndex);
 				if ( serviceType == "available" ) then
 					skillButton:SetNormalFontObject("GameFontNormalLeftGreen");
@@ -219,7 +253,7 @@ function ClassTrainerFrame_Update()
 				else
 					skillButton:SetNormalFontObject("GameFontNormalLeftRed");
 					ClassTrainer_SetSubTextColor(skillButton, 0.6, 0, 0);
-				end		
+				end
 			end
 			skillButton:SetID(skillIndex);
 			skillButton:Show();
@@ -239,7 +273,7 @@ function ClassTrainerFrame_Update()
 			skillButton:Hide();
 		end
 	end
-		
+
 	-- Set the expand/collapse all button texture
 	local numHeaders = 0;
 	local notExpanded = 0;
@@ -261,7 +295,7 @@ function ClassTrainerFrame_Update()
 	-- Show skill details if the skill is visible
 	if ( showDetails ) then
 		ClassTrainer_ShowSkillDetails();
-	else	
+	else
 		ClassTrainer_HideSkillDetails();
 	end
 	-- If all headers are not expanded then show collapse button, otherwise show the expand button
@@ -295,7 +329,7 @@ function ClassTrainer_SetSelection(id)
 	local serviceName, serviceSubText, serviceType, isExpanded = GetTrainerServiceInfo(id);
 
 	ClassTrainerSkillHighlightFrame:Show();
-	
+
 	-- When we have an available entry selected, we flag our selection to be sanitized
 	-- when receiving an update event. This event occurs when the list is collapsed or expanded,
 	-- and if entries are learned. In each of those cases, we can't trust our current position
@@ -445,7 +479,6 @@ function ClassTrainer_SetSelection(id)
 end
 
 function ClassTrainerSkillButton_OnClick(self)
-	ClassTrainerFrame.selectedService = self:GetID();
 	ClassTrainerFrame.showSkillDetails = 1;
 	ClassTrainer_SetSelection(self:GetID());
 	ClassTrainerFrame_Update();
@@ -512,65 +545,4 @@ function ClassTrainer_SetToClassTrainer()
 	ClassTrainerListScrollFrame:SetHeight(184);
 	ClassTrainerDetailScrollFrame:SetHeight(119);
 	ClassTrainerHorizontalBarLeft:SetPoint("TOPLEFT", "ClassTrainerFrame", "TOPLEFT", 15, -275);
-end
-
--- Dropdown functions
-function ClassTrainerFrameFilterDropDown_OnLoad(self)
-	UIDropDownMenu_Initialize(self, ClassTrainerFrameFilterDropDown_Initialize);
-	UIDropDownMenu_SetText(self, FILTER);
-	UIDropDownMenu_SetWidth(self, 130);
-end
-
-function ClassTrainerFrameFilterDropDown_Initialize()
-	-- Available button
-	local info = {};
-	local checked = nil;
-	if ( GetTrainerServiceTypeFilter("available") ) then
-		checked = 1;
-	end
-	info.text = GREEN_FONT_COLOR_CODE..AVAILABLE..FONT_COLOR_CODE_CLOSE;
-	info.value = "available";
-	info.func = ClassTrainerFrameFilterDropDown_OnClick;
-	info.checked = checked;
-	info.keepShownOnClick = 1;
-	info.classicChecks = true;
-	UIDropDownMenu_AddButton(info);
-
-	-- Unavailable button
-	info = {};
-	checked = nil;
-	if ( GetTrainerServiceTypeFilter("unavailable") ) then
-		checked = 1;
-	end
-	info.text = RED_FONT_COLOR_CODE..UNAVAILABLE..FONT_COLOR_CODE_CLOSE;
-	info.value = "unavailable";
-	info.func = ClassTrainerFrameFilterDropDown_OnClick;
-	info.checked = checked;
-	info.keepShownOnClick = 1;
-	info.classicChecks = true;
-	UIDropDownMenu_AddButton(info);
-
-	-- Already Known button
-	info = {};
-	checked = nil;
-	if ( GetTrainerServiceTypeFilter("used") ) then
-		checked = 1;
-	end
-	info.text = GRAY_FONT_COLOR_CODE..USED..FONT_COLOR_CODE_CLOSE;
-	info.value = "used";
-	info.func = ClassTrainerFrameFilterDropDown_OnClick;
-	info.checked = checked;
-	info.keepShownOnClick = 1;
-	info.classicChecks = true;
-	UIDropDownMenu_AddButton(info);
-end
-
-function ClassTrainerFrameFilterDropDown_OnClick(self)	
-	if ( UIDropDownMenuButton_GetChecked(self) ) then
-		setglobal("TRAINER_FILTER_"..strupper(self.value), 1);
-		SetTrainerServiceTypeFilter(self.value, 1);
-	else
-		setglobal("TRAINER_FILTER_"..strupper(self.value), 0);
-		SetTrainerServiceTypeFilter(self.value, 0);
-	end
 end

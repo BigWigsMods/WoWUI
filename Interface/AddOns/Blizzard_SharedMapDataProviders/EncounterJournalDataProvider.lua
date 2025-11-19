@@ -1,20 +1,19 @@
 
-EncounterJournalDataProviderMixin = CreateFromMixins(MapCanvasDataProviderMixin);
-
-function EncounterJournalDataProviderMixin:OnAdded(mapCanvas)
-	MapCanvasDataProviderMixin.OnAdded(self, mapCanvas);
-	mapCanvas:SetPinTemplateType("EncounterJournalPinTemplate", "BUTTON");
-end
+EncounterJournalDataProviderMixin = CreateFromMixins(CVarMapCanvasDataProviderMixin);
+EncounterJournalDataProviderMixin:Init("showBosses");
 
 function EncounterJournalDataProviderMixin:OnShow()
+	CVarMapCanvasDataProviderMixin.OnShow(self);
 	self:RegisterEvent("PORTRAITS_UPDATED");
 end
 
 function EncounterJournalDataProviderMixin:OnHide()
+	CVarMapCanvasDataProviderMixin.OnHide(self);
 	self:UnregisterEvent("PORTRAITS_UPDATED");
 end
 
 function EncounterJournalDataProviderMixin:OnEvent(event, ...)
+	CVarMapCanvasDataProviderMixin.OnEvent(self, event, ...);
 	if event == "PORTRAITS_UPDATED" then
 		self:RefreshAllData();
 	end
@@ -26,7 +25,11 @@ end
 
 function EncounterJournalDataProviderMixin:RefreshAllData(fromOnShow)
 	self:RemoveAllData();
-	
+
+	if not self:IsCVarSet() then
+		return;
+	end
+
 	if CanShowEncounterJournal() then
 		local mapEncounters = C_EncounterJournal.GetEncountersOnMap(self:GetMap():GetMapID());
 		for index, mapEncounterInfo in ipairs(mapEncounters) do

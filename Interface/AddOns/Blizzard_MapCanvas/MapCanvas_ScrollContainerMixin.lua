@@ -110,12 +110,12 @@ function MapCanvasScrollControllerMixin:OnMouseUp(button)
 		if isClick then
 			if not self:GetMap():ProcessCanvasClickHandlers(button, self:NormalizeUIPosition(cursorX, cursorY)) then
 				if self:ShouldNavigateOnClick() then
-					self:GetMap():NavigateToCursor(self:GetNormalizedCursorPosition());
+					self:GetMap():NavigateToCursor();
 				elseif self:ShouldZoomInOnClick() then
 					self:TryPanOrZoomOnClick();
 				end
 			end
-		elseif not self:TryPanOrZoomOnClick() and self:IsPanning() then		
+		elseif not self:TryPanOrZoomOnClick() and self:IsPanning() then
 			local deltaX, deltaY = self:GetNormalizedMouseDelta(button);
 			self:AccumulateMouseDeltas(GetTickTime(), deltaX, deltaY);
 
@@ -217,7 +217,7 @@ end
 function MapCanvasScrollControllerMixin:SetCanvasSize(width, height)
 	self.Child:SetSize(width, height);
 	self.Child.TiledBackground:SetSize(width * 2, height * 2);
-	self:GetMap():SetPinNudgingDirty(true);
+	self:GetMap():SetPinPostProcessDirty();
 	self:CalculateScaleExtents();
 	self:CalculateScrollExtents();
 	self:GetMap():OnCanvasSizeChanged();

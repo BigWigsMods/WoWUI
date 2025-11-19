@@ -1,7 +1,3 @@
-function CanAccessObject(obj)
-	return issecure() or not obj:IsForbidden();
-end
-
 function DebugTooltip_OnLoad(self)
 	SharedTooltip_OnLoad(self);
 	self:SetFrameLevel(self:GetFrameLevel() + 2);
@@ -14,6 +10,10 @@ function FrameStackTooltip_OnDisplaySizeChanged(self)
 	else
 		self:SetScale(1);
 	end
+end
+
+function FrameStackTooltip_IsFramestackEnabled()
+	return GetCVarBool("fstack_enabled");
 end
 
 function FrameStackTooltip_IsShowHiddenEnabled()
@@ -33,11 +33,13 @@ function FrameStackTooltip_IsShowAnchorsEnabled()
 end
 
 function FrameStackTooltip_OnFramestackVisibilityUpdated(self)
-	if ( self:IsVisible() ) then
-		--[[Since these properties impact the contents displayed on the framestack,
-		toggle the framestack off and then on to reinitialize it.--]]
-		FrameStackTooltip_Hide(self);
+	local show = FrameStackTooltip_IsFramestackEnabled();
 
+	--[[Since these properties impact the contents displayed on the framestack,
+	toggle the framestack off and then on to reinitialize it.--]]
+	FrameStackTooltip_Hide(self);
+
+	if ( show ) then
 		local showHidden = FrameStackTooltip_IsShowHiddenEnabled();
 		local showRegions = FrameStackTooltip_IsShowRegionsEnabled();
 		local showAnchors = FrameStackTooltip_IsShowAnchorsEnabled();
@@ -48,6 +50,7 @@ end
 
 function FrameStackTooltip_OnLoad(self)
 	Mixin(self, CallbackRegistryMixin);
+	Mixin(self, TextureInfoGeneratorMixin);
 	CallbackRegistryMixin.OnLoad(self);
 	self:GenerateCallbackEvents({ "FrameStackOnHighlightFrameChanged", "FrameStackOnShow", "FrameStackOnHide", "FrameStackOnTooltipCleared" });
 
@@ -75,8 +78,16 @@ end
 
 function FrameStackTooltip_InspectTable(self)
 	if self.highlightFrame then
-		TableAttributeDisplay:InspectTable(self.highlightFrame);
-		TableAttributeDisplay:Show();
+		if DebugInspectionTool then
+			local useExistingFrame = nil;
+			local pollingOff = nil;
+			local fallbackName = nil;
+			local view = DebugInspectionToolViewEnum.Hierarchy;
+			DebugInspectionTool:OpenObject(self.highlightFrame, useExistingFrame, pollingOff, fallbackName, view);
+		else
+			TableAttributeDisplay:InspectTable(self.highlightFrame);
+			TableAttributeDisplay:Show();
+		end
 	end
 end
 
@@ -85,20 +96,7 @@ function FrameStackTooltip_ToggleTextureInformation(self)
 end
 
 function FrameStackTooltip_HandleFrameCommand(self)
-	if self.currentAssets then
-		for index, asset in ipairs(self.currentAssets) do
-			local assetName, assetType = asset[1], asset[2];
-
-			if assetType == "Atlas" then
-				HandleAtlasMemberCommand(assetName);
-				PlaySound(SOUNDKIT.MAP_PING);
-				break;
-			elseif assetType == "File" then
-				CopyToClipboard(assetName);
-				PlaySound(SOUNDKIT.UI_BONUS_LOOT_ROLL_END); -- find sound
-			end
-		end
-	end
+	self:HandleTextureCommand(self.currentAssets);
 end
 
 function FrameStackTooltip_OnEvent(self, event, ...)
@@ -109,90 +107,11 @@ function FrameStackTooltip_OnEvent(self, event, ...)
 	end
 end
 
-local function AreTextureCoordinatesValid(...)
-	local coordCount = select("#", ...);
-	for i = 1, coordCount do
-		if type(select(i, ...)) ~= "number" then
-			return false;
-		end
-	end
-
-	return coordCount == 8;
-end
-
-local function AreTextureCoordinatesEntireImage(...)
-	local ulX, ulY, blX, blY, urX, urY, brX, brY = ...;
-	return	ulX == 0 and ulY == 0 and
-			blX == 0 and blY == 1 and
-			urX == 1 and urY == 0 and
-			brX == 1 and brY == 1;
-end
-
-local function FormatTextureCoordinates(...)
-	if AreTextureCoordinatesValid(...) then
-		if not AreTextureCoordinatesEntireImage(...) then
-			return WrapTextInColorCode(("UL:(%.2f, %.2f), BL:(%.2f, %.2f), UR:(%.2f, %.2f), BR:(%.2f, %.2f)"):format(...), "ff00ffff");
-		end
-
-		return "";
-	end
-
-	return "invalid coordinates";
-end
-
-local function ColorAssetType(assetType)
-	if assetType == "Atlas" then
-		return WrapTextInColorCode(assetType, "ff00ff00");
-	end
-
-	return WrapTextInColorCode(assetType, "ffff0000");
-end
-
-local function FormatTextureAssetName(assetName, assetType)
-	return ("%s: %s"):format(ColorAssetType(assetType), tostring(assetName));
-end
-
-local function FormatTextureInfo(region, ...)
-	if ... ~= nil then
-		local assetInfo = { select(1, ...), select(2, ...) };
-		return ("%s : %s %s"):format(region:GetDebugName(), FormatTextureAssetName(...), FormatTextureCoordinates(select(3, ...))), assetInfo;
-	end
-end
-
-local function CheckGetRegionsTextureInfo(...)
-	local info = {};
-	local assets = {};
-	for i = 1, select("#", ...) do
-		local region = select(i, ...);
-		if CanAccessObject(region) and region:IsMouseOver() then
-			local textureInfo, assetInfo = FormatTextureInfo(region, GetTextureInfo(region))
-			if textureInfo then
-				table.insert(info, textureInfo);
-				table.insert(assets, assetInfo);
-			end
-		end
-	end
-
-	if #info > 0 then
-		return table.concat(info, "\n"), assets;
-	end
-end
-
-local function CheckFormatTextureInfo(self, obj)
-	if self.showTextureInfo and CanAccessObject(obj) then
-		if obj.GetRegions then
-			return CheckGetRegionsTextureInfo(obj:GetRegions());
-		else
-			return CheckGetRegionsTextureInfo(obj);
-		end
-	end
-end
-
 function FrameStackTooltip_OnTooltipSetFrameStack(self, highlightFrame)
 	self.highlightFrame = highlightFrame;
 
-	if self.highlightFrame then
-		local textureInfo, assets = CheckFormatTextureInfo(self, self.highlightFrame);
+	if self.highlightFrame and self.showTextureInfo then
+		local textureInfo, assets = self:CheckFormatTextureInfo(self.highlightFrame);
 		if textureInfo then
 			self:AddLine(textureInfo);
 			self.currentAssets = assets;
@@ -200,7 +119,7 @@ function FrameStackTooltip_OnTooltipSetFrameStack(self, highlightFrame)
 	end
 
 	if self.shouldSetFSObj then
-		fsobj = self.highlightFrame;
+		fsobj = self.highlightFrame; -- luacheck: ignore 111 (setting non-standard global variable)
 		self.shouldSetFSObj = nil;
 
 		self:TriggerEvent(self.Event.FrameStackOnHighlightFrameChanged, fsobj);
@@ -226,24 +145,33 @@ function FrameStackTooltip_Hide(self)
 	FrameStackHighlight:Hide();
 end
 
+local function FrameStack_SetCVarEnabled(enabled)
+	SetCVar("fstack_enabled", enabled);
+end
+
 function FrameStackTooltip_ToggleDefaults()
 	local tooltip = FrameStackTooltip;
 	if ( tooltip:IsVisible() ) then
 		FrameStackTooltip_Hide(tooltip);
+		FrameStack_SetCVarEnabled(false);
 	else
 		local showHidden = FrameStackTooltip_IsShowHiddenEnabled();
 		local showRegions = FrameStackTooltip_IsShowRegionsEnabled();
 		local showAnchors = FrameStackTooltip_IsShowAnchorsEnabled();
 		FrameStackTooltip_Show(tooltip, showHidden, showRegions, showAnchors);
+		FrameStack_SetCVarEnabled(true);
 	end
 end
 
 function FrameStackTooltip_Toggle(showHidden, showRegions, showAnchors)
 	local tooltip = FrameStackTooltip;
+
 	if ( tooltip:IsVisible() ) then
 		FrameStackTooltip_Hide(tooltip);
+		FrameStack_SetCVarEnabled(false);
 	else
 		FrameStackTooltip_Show(tooltip, showHidden, showRegions, showAnchors);
+		FrameStack_SetCVarEnabled(true);
 	end
 end
 

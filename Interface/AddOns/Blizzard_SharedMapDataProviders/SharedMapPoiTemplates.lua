@@ -45,7 +45,7 @@ function BaseMapPoiPinMixin:SetTexture(poiInfo)
 			self.HighlightTexture:SetTexture("Interface/Minimap/POIIcons");
 		end
 		
-		local x1, x2, y1, y2 = GetPOITextureCoords(poiInfo.textureIndex);
+		local x1, x2, y1, y2 = C_Minimap.GetPOITextureCoords(poiInfo.textureIndex);
 		self.Texture:SetTexCoord(x1, x2, y1, y2);
 		if self.HighlightTexture then
 			self.HighlightTexture:SetTexCoord(x1, x2, y1, y2);
@@ -54,11 +54,12 @@ function BaseMapPoiPinMixin:SetTexture(poiInfo)
 end
 
 function BaseMapPoiPinMixin:OnAcquired(poiInfo)
+	self:SetDataProvider(poiInfo.dataProvider);
 	self:SetTexture(poiInfo);
 
 	self.name = poiInfo.name;
 	self.description = poiInfo.description;
-	self.widgetSetID = poiInfo.widgetSetID;
+	self.tooltipWidgetSet = poiInfo.tooltipWidgetSet;
 
 	self:SetPosition(poiInfo.position:GetXY());
 end
