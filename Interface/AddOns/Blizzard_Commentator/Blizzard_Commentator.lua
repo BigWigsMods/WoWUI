@@ -52,7 +52,7 @@ function CommentatorMixin:OnLoad()
 	
 	local resetterCb = function(pool, frame)
 		frame:Reset();
-		FramePool_HideAndClearAnchors(pool, frame);
+		Pool_HideAndClearAnchors(pool, frame);
 	end;
 
 	self.unitFramePool = CreateFramePool("BUTTON", self, "CommentatorUnitFrameTemplate", resetterCb);
@@ -241,7 +241,11 @@ function CommentatorMixin:SetDefaultCVars()
 	SetCVar("nameplateSelectedScale", nativeScale);
 
 	SetCVar("nameplateShowAll", 1);
+	SetCVar("UnitNameFriendlySpecialNPCName", 0);
+	SetCVar("UnitNameHostleNPC", 0);
+	SetCVar("UnitNameInteractiveNPC", 0);
 	SetCVar("UnitNameNPC", 0);
+	SetCVar("ShowQuestUnitCircles", 0);
 	SetCVar("ShowClassColorInNameplate", 0);
 	SetCVar("nameplateMotion", 0);
 	SetCVar("showVKeyCastbar", 0);

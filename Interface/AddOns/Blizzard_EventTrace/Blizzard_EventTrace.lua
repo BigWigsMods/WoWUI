@@ -19,10 +19,15 @@ local DefaultFilter =
 	{event="OBJECT_LEFT_AOI", enabled=true},
 	{event="SPELL_ACTIVATION_OVERLAY_HIDE", enabled=true},
 	{event="MODIFIER_STATE_CHANGED", enabled=true},
+	{event="IMGUI_RENDER_ENABLED", enabled=true},
 };
 
 local function GetDisplayEvent(elementData)
 	return elementData.displayEvent or elementData.event;
+end
+
+local function ApplyAlternateState(frame, alternate)
+	frame:SetAlternateOverlayShown(alternate);
 end
 
 EventTraceSavedVars =
@@ -62,7 +67,13 @@ function EventTraceScrollBoxButtonMixin:Flash()
 	self.FlashOverlay.Anim:Play();
 end
 
-EventTracePanelMixin = {};
+EventTracePanelMixin = CreateFromMixins(ToolWindowOwnerMixin);
+
+function EventTracePanelMixin:OnSetDebugToolVisible(addonName, showTool)
+	if addonName == "Blizzard_EventTrace" then
+		self:SetShown(showTool);
+	end
+end
 
 function EventTracePanelMixin:OnLoad()
 	ButtonFrameTemplate_HidePortrait(self)
@@ -96,17 +107,22 @@ function EventTracePanelMixin:OnLoad()
 
 	self.TitleBar:Init(self);
 	self.ResizeButton:Init(self, MinPanelWidth, MinPanelHeight);
-	self.TitleText:SetText(EVENTTRACE_HEADER);
+	self:SetTitle(EVENTTRACE_HEADER);
 
 	hooksecurefunc(EventRegistry, "TriggerEvent", function(registry, event, ...)
 		EventTrace:LogCallbackRegistryEvent(registry, event, ...);
 	end);
 
 	self:UpdatePlaybackButton();
+
+	EventRegistry:RegisterFrameEvent("SET_DEBUG_TOOL_VISIBLE");
+	EventRegistry:RegisterCallback("SET_DEBUG_TOOL_VISIBLE", self.OnSetDebugToolVisible, self);
 end
 
 function EventTracePanelMixin:OnShow()
-	self.Log.Events.ScrollBox:ScrollToEnd(ScrollBoxConstants.NoScrollInterpolation);
+	self:MoveToNewWindow(EVENTTRACE_HEADER, 1000, 600, 930, 300);
+
+	self.Log.Events.ScrollBox:ScrollToEnd();
 
 	if not self:IsLoggingEventsWhenHidden() then
 		self:LogMessage(EVENTTRACE_LOG_START);
@@ -235,8 +251,8 @@ function EventTracePanelMixin:InitializeLog()
 			   tinsert(words, word);
 			end
 
-			for index, elementData in self.logDataProvider:Enumerate() do
-				for index, word in ipairs(words) do
+			for _, elementData in self.logDataProvider:Enumerate() do
+				for _, word in ipairs(words) do
 					if self:TryAddToSearch(elementData, word) then
 						break;
 					end
@@ -249,7 +265,7 @@ function EventTracePanelMixin:InitializeLog()
 
 				local found = self.Log.Search.ScrollBox:ScrollToElementDataByPredicate(function(elementData)
 					return elementData.id == pendingSearch.id;
-				end, ScrollBoxConstants.AlignCenter, ScrollBoxConstants.NoScrollInterpolation);
+				end, ScrollBoxConstants.AlignCenter);
 
 				if found then
 					local button = self.Log.Search.ScrollBox:FindFrame(found);
@@ -258,28 +274,13 @@ function EventTracePanelMixin:InitializeLog()
 					end
 				end
 			elseif self.Log.Search.ScrollBox:HasScrollableExtent() then
-				self.Log.Search.ScrollBox:ScrollToEnd(ScrollBoxConstants.NoScrollInterpolation);
+				self.Log.Search.ScrollBox:ScrollToEnd();
 			end
 		end
-
-		local alpha = empty and 1.0 or .5;
-		self.Log.Bar.MarkButton:SetAlpha(alpha);
-		self.Log.Bar.MarkButton:SetEnabled(empty);
-		self.Log.Bar.PlaybackButton:SetAlpha(alpha);
-		self.Log.Bar.PlaybackButton:SetEnabled(empty);
-		self.Log.Bar.DiscardAllButton:SetAlpha(alpha);
-		self.Log.Bar.DiscardAllButton:SetEnabled(empty);
 	end);
 
-	local function SetOnDataRangeChanged(scrollBox)
-		local function OnDataRangeChanged(sortPending)
-			SetScrollBoxButtonAlternateState(scrollBox);
-		end;
-		scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnDataRangeChanged, OnDataRangeChanged, self);
-	end
-
-	SetOnDataRangeChanged(self.Log.Events.ScrollBox);
-	SetOnDataRangeChanged(self.Log.Search.ScrollBox);
+	ScrollUtil.RegisterAlternateRowBehavior(self.Log.Events.ScrollBox, ApplyAlternateState);
+	ScrollUtil.RegisterAlternateRowBehavior(self.Log.Search.ScrollBox, ApplyAlternateState);
 
 	local function AddEventToFilter(scrollBox, elementData)
 		local found = self.filterDataProvider:FindElementDataByPredicate(function(filterData)
@@ -306,26 +307,36 @@ function EventTracePanelMixin:InitializeLog()
 		end
 
 		local view = CreateScrollBoxListLinearView();
-		view:SetElementExtent(20);
 		view:SetElementFactory(function(factory, elementData)
 			if elementData.event then
-				local button = factory("Button", "EventTraceLogEventButtonTemplate");
-				button:Init(elementData, self:IsShowingArguments(), self:IsShowingTimestamp());
+				factory("EventTraceLogEventButtonTemplate", function(button, elementData)
+					button:Init(elementData, self:IsShowingArguments(), self:IsShowingTimestamp());
 
-				button.HideButton:SetScript("OnMouseDown", function(button, buttonName)
-					AddEventToFilter(self.Filter.ScrollBox, elementData);
-				end);
+					button.HideButton:SetScript("OnMouseDown", function(button, buttonName)
+						AddEventToFilter(self.Filter.ScrollBox, elementData);
+					end);
 
-				button:SetScript("OnDoubleClick", function(button, buttonName)
-					LocateInSearch(elementData, elementData.event);
+					button:SetScript("OnClick", function(button, buttonName, down)
+						if buttonName == "RightButton" then
+							CopyToClipboard(elementData.event);
+						end
+					end);
+
+					button:SetScript("OnDoubleClick", function(button, buttonName)
+						if buttonName == "LeftButton" then
+							LocateInSearch(elementData, elementData.event);
+						end
+					end);
 				end);
 			elseif elementData.message then
-				local button = factory("Button", "EventTraceLogMessageButtonTemplate");
-				button:Init(elementData);
+				factory("EventTraceLogMessageButtonTemplate", function(button, elementData)
+					button:Init(elementData);
 
-				button:SetScript("OnDoubleClick", function(button, buttonName)
-					LocateInSearch(elementData, elementData.message);
+					button:SetScript("OnDoubleClick", function(button, buttonName)
+						LocateInSearch(elementData, elementData.message);
+					end);
 				end);
+
 			end
 		end);
 
@@ -345,7 +356,7 @@ function EventTracePanelMixin:InitializeLog()
 
 			local found = self.Log.Events.ScrollBox:ScrollToElementDataByPredicate(function(data)
 				return data.id == elementData.id;
-			end, ScrollBoxConstants.AlignCenter, ScrollBoxConstants.NoScrollInterpolation);
+			end, ScrollBoxConstants.AlignCenter);
 
 			local button = found and self.Log.Events.ScrollBox:FindFrame(found);
 			if button then
@@ -354,25 +365,34 @@ function EventTracePanelMixin:InitializeLog()
 		end
 
 		local view = CreateScrollBoxListLinearView();
-		view:SetElementExtent(20);
 		view:SetElementFactory(function(factory, elementData)
 			if elementData.event then
-				local button = factory("Button", "EventTraceLogEventButtonTemplate");
-				button:Init(elementData, self:IsShowingArguments());
+				factory("EventTraceLogEventButtonTemplate", function(button, elementData)
+					button:Init(elementData, self:IsShowingArguments());
 
-				button.HideButton:SetScript("OnMouseDown", function(button, buttonName)
-					AddEventToFilter(self.Log.Search.ScrollBox, elementData);
-				end);
+					button.HideButton:SetScript("OnMouseDown", function(button, buttonName)
+						AddEventToFilter(self.Log.Search.ScrollBox, elementData);
+					end);
 
-				button:SetScript("OnDoubleClick", function(button, buttonName)
-					LocateInLog(elementData);
+					button:SetScript("OnClick", function(button, buttonName, down)
+						if buttonName == "RightButton" then
+							CopyToClipboard(elementData.event);
+						end
+					end);
+
+					button:SetScript("OnDoubleClick", function(button, buttonName)
+						if buttonName == "LeftButton" then
+							LocateInLog(elementData);
+						end
+					end);
 				end);
 			elseif elementData.message then
-				local button = factory("Button", "EventTraceLogMessageButtonTemplate");
-				button:Init(elementData);
+				factory("EventTraceLogMessageButtonTemplate", function(button, elementData)
+					button:Init(elementData);
 
-				button:SetScript("OnDoubleClick", function(button, buttonName)
-					LocateInLog(elementData);
+					button:SetScript("OnDoubleClick", function(button, buttonName)
+						LocateInLog(elementData);
+					end);
 				end);
 			end
 		end);
@@ -415,18 +435,14 @@ function EventTracePanelMixin:InitializeFilter()
 		self.filterDataProvider:Flush();
 	end);
 
-	local function OnDataRangeChanged(sortPending)
-		SetScrollBoxButtonAlternateState(self.Filter.ScrollBox);
-	end
-	self.Filter.ScrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnDataRangeChanged, OnDataRangeChanged, self);
+	ScrollUtil.RegisterAlternateRowBehavior(self.Filter.ScrollBox, ApplyAlternateState);
 
 	local function RemoveEventFromFilter(elementData)
 		self.filterDataProvider:Remove(elementData);
 	end
 
 	local view = CreateScrollBoxListLinearView();
-	view:SetElementExtent(20);
-	view:SetElementInitializer("Button", "EventTraceFilterButtonTemplate", function(button, elementData)
+	view:SetElementInitializer("EventTraceFilterButtonTemplate", function(button, elementData)
 		button:Init(elementData, RemoveEventFromFilter);
 	end);
 
@@ -440,67 +456,68 @@ function EventTracePanelMixin:InitializeFilter()
 end
 
 function EventTracePanelMixin:InitializeOptions()
-	local function Initializer(dropDown, level)
-		local info = UIDropDownMenu_CreateInfo();
-		info.notCheckable = true;
-		info.text = string.format(EVENTTRACE_APPLY_DEFAULT_FILTER);
-		info.func = function()
+	self.SubtitleBar.OptionsDropdown:SetText(EVENTTRACE_OPTIONS);
+	self.SubtitleBar.OptionsDropdown:SetupMenu(function(dropdown, rootDescription)
+		rootDescription:SetTag("MENU_EVENT_TRACE_FILTER");
+
+		rootDescription:CreateButton(EVENTTRACE_APPLY_DEFAULT_FILTER, function()
 			self.filterDataProvider:Flush();
 			for index, elementData in ipairs(DefaultFilter) do
 				self.filterDataProvider:Insert(CopyTable(elementData));
 			end
-		end;
-		UIDropDownMenu_AddButton(info);
+		end);
 
-		info = UIDropDownMenu_CreateInfo();
-		info.text = string.format(EVENTTRACE_LOG_WHEN_HIDDEN);
-		info.checked = self:IsLoggingEventsWhenHidden();
-		info.keepShownOnClick = 1;
-		info.func = function()
-			self:SetLoggingEventsWhenHidden(not self:IsLoggingEventsWhenHidden());
+		rootDescription:CreateDivider();
+
+		do
+			local function IsSelected()
+				return self:IsLoggingEventsWhenHidden();
+			end
+
+			local function SetSelected()
+				self:SetLoggingEventsWhenHidden(not self:IsLoggingEventsWhenHidden());
+			end
+
+			rootDescription:CreateCheckbox(EVENTTRACE_LOG_WHEN_HIDDEN, IsSelected, SetSelected);
 		end
-		UIDropDownMenu_AddButton(info);
 
-		info = UIDropDownMenu_CreateInfo();
-		info.text = string.format(EVENTTRACE_SHOW_ARGUMENTS);
-		info.checked = self:IsShowingArguments();
-		info.keepShownOnClick = 1;
-		info.func = function()
-			self:SetShowingArguments(not self:IsShowingArguments());
+		do
+			local function IsSelected()
+				return self:IsShowingArguments();
+			end
+
+			local function SetSelected()
+				self:SetShowingArguments(not self:IsShowingArguments());
+			end
+
+			rootDescription:CreateCheckbox(EVENTTRACE_SHOW_ARGUMENTS, IsSelected, SetSelected);
 		end
-		UIDropDownMenu_AddButton(info);
 
-		info = UIDropDownMenu_CreateInfo();
-		info.text = string.format(EVENTTRACE_SHOW_TIMESTAMP);
-		info.checked = self:IsShowingTimestamp();
-		info.keepShownOnClick = 1;
-		info.func = function()
-			self:SetShowingTimestamp(not self:IsShowingTimestamp());
+		do
+			local function IsSelected()
+				return self:IsShowingTimestamp();
+			end
+
+			local function SetSelected()
+				self:SetShowingTimestamp(not self:IsShowingTimestamp());
+			end
+
+			rootDescription:CreateCheckbox(EVENTTRACE_SHOW_TIMESTAMP, IsSelected, SetSelected);
 		end
-		UIDropDownMenu_AddButton(info);
 
-		info = UIDropDownMenu_CreateInfo();
-		info.text = string.format(EVENTTRACE_LOG_CR_EVENTS);
-		info.checked = self:IsLoggingCREvents();
-		info.keepShownOnClick = 1;
-		info.func = function()
-			self:SetLoggingCREvents(not self:IsLoggingCREvents());
+		do
+			local function IsSelected()
+				return self:IsLoggingCREvents();
+			end
+
+			local function SetSelected()
+				self:SetLoggingCREvents(not self:IsLoggingCREvents());
+			end
+
+			rootDescription:CreateCheckbox(EVENTTRACE_LOG_CR_EVENTS, IsSelected, SetSelected);
 		end
-		UIDropDownMenu_AddButton(info);
-	end
-
-	local dropDown = self.SubtitleBar.DropDown;
-	UIDropDownMenu_SetInitializeFunction(dropDown, Initializer);
-	UIDropDownMenu_SetDisplayMode(dropDown, "MENU");
-
-	self.SubtitleBar.OptionsDropDown.Text:SetText(EVENTTRACE_OPTIONS);
-	self.SubtitleBar.OptionsDropDown:SetScript("OnMouseDown", function(o, button)
-		UIMenuButtonStretchMixin.OnMouseDown(self.SubtitleBar.OptionsDropDown, button);
-		ToggleDropDownMenu(1, nil, dropDown, self.SubtitleBar.OptionsDropDown, 130, 20);
 	end);
 end
-
-
 
 function EventTracePanelMixin:IsLoggingEventsWhenHidden()
 	return self.logEventsWhenHidden;
@@ -561,7 +578,7 @@ end
 function EventTracePanelMixin:ProcessChatCommand(msg)
 	if msg then
 		local words = string.gmatch(msg, "([^ ]+)");
-		for word in words do
+		for word in words do -- luacheck: ignore 512 (loop is executed at most once)
 			local Mark = "MARK";
 			if string.upper(word) == Mark then
 				local index = string.find(msg, word);
@@ -582,7 +599,7 @@ end
 function EventTracePanelMixin:SetLoggingPaused(paused)
 	self.isLoggingPaused = paused;
 
-	self:LogMessage(paused and EVENTTRACE_LOG_START or EVENTTRACE_LOG_PAUSE);
+	self:LogMessage(paused and EVENTTRACE_LOG_PAUSE or EVENTTRACE_LOG_START);
 	self:UpdatePlaybackButton();
 end
 
@@ -614,8 +631,8 @@ function EventTracePanelMixin:LogCallbackRegistryEvent(sender, event, ...)
 	local elementData = CreateEventElementData(event:upper(), ...);
 	elementData.displayEvent = string.format("%s %s", event, DARKYELLOW_FONT_COLOR:WrapTextInColorCode("(CR)"));
 
-	local sender = DARKYELLOW_FONT_COLOR:WrapTextInColorCode(("(CR: %s)"):format(sender.GetDebugName and sender:GetDebugName() or tostring(sender)));
-	elementData.displayMessage = string.format("%s %s", event, sender);
+	local senderStr = DARKYELLOW_FONT_COLOR:WrapTextInColorCode(("(CR: %s)"):format(sender.GetDebugName and sender:GetDebugName() or tostring(sender)));
+	elementData.displayMessage = string.format("%s %s", event, senderStr);
 	self:LogLine(elementData);
 end
 
@@ -637,11 +654,15 @@ function EventTracePanelMixin:LogLine(elementData)
 	self:TrimDataProvider(self.searchDataProvider);
 
 	if not IsAltKeyDown() and (preInsertAtScrollEnd or (not preInsertScrollable and self.Log.Events.ScrollBox:HasScrollableExtent())) then
-		self.Log.Events.ScrollBox:ScrollToEnd(ScrollBoxConstants.NoScrollInterpolation);
+		self.Log.Events.ScrollBox:ScrollToEnd();
 	end
 end
 
 function EventTracePanelMixin:OnEvent(event, ...)
+	if event == "IMGUI_RENDER_ENABLED" then
+		return;
+	end
+
 	if event == "ADDONS_UNLOADING" then
 		self:SaveVariables();
 		return;
@@ -654,7 +675,6 @@ function EventTracePanelMixin:OnEvent(event, ...)
 			self:UnregisterEvent("ADDON_LOADED");
 			self:Show();
 		end
-		return;
 	end
 
 	self:LogEvent(event, ...);
@@ -760,6 +780,11 @@ local function AddTooltipArguments(...)
 		local arg = select(index, ...);
 		GameTooltip_AddColoredDoubleLine(EventTraceTooltip, EVENTTRACE_ARG_FMT:format(index), FormatArgument(arg), HIGHLIGHT_FONT_COLOR, GetArgumentColor(arg));
 	end
+end
+
+function EventTraceLogEventButtonMixin:OnLoad()
+	self.HideButton:ClearAllPoints();
+	self.HideButton:SetPoint("LEFT", self, "LEFT", 3, 0);
 end
 
 function EventTraceLogEventButtonMixin:OnEnter()

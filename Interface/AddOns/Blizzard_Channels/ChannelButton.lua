@@ -7,7 +7,6 @@ end
 
 function ChannelButtonBaseMixin:OnClick(button)
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	HideDropDownMenu(1);
 end
 
 function ChannelButtonBaseMixin:GetChannelList()
@@ -15,7 +14,7 @@ function ChannelButtonBaseMixin:GetChannelList()
 end
 
 function ChannelButtonBaseMixin:Reset(pool)
-	FramePool_HideAndClearAnchors(pool, self);
+	Pool_HideAndClearAnchors(pool, self);
 	self:Enable();
 end
 
@@ -319,7 +318,8 @@ end
 ChannelButtonCommunityMixin = CreateFromMixins(ChannelButtonMixin);
 
 function ChannelButtonCommunityMixin:OnClick(button)
-	C_Club.SetClubPresenceSubscription(self.clubId);
+	local channelFrame = self:GetChannelList():GetChannelFrame();
+	channelFrame:SetFocusedClub(self.clubId);
 	ChannelButtonMixin.OnClick(self, button);
 end
 

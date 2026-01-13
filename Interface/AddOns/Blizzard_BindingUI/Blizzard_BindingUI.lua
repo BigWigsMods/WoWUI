@@ -6,13 +6,15 @@ DEFAULT_BINDINGS = 0;
 ACCOUNT_BINDINGS = 1;
 CHARACTER_BINDINGS = 2;
 
+CONFIRMED_DELETING_CHARACTER_SPECIFIC_BINDINGS = nil;
+
 UIPanelWindows["KeyBindingFrame"] = { area = "center", pushable = 0, whileDead = 1 };
 
 StaticPopupDialogs["CONFIRM_DELETING_CHARACTER_SPECIFIC_BINDINGS"] = {
 	text = CONFIRM_DELETING_CHARACTER_SPECIFIC_BINDINGS,
 	button1 = OKAY,
 	button2 = CANCEL,
-	OnAccept = function(self)
+	OnAccept = function(dialog, data)
 		SaveBindings(KeyBindingFrame.which);
 		KeyBindingFrame.outputText:SetText("");
 		KeyBindingFrame_SetSelected(nil);
@@ -28,11 +30,11 @@ StaticPopupDialogs["CONFIRM_LOSE_BINDING_CHANGES"] = {
 	text = CONFIRM_LOSE_BINDING_CHANGES,
 	button1 = OKAY,
 	button2 = CANCEL,
-	OnAccept = function(self)
+	OnAccept = function(dialog, data)
 		KeyBindingFrame_ChangeBindingProfile();
 		KeyBindingFrame.bindingsChanged = nil;
 	end,
-	OnCancel = function(self)
+	OnCancel = function(dialog, data)
 		if ( KeyBindingFrame.characterSpecificButton:GetChecked() ) then
 			KeyBindingFrame.characterSpecificButton:SetChecked();
 		else
@@ -48,7 +50,7 @@ StaticPopupDialogs["CONFIRM_RESET_TO_DEFAULT_KEYBINDINGS"] = {
 	text = CONFIRM_RESET_KEYBINDINGS,
 	button1 = OKAY,
 	button2 = CANCEL,
-	OnAccept = function(self)
+	OnAccept = function(dialog, data)
 		KeyBindingFrame_ResetBindingsToDefault();
 	end,
 	timeout = 0,
@@ -75,7 +77,10 @@ end
 local defaultCategories = { BINDING_HEADER_MOVEMENT,
 							BINDING_HEADER_CHAT,
 							BINDING_HEADER_ACTIONBAR,
-							BINDING_HEADER_MULTIACTIONBAR,
+							BINDING_HEADER_ACTIONBAR2,
+							BINDING_HEADER_ACTIONBAR3,
+							BINDING_HEADER_ACTIONBAR4,
+							BINDING_HEADER_ACTIONBAR5,
 							BINDING_HEADER_TARGETING,
 							BINDING_HEADER_INTERFACE,
 							BINDING_HEADER_MISC,
@@ -552,7 +557,7 @@ function KeybindingsCategoryListButton_OnClick(self, button)
 end
 
 function CharacterSpecificButton_OnLoad(self)
-	self.text:SetText(HIGHLIGHT_FONT_COLOR_CODE..CHARACTER_SPECIFIC_KEYBINDINGS..FONT_COLOR_CODE_CLOSE);
+	self.Text:SetText(HIGHLIGHT_FONT_COLOR_CODE..CHARACTER_SPECIFIC_KEYBINDINGS..FONT_COLOR_CODE_CLOSE);
 end
 
 function CharacterSpecificButton_OnClick(self)

@@ -5,41 +5,45 @@ GlowEmitterMixin.Anims =
 	FadeAnim = 1,
 	FaintFadeAnim = 2,
 	NPE_RedButton_GreenGlow = 3,
+	GreenGlow = 4,
 };
 
+function GlowEmitterMixin:OnLoad()
+	self.anims = {
+		[GlowEmitterMixin.Anims.FadeAnim] = self.FadeAnim,
+		[GlowEmitterMixin.Anims.FaintFadeAnim] = self.FaintFadeAnim,
+		[GlowEmitterMixin.Anims.NPE_RedButton_GreenGlow] = self.NPE_RedButton_GreenGlow,
+		[GlowEmitterMixin.Anims.GreenGlow] = self.GreenGlow,
+	};
+
+	self.NineSlice:SetBorderBlendMode("ADD");
+end
+
 function GlowEmitterMixin:Play(animType)
-	if animType == GlowEmitterMixin.Anims.FadeAnim then
-		self.FadeAnim:Play();
-	elseif animType == GlowEmitterMixin.Anims.FaintFadeAnim then
-		self.FaintFadeAnim:Play();
-	elseif animType == GlowEmitterMixin.Anims.NPE_RedButton_GreenGlow then
-		self.NPE_RedButton_GreenGlow:Play();
-	else
-		error("Provide a play type")
-	end
+	local anim = self.anims[animType];
+	assert(anim, string.format("Missing an animation for animType %d", animType));
+	anim:Play();
 end
 
 GlowEmitterFactory = CreateFromMixins(EffectFactoryMixin);
 
-function GlowEmitterFactory:OnLoad()
-	EffectFactoryMixin.OnLoad(self, "GlowEmitterTemplate");
+function GlowEmitterFactory:Attach(frame, target, offsetX, offsetY, width, height)
+	EffectFactoryMixin.Attach(self, frame, target, offsetX, offsetY, width, height);
+
+	if offsetX == nil then
+		offsetX = 12;
+	end
+
+	if offsetY == nil then
+		offsetY = 0;
+	end
+
+	if width then
+		frame:SetPoint("CENTER");
+	else
+		frame:SetPoint("LEFT", target, -offsetX, offsetY);
+		frame:SetPoint("RIGHT", target, offsetX, offsetY);
+	end
 end
 
-function GlowEmitterFactory:Attach(frame, target)
-	frame:SetParent(target);
-	frame:SetFrameStrata("DIALOG");
-	
-	frame:ClearAllPoints();
-
-	local offsetX = self.offsetXOverride and self.offsetXOverride or 12;
-	local offsetY = self.offsetYOverride and self.offsetYOverride or 0;
-	frame:SetPoint("LEFT", target, -offsetX, offsetY);
-	frame:SetPoint("RIGHT", target, offsetX, offsetY);
-end
-
-function GlowEmitterFactory:SetOffset(offsetX, offsetY)
-	self.offsetXOverride = offsetX;
-	self.offsetYOverride = offsetY;
-end
-
-GlowEmitterFactory:OnLoad();
+GlowEmitterFactory:Init("Frame", "GlowEmitterTemplate");
