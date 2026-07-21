@@ -24,10 +24,20 @@ function QuickJoinSocialViewMixin:OnLoad()
 	self:InitializeFilterBar();
 end
 
-function QuickJoinSocialViewMixin:GetScrollBoxPadding()
-	local topPadding, bottomPadding, leftPadding, rightPadding = 10, 10, 5, 5;
-	local elementSpacing = 0;
-	return topPadding, bottomPadding, leftPadding, rightPadding, elementSpacing;
+function QuickJoinSocialViewMixin:InitializeScrollBox()
+	local topPadding, bottomPadding, leftPadding, rightPadding = 10, 10, 6, 6;
+	local elementSpacing = 3;
+	local view = CreateScrollBoxListLinearView(topPadding, bottomPadding, leftPadding, rightPadding, elementSpacing);
+	view:SetElementInitializer("QuickJoinSocialViewButtonTemplate", function(button, elementData)
+		button:Init(elementData, self);
+	end);
+
+	-- Scrollable text in the Quick Join List can be resized by the player so the extent may change during a session
+	view:SetElementExtentCalculator(function(dataIndex, elementData)
+		return elementData:CalculateHeight();
+	end);
+
+	ScrollUtil.InitScrollBoxListWithScrollBar(self.ScrollBox, self.ScrollBar, view);
 end
 
 function QuickJoinSocialViewMixin:InitializeActionButton()
