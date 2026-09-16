@@ -1,0 +1,39 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\..\..\..\..\WoW\Data\Interface\AddOns\Blizzard_SharedXML\UI.xsd">
+
+	<Frame name="ProfessionsBookFrame" toplevel="true" movable="true" enableMouse="true" hidden="true" parent="UIParent" inherits="ButtonFrameTemplate, ProfessionsBookFrameTemplate" mixin="ProfessionsBookFrameStandaloneMixin" frameStrata="MEDIUM">
+		<Size x="550" y="525"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture name="ProfessionsBookPage1" file="Interface\Spellbook\Professions-Book-Left">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="7" y="-25"/>
+					</Anchors>
+				</Texture>
+				<Texture name="ProfessionsBookPage2" file="Interface\Spellbook\Professions-Book-Right">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="ProfessionsBookPage1" relativePoint="TOPRIGHT" />
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button name="$parentTutorialButton" parentKey="MainHelpButton" inherits="MainHelpPlateButton">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="ProfessionsBookFrame" x="39" y="20" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						ProfessionsBook_ToggleTutorial();
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEvent method="OnEvent"/>
+			<OnShow method="OnShow"/>
+			<OnHide method="OnHide"/>
+		</Scripts>				
+	</Frame>
+</Ui>

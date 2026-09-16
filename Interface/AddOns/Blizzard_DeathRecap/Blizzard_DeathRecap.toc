@@ -1,0 +1,6 @@
+## Title: Blizzard_DeathRecap
+## LoadOnDemand: 1
+[Family]\Blizzard_DeathRecap_Bootstrap.lua [Bootstrap]
+[Family]\Blizzard_DeathRecap.lua [AllowLoadGameType mainline]
+[Family]\Blizzard_DeathRecap.xml [AllowLoadGameType mainline]
+[Family]\Localization.lua [AllowLoadGameType mainline]

@@ -1,0 +1,6 @@
+## Title: Blizzard Stable UI
+## AllowLoadGameType: standard, camelot
+## Dependencies: Blizzard_HelpPlate
+Shared/Blizzard_StableUI_Shared.lua
+[Game]/Blizzard_StableUI.lua
+[Game]/Blizzard_StableUI.xml

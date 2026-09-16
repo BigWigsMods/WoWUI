@@ -1,0 +1,34 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\..\Blizzard_SharedXML\UI.xsd">
+	<ItemButton name="ShapedBagSlotButtonTemplate" inherits="CircularBagSlotButtonTemplate" virtual="true"/>
+
+	<ItemButton name="CircularBagSlotButtonTemplate" inherits="BaseBagSlotButtonTemplate, CircularItemButtonTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="buttonShape" value="circle" type="string"/>
+		</KeyValues>
+		<Size x="30" y="30"/>
+	</ItemButton>
+
+	<Frame name="BagsBar" inherits="EditModeBagsSystemTemplate" mixin="BagsBarMixin" parent="UIParent" roleset="microMenu">
+		<Size x="1" y="47"/>
+		<Anchors>
+			<Anchor point="TOPRIGHT" relativeTo="MicroButtonAndBagsBar"/>
+		</Anchors>
+		<KeyValues>
+			<KeyValue key="isHorizontal" value="true" type="boolean"/>
+			<KeyValue key="direction" value="Enum.BagsDirection.Left" type="global"/>
+			<KeyValue key="useDividers" value="false" type="boolean"/>
+			<KeyValue key="bagPadding" value="0" type="number"/>
+			<KeyValue key="hideExpandToggle" value="false" type="boolean"/>
+		</KeyValues>
+		<Frames>
+			<ItemButton name="MainMenuBarBackpackButton" inherits="MainMenuBarBackpackButtonBase">
+				<Size x="48" y="48"/>
+			</ItemButton>
+			<Frame name="BagSlotCluster" inherits="BagSlotClusterTemplate"/>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad" inherit="prepend"/>
+		</Scripts>
+	</Frame>
+</Ui>

@@ -1,0 +1,10 @@
+## Title: Blizzard_CharacterCreate
+## AllowLoad: Glue
+## Dep: Blizzard_CharacterCustomize
+## Dep: Blizzard_GlueXML
+[Family]/Blizzard_CharacterCreate.lua			[ExcludeLoadGameType camelot]
+[Game]/Blizzard_CharacterCreate.lua				[AllowLoadGameType camelot]
+[Game]/Blizzard_CharacterCreate_Templates.lua	[AllowLoadGameType camelot]
+[Family]/Blizzard_CharacterCreate.xml			[ExcludeLoadGameType camelot]
+[Game]/Blizzard_CharacterCreate_Templates.xml	[AllowLoadGameType camelot]
+[Game]/Blizzard_CharacterCreate.xml				[AllowLoadGameType camelot]

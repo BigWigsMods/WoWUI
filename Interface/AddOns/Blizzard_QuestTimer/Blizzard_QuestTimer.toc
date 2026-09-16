@@ -1,0 +1,11 @@
+## Title: Blizzard Quest Timer
+## Author: Blizzard Entertainment
+## DefaultState: enabled
+## Dependencies: Blizzard_GameTooltip, Blizzard_ManagedFrameSystem
+## AllowLoad: game
+## AllowLoadGameType: classic, camelot
+
+[Family]\Blizzard_QuestTimerOverrides.lua
+QuestTimerButtonTemplate.xml
+Blizzard_QuestTimer.lua
+[Family]\Blizzard_QuestTimer.xml

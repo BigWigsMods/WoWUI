@@ -1,0 +1,38 @@
+local InputConstants =
+{
+	Tables =
+	{
+		{
+			Name = "InputContext",
+			Type = "Enumeration",
+			NumValues = 4,
+			MinValue = 0,
+			MaxValue = 3,
+			Fields =
+			{
+				{ Name = "None", Type = "InputContext", EnumValue = 0 },
+				{ Name = "Keyboard", Type = "InputContext", EnumValue = 1 },
+				{ Name = "Mouse", Type = "InputContext", EnumValue = 2 },
+				{ Name = "GamePad", Type = "InputContext", EnumValue = 3 },
+			},
+		},
+		{
+			Name = "InputDeviceInterfaceType",
+			Type = "Enumeration",
+			NumValues = 2,
+			MinValue = 0,
+			MaxValue = 1,
+			Fields =
+			{
+				{ Name = "Mkb", Type = "InputDeviceInterfaceType", EnumValue = 0 },
+				{ Name = "Gamepad", Type = "InputDeviceInterfaceType", EnumValue = 1 },
+			},
+		},
+	},
+
+	Predicates =
+	{
+	},
+};
+
+APIDocumentation:AddDocumentationTable(InputConstants);

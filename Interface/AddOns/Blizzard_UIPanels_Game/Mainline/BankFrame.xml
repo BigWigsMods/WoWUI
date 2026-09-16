@@ -1,0 +1,35 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\..\Blizzard_SharedXML\UI.xsd">
+	<Frame name="BankFrame" inherits="BankFrameTemplate">
+		<Frames>
+			<Frame name="BankPanel" parentKey="BankPanel" useParentLevel="true" hidden="true" inherits="BankPanelTemplate">
+				<Size x="738" y="460"/>
+				<Anchors>
+					<Anchor point="LEFT"/>
+				</Anchors>
+				<Frames>
+					<Frame parentKey="Header" inherits="BankPanelHeaderFrameTemplate">
+						<Anchors>
+							<Anchor point="TOP" y="-36"/>
+						</Anchors>
+					</Frame>
+					
+					<Frame parentKey="AutoDepositFrame" inherits="BankPanelAutoDepositFrameTemplate">
+						<Anchors>
+							<Anchor point="BOTTOM" relativeKey="$parent.NineSlice" relativePoint="BOTTOM" y="10"/>
+						</Anchors>
+					</Frame>
+				</Frames>
+			</Frame>
+			<Frame parentKey="TabSystem" inherits="TabSystemTemplate">
+				<KeyValues>
+					<KeyValue key="minTabWidth" value="100" type="number"/>
+					<KeyValue key="maxTabWidth" value="150" type="number"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" x="22" y="2"/>
+				</Anchors>
+			</Frame>
+		</Frames>
+	</Frame>
+</Ui>

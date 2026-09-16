@@ -1,0 +1,165 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\..\..\..\..\..\WoW\Data\Interface\AddOns\Blizzard_SharedXML\UI.xsd">
+
+	<Frame name="SpellBookFrameTemplate" mixin="SpellBookFrameMixin" inherits="TabSystemOwnerTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="topBarFullWidth" value="1614" type="number" />
+		</KeyValues>
+		<Layers>
+			<Layer level="BACKGROUND" textureSubLevel="1">
+				<Texture parentKey="TopBar" inherits="SpellBookTopBarTemplate"/>
+				<Texture parentKey="BookBGHalved" inherits="SpellBookBGHalvedTemplate" hidden="true" parentArray="minimizedArt"/>
+				<Texture parentKey="BookBGLeft" inherits="SpellBookBGLeftTemplate" parentArray="maximizedArt"/>
+				<Texture parentKey="BookBGRight" inherits="SpellBookBGRightTemplate" parentArray="maximizedArt"/>
+			</Layer>
+			<Layer level="BACKGROUND" textureSubLevel="2">
+				<Texture parentKey="BookCornerFlipbook" atlas="spellbook-corner-flipbook-evergreen" useAtlasSize="false">
+					<Size x="150" y="155"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="-15" y="6"/>
+					</Anchors>
+					<Animations>
+						<AnimationGroup parentKey="Anim" looping="NONE">
+							<FlipBook flipBookRows="2" flipBookColumns="4" flipBookFrames="8" duration="0.25" smoothing="NONE" />
+						</AnimationGroup>
+					</Animations>
+				</Texture>
+				<Texture parentKey="Bookmark" inherits="SpellBookBookmarkTemplate" parentArray="maximizedArt"/>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Button parentKey="HelpPlateButton" inherits="MainHelpPlateButton" frameStrata="HIGH">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="38" y="42" />
+				</Anchors>
+			</Button>
+			<Frame parentKey="CategoryTabSystem" inherits="SpellbookCategoryTabSystemTemplate">
+				<KeyValues>
+					<KeyValue key="maxTabWidth" value="150" type="number"/>
+					<KeyValue key="tabTemplate" value="SpellBookCategoryTabTemplate" type="string"/>
+					<KeyValue key="tabSelectSound" value="SOUNDKIT.IG_SPELLBOOK_OPEN" type="global"/>
+					<KeyValue key="smartNavigationIgnored" value="true" type="boolean"/>
+				</KeyValues>
+			</Frame>
+			<Frame parentKey="PreviousCategoryIcon" inherits="InputIconTextureFrameTemplate" hidden="true">
+				<KeyValues>
+					<KeyValue key="mappedButtonKey" value="GAMEPAD_SHOULDER_LEFT" type="global"/>
+					<KeyValue key="useDropShadow" value="true" type="boolean"/>
+				</KeyValues>
+				<Size x="30" y="30"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.CategoryTabSystem" relativePoint="TOPLEFT" />
+				</Anchors>
+			</Frame>
+			<Frame parentKey="NextCategoryIcon" inherits="InputIconTextureFrameTemplate" hidden="true">
+				<KeyValues>
+					<KeyValue key="mappedButtonKey" value="GAMEPAD_SHOULDER_RIGHT" type="global"/>
+					<KeyValue key="useDropShadow" value="true" type="boolean"/>
+				</KeyValues>
+				<Size x="30" y="30"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.CategoryTabSystem" relativePoint="TOPRIGHT" />
+				</Anchors>
+			</Frame>
+			<DropdownButton parentKey="SettingsDropdown" inherits="SpellBookSettingsDropdownTemplate">
+				<KeyValues>
+					<KeyValue key="smartNavigationIgnored" value="true" type="boolean"/>
+				</KeyValues>
+			</DropdownButton>
+			<Frame parentKey="SettingsTopFaceIcon" inherits="InputIconTextureFrameTemplate" hidden="true">
+				<KeyValues>
+					<KeyValue key="mappedButtonKey" value="GAMEPAD_MENU_RIGHT" type="global"/>
+					<KeyValue key="useDropShadow" value="true" type="boolean"/>
+				</KeyValues>
+				<Size x="22" y="22"/>
+				<Anchors>
+					<Anchor point="RIGHT" relativeKey="$parent.SettingsDropdown" relativePoint="LEFT" x="-5" y="4" />
+				</Anchors>
+			</Frame>
+			<Frame parentKey="AssistedCombatRotationSpellFrame" inherits="UIPanelSpellButtonFrameTemplate" mixin="AssistedCombatRotationSpellFrameMixin">
+				<KeyValues>
+					<KeyValue key="labelText" value="ASSISTED_COMBAT_ROTATION_SPELLBOOK_LABEL" type="global"/>
+					<KeyValue key="resizeToText" value="true" type="boolean"/>
+					<KeyValue key="textPadLeft" value="13" type="number"/>
+					<KeyValue key="textPadRight" value="5" type="number"/>
+					<KeyValue key="tooltipAnchor" value="ANCHOR_BOTTOMLEFT" type="string"/>
+					<KeyValue key="buttonBorderAtlas" value="spellbook-rotationhelper-iconframe" type="string"/>
+					<KeyValue key="buttonBorderAtlasSize" value="35" type="number"/>
+				</KeyValues>
+				<Size x="120" y="33"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="-20" y="-7"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture atlas="UI-HUD-RotationHelper-SpellbookDivider" useAtlasSize="true">
+							<Anchors>
+								<Anchor point="LEFT"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+			<EditBox parentKey="SearchBox" inherits="SpellBookSearchBoxTemplate" hidden="false">
+				<KeyValues>
+					<KeyValue key="instructionText" value="SPELLBOOK_SEARCH_INSTRUCTIONS" type="global"/>
+				</KeyValues>
+				<Size x="300" y="30"/>
+			</EditBox>
+			<Frame parentKey="SearchBoxIcon" inherits="InputIconTextureFrameTemplate" hidden="true">
+				<KeyValues>
+					<KeyValue key="mappedButtonKey" value="GAMEPAD_MENU_LEFT" type="global"/>
+					<KeyValue key="useDropShadow" value="true" type="boolean"/>
+				</KeyValues>
+				<Size x="22" y="22"/>
+				<Anchors>
+					<Anchor point="RIGHT" relativeKey="$parent.SearchBox" relativePoint="LEFT" x="-7" y="0" />
+				</Anchors>
+			</Frame>
+			<Frame parentKey="SearchPreviewContainer" inherits="SpellSearchPreviewContainerTemplate" hidden="true" frameLevel="200">
+				<Size x="176"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.SearchBox" relativePoint="BOTTOMLEFT" x="20" y="4"/>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.SearchBox" relativePoint="BOTTOMRIGHT" x="-3" y="4"/>
+				</Anchors>
+			</Frame>
+			<Frame parentKey="PagedSpellsFrame" inherits="PagedSpellsTemplate">
+				<KeyValues>
+					<KeyValue key="viewsPerPage" value="2" type="number"/>
+					<KeyValue key="autoExpandHeaders" value="true" type="boolean"/>
+					<KeyValue key="spacerSize" value="20" type="number"/>
+					<KeyValue key="xPadding" value="15" type="number"/>
+					<KeyValue key="yPadding" value="10" type="number"/>
+					<KeyValue key="columnsPerRow" value="3" type="number"/>
+					<KeyValue key="autoExpandElements" value="true" type="boolean"/>
+				</KeyValues>
+				<Anchors>
+					<Anchor point="TOPLEFT" y="-50"/>
+					<Anchor point="BOTTOMRIGHT"/>
+				</Anchors>
+				<Frames>
+					<Frame parentKey="View1" inherits="PagedSpellsView1Template" parentArray="ViewFrames"/>
+					<Frame parentKey="View2" inherits="PagedSpellsView2Template" parentArray="ViewFrames"/>	
+					<Frame parentKey="PagingControls" inherits="PagingControlsHorizontalTemplate">
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" x="-75" y="40"/>
+						</Anchors>
+						<KeyValues>
+							<KeyValue key="fontName" value="SystemFont_Med3" type="string" />
+							<KeyValue key="fontColor" value="SPELLBOOK_FONT_COLOR" type="global" />
+							<KeyValue key="spacing" value="8" type="number"/>
+							<KeyValue key="prevPageSound" value="SOUNDKIT.IG_ABILITY_PAGE_TURN" type="global"/>
+							<KeyValue key="nextPageSound" value="SOUNDKIT.IG_ABILITY_PAGE_TURN" type="global"/>
+						</KeyValues>
+					</Frame>
+				</Frames>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnShow method="OnShow"/>
+			<OnHide method="OnHide"/>
+			<OnEvent method="OnEvent"/>
+		</Scripts>
+	</Frame>
+</Ui>

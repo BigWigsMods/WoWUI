@@ -1,0 +1,6 @@
+## Title: Blizzard_SocialToast
+## AllowLoad: both [AllowLoadGameType mainline]
+## Dep: Blizzard_SharedXML
+
+SocialToast.lua
+SocialToast.xml
