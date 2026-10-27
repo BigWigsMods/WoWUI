@@ -2802,6 +2802,14 @@ function ContainerFrameCombinedBagsMixin:OnShow()
 	ContainerFrameTokenWatcherMixin.OnShow(self);
 	EventRegistry:RegisterCallback("BagSlot.OnEnter", self.OnBagSlotEnter, self);
 	EventRegistry:RegisterCallback("BagSlot.OnLeave", self.OnBagSlotLeave, self);
+
+	if InputUtil.IsGamepadUIEnabled() then
+		RunNextFrame(function()
+			if self:IsShown() then
+				SmartNavigation:RefreshButtonGroups(self); -- Do it one frame later to avoid race conditions when opened another panel's show.
+			end
+		end);
+	end
 end
 
 function ContainerFrameCombinedBagsMixin:OnHide()
@@ -3299,7 +3307,6 @@ local function Gamepad_UseItemAction()
 end
 
 function ContainerFrameCombinedBagsMixin:SetUpSearchGamepad()
-	BagItemSearchBox.useFooterJumpHints = true;
 	local function ClearText()
 		BagItemSearchBox:SetText("");
 		BagItemSearchBox:SetFocus();
@@ -3466,7 +3473,6 @@ function ContainerFrameCombinedBagsMixin:SetupGamepad()
 	self.gamepadFooter:AddPromptedBinding(collapseBagAction);
 	self.gamepadFooter:AddPromptedBinding(itemMoreActions);
 	self.gamepadFooter:AddPromptedBinding(enterSearchBox);
-	self.gamepadFooter:AddStandardFrameControlManagerBindings(self);
 	self.gamepadFooter:AddPromptedBinding(backAction);
 	self.gamepadFooter:Finalize();
 end

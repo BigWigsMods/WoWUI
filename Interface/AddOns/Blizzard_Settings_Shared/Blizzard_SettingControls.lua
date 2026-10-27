@@ -80,6 +80,19 @@ SettingsListSectionHeaderMixin = CreateFromMixins(DefaultTooltipMixin, SettingsN
 
 function SettingsListSectionHeaderMixin:OnLoad()
 	DefaultTooltipMixin.OnLoad(self);
+	self:RegisterEvent("SETTINGS_HEADER_TEXT_UPDATE");
+end
+
+function SettingsListSectionHeaderMixin:OnEvent(event, ...)
+	if event == "SETTINGS_HEADER_TEXT_UPDATE" then
+		if (self.customNameUpdateFunc) then
+			self.Title:SetTextToFit(self.customNameUpdateFunc());
+		end
+	end
+end
+
+function SettingsListSectionHeaderMixin:EvaluateState()
+	SettingsListElementMixin.EvaluateState(self);
 end
 
 function SettingsListSectionHeaderMixin:NarrationGetName()
@@ -94,6 +107,12 @@ end
 
 function SettingsListSectionHeaderMixin:Init(initializer)
 	local name = initializer:GetName();
+
+	if (initializer.customNameUpdateFunc) then
+		self.customNameUpdateFunc = initializer.customNameUpdateFunc;
+		name = self.customNameUpdateFunc();
+	end
+
 	self.Title:SetTextToFit(name);
 
 	NarrationUtil.SetStaticDescription(self, initializer:GetTooltip());
@@ -802,6 +821,8 @@ end
 function SettingsDropdownControlMixin:OnLoad()
 	SettingsControlMixin.OnLoad(self);
 
+	self:RegisterEvent("SETTINGS_HEADER_TEXT_UPDATE");
+
 	local dropdownType = self.dropdownType or "SettingsDropdownWithButtonsTemplate";
 	self.Control = CreateFrame("Frame", nil, self, dropdownType);
 	self.Control:SetPoint("LEFT", self, "CENTER", -48, 3);
@@ -849,6 +870,13 @@ function SettingsDropdownControlMixin:Init(initializer)
 
 	self:InitDropdown();
 	self:EvaluateState();
+end
+
+function SettingsDropdownControlMixin:OnEvent(event, ...)
+	if event == "SETTINGS_HEADER_TEXT_UPDATE" then
+		self.Control.Dropdown:SetSelectionText(self.getSelectionTextFunc);
+		self.Control.Dropdown:UpdateToMenuSelections(self.Control.Dropdown:GetMenuDescription());
+	end
 end
 
 function SettingsDropdownControlMixin:InitDropdown()

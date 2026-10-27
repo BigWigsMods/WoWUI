@@ -1317,7 +1317,7 @@ function SmartNavigationMixin:GetButtonInDirectionGrid(inButton, inDirection)
 	nextButton = self:GetButtonAtGridIndex(nextX, nextY);
 
 	if panelInfo.isWrapping then
-		if not nextButton then
+		if not nextButton and #grid > 0 then
 			local maxGridX = #grid;
 
 			if inDirection:IsEqualTo(SMART_NAV_INPUT_DIRECTION.UP) then

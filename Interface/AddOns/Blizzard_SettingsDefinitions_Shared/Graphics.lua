@@ -1166,8 +1166,6 @@ local function Register()
 		end
 	end
 
-	GraphicsOverrides.CreateHDSDToggleOptions(category, layout);
-
 	GraphicsOverrides.CreateHiResOptions(category, layout);
 
 	-- Camera FOV

@@ -890,7 +890,6 @@ function PlayerSpellsFrameMixin:SetUpSpellBookGamepad()
 	self.spellsFrameFooter:AddPromptedBinding(enterSearchBox);
 	self.spellsFrameFooter:AddPromptedBinding(previousCategory);
 	self.spellsFrameFooter:AddPromptedBinding(nextCategory);
-	self.spellsFrameFooter:AddStandardFrameControlManagerBindings(self);
 	self.spellsFrameFooter:Finalize();
 end
 
@@ -1095,7 +1094,6 @@ function PlayerSpellsFrameMixin:SetUpClassTalentsGamepad()
 	self.classTalentsFrameFooter:AddPromptedBinding(navigateElements);
 	self.classTalentsFrameFooter:AddPromptedBinding(openSettings);
 	self.classTalentsFrameFooter:AddPromptedBinding(enterSearchBox);
-	self.classTalentsFrameFooter:AddStandardFrameControlManagerBindings(self);
 	self.classTalentsFrameFooter:Finalize();
 end
 

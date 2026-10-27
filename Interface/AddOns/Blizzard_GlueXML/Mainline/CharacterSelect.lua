@@ -3136,6 +3136,11 @@ function CharacterSelectFrameMixin:SetUpGamepad()
 	self.SmartNavigationOnSelect = self.OnSmartNavButtonSelected;
 end
 
+function CharacterSelectFrameMixin:ConfigureCharacterListSearchBoxGamepad()
+	CharacterSelectUI.VisibilityFramesContainer.CharacterList.SearchBox:SetPoint("TOPLEFT", 40, -25);
+	CharacterSelectUI.VisibilityFramesContainer.CharacterList.SearchBox:SetWidth(297);
+end
+
 function CharacterSelectFrameMixin:InitializeGamepad()
 	--Set up navigation overrides.
 	local navBar = self.CharacterSelectUI.VisibilityFramesContainer.NavBar;
@@ -3156,7 +3161,8 @@ function CharacterSelectFrameMixin:InitializeGamepad()
 	CharacterSelectCharacterFrame.DeleteCharacterButton:Hide();
 
 	CharacterSelectUI.VisibilityFramesContainer.CharacterList.SearchBox.FocusIcon:Show();
-	CharacterSelectUI.VisibilityFramesContainer.CharacterList.SearchBox:SetPoint("TOPLEFT", 40, -25);
+	self:ConfigureCharacterListSearchBoxGamepad();
+
 	CharacterSelectUI.VisibilityFramesContainer.ToolTray:SetPoint("RIGHT", CharSelectEnterWorldButton, "BOTTOMLEFT", -200, 0);
 	CharSelectCharacterName:SetPoint("BOTTOM", self.frameFooter.inputLegend, "TOP", 0, 15);
 

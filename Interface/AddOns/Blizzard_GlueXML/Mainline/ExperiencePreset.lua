@@ -89,8 +89,8 @@ end
 function ExperiencePresetSelectButtonMixin:OnClick()
 	PlaySound(SOUNDKIT.UI_EXPERIENCE_PRESET_SELECT_CLICK);
 	if (ClassicExperienceButton:GetChecked() or ModernExperienceButton:GetChecked()) then
-		local selectedPreset = ClassicExperienceButton:GetChecked() and Enum.ForeverExperiencePreset.Classic or Enum.ForeverExperiencePreset.Modern;
-		C_GameRules.SetForeverExperiencePreset(selectedPreset);
+		local selectedPreset = ClassicExperienceButton:GetChecked() and Enum.ForeverExperiencePreset.Classic or Enum.ForeverExperiencePreset.Enhanced;
+		C_GameRules.SetForeverExperiencePresetPreLogin(selectedPreset);
 	end
 end
 
