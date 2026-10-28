@@ -3174,6 +3174,20 @@ function CharacterSelectFrameMixin:InitializeGamepad()
 	EventRegistry:RegisterCallback("CharacterSelectList.OnCharacterSelectionUpdated",
 	function()
 		if SmartNavigation:GetActiveFrame() ~= CharacterSelect then
+			-- The character list equates focus with selection, but the two can be updated
+			-- independently. If the selection is updated while CharacterSelect is out of focus,
+			-- then the on-return focus target must be updated to match.
+			local panelInfo = SmartNavigation:GetPanelInfo(CharacterSelect, true);
+			local buttonContext = panelInfo and panelInfo.lastButton and panelInfo.lastButton.buttonContext;
+			-- It's possible to be focusing something other than the character list when the update comes.
+			-- Only prep the new focus target if our prior focus target was a character list entry.
+			if buttonContext == 'ButtonContext_CharacterSelectListCharacterButton' then
+				local selectedButton = CharacterSelect:GetSelectedCharacterButton();
+				if selectedButton and selectedButton.buttonContext == "ButtonContext_CharacterSelectListCharacterButton" then
+					SmartNavigation:SetLastButtonForPanelInfo(panelInfo, selectedButton);
+				end
+			end
+
 			return;
 		end
 

@@ -894,10 +894,8 @@ function SettingsDropdownControlMixin:InitDropdown()
 		self.Control:SetSteppersShown(hasOnlyRadioDescriptions);
 	end
 
-	if initializer.getSelectionTextFunc then
-		self.Control.Dropdown:SetSelectionText(initializer.getSelectionTextFunc);
-		self.Control.Dropdown:UpdateToMenuSelections(self.Control.Dropdown:GetMenuDescription());
-	end
+	self.Control.Dropdown:SetSelectionText(initializer.getSelectionTextFunc);
+	self.Control.Dropdown:UpdateToMenuSelections(self.Control.Dropdown:GetMenuDescription());
 end
 
 function SettingsDropdownControlMixin:SetupDropdownMenu(button, setting, options, initTooltip, initializer)
@@ -1634,10 +1632,8 @@ function SettingsCheckboxDropdownControlMixin:Init(initializer)
 
 	self.cbrHandles:SetOnValueChangedCallback(dropdownSetting:GetVariable(), OnDropdownSettingChanged);
 
-	if initializer.getSelectionTextFunc then
-		self.Control.Dropdown:SetSelectionText(initializer.getSelectionTextFunc);
-		self.Control.Dropdown:UpdateToMenuSelections(self.Control.Dropdown:GetMenuDescription());
-	end
+	self.Control.Dropdown:SetSelectionText(initializer.getSelectionTextFunc);
+	self.Control.Dropdown:UpdateToMenuSelections(self.Control.Dropdown:GetMenuDescription());
 
 	local hasOnlyRadioDescriptions = self.Control.Dropdown:HasOnlyRadioDescriptions();
 	self.Control:SetSteppersShown(hasOnlyRadioDescriptions);

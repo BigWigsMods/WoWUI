@@ -122,7 +122,7 @@ function ContainerFrame_GetContainerNumSlots(bagId)
 		local keyRingSize = GetKeyRingSize();
 		return keyRingSize, keyRingSize;
 	end
-	
+
 	local currentNumSlots = C_Container.GetContainerNumSlots(bagId);
 	local maxNumSlots = currentNumSlots;
 
@@ -756,17 +756,6 @@ local function Gamepad_SetupMenuOptions(menuDescription, bagID)
 	end
 end
 
-
-local function Gamepad_BagClose()
-	if CursorHasItem() then
-		ClearCursor();
-		return true;
-	end
-
-	CloseAllBags();
-	return true;
-end
-
 function ContainerFrame_OnLoad(self)
 	self:RegisterEvent("BAG_OPEN");
 	self:RegisterEvent("BAG_CLOSED");
@@ -1062,20 +1051,19 @@ do
 		if self:IsCombinedBagContainer() then
 			local useAscendingOrder = false;
 			local startIndex, endIndex, increment = GetBagSetupIndices(useAscendingOrder);
-			for bag = startIndex, endIndex, increment do
-				local bagSize = ContainerFrame_GetContainerNumSlots(bag);
+			for bagID = startIndex, endIndex, increment do
+				local bagSize = ContainerFrame_GetContainerNumSlots(bagID);
 				for i = 1, bagSize do
-					local itemButton = self:AcquireNewItemButton();
 					local slotID = bagSize - i + 1;
-					itemButton:Initialize(bag, slotID);
+					self:AcquireNewItemButton():Initialize(self, bagID, slotID);
 				end
 			end
 		else
 			local bagSize = self:GetBagSize();
-			for i = 1, ContainerFrame_GetContainerNumSlots(self:GetBagID()) do
-				local itemButton = self:AcquireNewItemButton();
+			local bagID = self:GetBagID();
+			for i = 1, ContainerFrame_GetContainerNumSlots(bagID) do
 				local slotID = bagSize - i + 1;
-				itemButton:Initialize(self:GetBagID(), slotID);
+				self:AcquireNewItemButton():Initialize(self, bagID, slotID);
 			end
 		end
 	end
@@ -1088,6 +1076,7 @@ do
 				table.insert(itemsToLayout, itemButton);
 			end
 		end
+
 		if self:IsCombinedBagContainer() and InputUtil.IsGamepadUIEnabled() then
 			local useAscendingOrder = false;
 			local startIndex, endIndex, increment = GetBagSetupIndices(useAscendingOrder);
@@ -1214,7 +1203,11 @@ function ContainerFrameMixin:UpdateItems()
 		ClearItemButtonOverlay(itemButton);
 
 		itemButton:SetHasItem(texture);
+
+		-- Not ideal, this ends up doing the work for empty slot texture setting twice, but
+		-- needs a larger refactor to clean up
 		itemButton:SetItemButtonTexture(texture);
+		itemButton:SyncAppearanceWithHasItem();
 
 		local doNotSuppressOverlays = false;
 		SetItemButtonQuality(itemButton, quality, itemLink, doNotSuppressOverlays, isBound);
@@ -1248,6 +1241,7 @@ function ContainerFrameMixin:UpdateCooldowns()
 	for i, itemButton in self:EnumerateValidItems() do
 		local hasItem = C_Container.HasContainerItem(itemButton:GetBagID(), itemButton:GetID());
 		itemButton:UpdateCooldown(hasItem);
+		itemButton:SyncAppearanceWithHasItem();
 	end
 end
 
@@ -1835,23 +1829,16 @@ function ContainerFrameItemButtonMixin:GetSlotAndBagID()
 	return self:GetID(), self:GetBagID();
 end
 
-function ContainerFrameItemButtonMixin:Initialize(bag, slot)
+function ContainerFrameItemButtonMixin:IsCombined()
+	return self.containerFrame and self.containerFrame:IsCombinedBagContainer();
+end
+
+function ContainerFrameItemButtonMixin:Initialize(containerFrame, bag, slot)
+	self.containerFrame = containerFrame;
+
 	self:SetBagID(bag);
 	self:SetID(slot);
 	self:UpdateExtended();
-
-	-- Potentially temporary, item slots don't have a background, so when they're used in a combined inventory setup
-	-- they need to make their own.
-	local isCombined = self:GetParent():IsCombinedBagContainer();
-	if isCombined and not self.ItemSlotBackground then
-		self.ItemSlotBackground = self:CreateTexture(nil, "BACKGROUND", "ItemSlotBackgroundCombinedBagsTemplate", -6);
-		self.ItemSlotBackground:SetAllPoints(self);
-	end
-
-	if self.ItemSlotBackground then
-		self.ItemSlotBackground:SetShown(isCombined);
-	end
-
 	self:Show();
 end
 
@@ -1907,6 +1894,80 @@ function ContainerFrameItemButtonMixin:UpdateJunkItem(quality, noValue)
 	if C_Item.DoesItemExist(itemLocation) then
 		local isJunk = quality == Enum.ItemQuality.Poor and not noValue and MerchantFrame:IsShown();
 		self.JunkIcon:SetShown(isJunk);
+	end
+end
+
+function ContainerFrameItemButtonMixin:GetBagIcon()
+	local bagID = self:GetBagID();
+	if ContainerFrame_IsBackpack(bagID) then
+		return [[Interface\Icons\ui-hud-actionbar-bag]];
+	end
+
+	if bagID == Enum.BagIndex.Keyring then
+		return [[Interface\ICONS\ui-hud-actionbar-keyring]];
+	end
+
+	local bagTexture = GetInventoryItemTexture("player", C_Container.ContainerIDToInventoryID(bagID));
+	return bagTexture;
+end
+
+function ContainerFrameItemButtonMixin:ApplyEmptySlotAppearanceToTexture(texture, asset)
+	texture:SetTexture(asset);
+	texture:SetAllPoints(self);
+	texture:SetVertexColor(EMPTY_BAG_SLOT_EFFECT_COLOR:GetRGBA());
+	texture:SetDesaturation(1);
+end
+
+function ContainerFrameItemButtonMixin:ApplyRegularSlotAppearanceToTexture(texture, asset)
+	texture:SetTexture(asset);
+	texture:SetVertexColor(1, 1, 1, 1);
+	texture:SetDesaturation(0);
+end
+
+function ContainerFrameItemButtonMixin:ShouldUseBagIconForEmptySlot()
+	-- Default behavior, override as necessary
+	return false;
+end
+
+function ContainerFrameItemButtonMixin:SetAppearanceToEmptyBagSlot()
+	if self:ShouldUseBagIconForEmptySlot() then
+		local bagIcon = self:GetBagIcon();
+		self:ApplyEmptySlotAppearanceToTexture(self:GetNormalTexture(), bagIcon);
+		self:ApplyEmptySlotAppearanceToTexture(self:GetPushedTexture(), bagIcon);
+	else
+		self:SetAppearanceToRegularBagSlot();
+	end
+
+	self:SetItemButtonTexture(nil);
+end
+
+function ContainerFrameItemButtonMixin:SetAppearanceToRegularBagSlot()
+	local normalTexture = self:GetNormalTexture();
+	self:ApplyRegularSlotAppearanceToTexture(normalTexture, [[Interface\Buttons\UI-Quickslot2]]);
+	normalTexture:ClearAllPoints();
+	normalTexture:SetPoint("CENTER", 0, -1);
+	normalTexture:SetSize(64, 64);
+
+	local pushedTexture = self:GetPushedTexture();
+	self:ApplyRegularSlotAppearanceToTexture(pushedTexture, [[Interface\Buttons\UI-Quickslot-Depress]]);
+	pushedTexture:SetAllPoints();
+end
+
+local backgroundTextureIsAtlas = true;
+function ContainerFrameItemButtonMixin:GetItemButtonBackgroundTexture()
+	-- this is an override
+	if self:IsCombined() then
+		return "bags-item-slot-blank", backgroundTextureIsAtlas;
+	end
+
+	return "bags-item-slot64", backgroundTextureIsAtlas;
+end
+
+function ContainerFrameItemButtonMixin:SyncAppearanceWithHasItem()
+	if self:HasItem() then
+		self:SetAppearanceToRegularBagSlot();
+	else
+		self:SetAppearanceToEmptyBagSlot();
 	end
 end
 

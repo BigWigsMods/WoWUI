@@ -84,6 +84,7 @@ function GamepadMainActionBarFrameMixin:InitializeGamepad()
 	self:RegisterEvent("PET_ORDER_MOVE_TO_PENDING_CHANGED");
 	self:RegisterEvent("UPDATE_BONUS_ACTIONBAR");
 	self:RegisterEvent("PLAYER_TARGET_CHANGED");
+	self:RegisterEvent("LOOT_CLOSED");
 	self:ResyncAttackState();
 end
 
@@ -96,6 +97,7 @@ function GamepadMainActionBarFrameMixin:UninitializeGamepad()
 	self:UnregisterEvent("PET_ORDER_MOVE_TO_PENDING_CHANGED");
 	self:UnregisterEvent("UPDATE_BONUS_ACTIONBAR");
 	self:UnregisterEvent("PLAYER_TARGET_CHANGED");
+	self:UnregisterEvent("LOOT_CLOSED");
 end
 
 function GamepadMainActionBarFrameMixin:OnAutoLootCVarChanged()
@@ -334,6 +336,22 @@ local function ResolveNonBindableInteract()
 	error("At least one action should resolve");
 end
 
+local function RemoveLockedUnitOnLootClose()
+	-- AoE looting may have mutlple loot owners and the user may have
+	-- changed the loot owner while the loot window is open via mouse
+	-- clicking another dead unit.
+	-- So we may clear a dead target that is not the target we are looting
+	-- in very rare circumstances but overall that is fine for our needs
+	-- since soft, tab and analog enemy targeting cannot target dead units.
+	-- Soft enemy will not be equal to the locked target if the target
+	-- does not have the `TARGET_FLAG_ENEMY` flag set which is true for
+	-- dead units so clearing dead units on loot close avoids confusion
+	-- here with soft enemy targeting.
+	if UnitExists("target") and UnitIsDead("target") then
+		ClearTarget();
+	end
+end
+
 function GamepadMainActionBarFrameMixin:UpdateInteractIcons()
 	local actionBars = self:GetActionBars();
 	local iconTexture = actionBars.topBar.Right.ActionButton1.SpecialActionIcon;
@@ -369,6 +387,8 @@ function GamepadMainActionBarFrameMixin:OnEvent(event, ...)
 			self.pendingTaxiCancel = false;
 		end
 		self:UpdateBackIcons();
+	elseif (event == "LOOT_CLOSED") then
+		RemoveLockedUnitOnLootClose();
 	else
 		if (event == "PLAYER_ENTER_COMBAT") then
 			self.isMeleeAttacking = true;
