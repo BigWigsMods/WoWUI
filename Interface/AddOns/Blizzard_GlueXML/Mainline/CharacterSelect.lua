@@ -323,6 +323,8 @@ function CharacterSelectFrameMixin:OnUpdate(elapsed)
 				StaticPopup_Show("UNDELETE_NAME_TAKEN_REGIONAL");
 			elseif (self.undeleteFailed == "dracthyr") then
 				StaticPopup_Show("UNDELETE_DRACTHYR_LEVEL_REQUIREMENT");
+			elseif (self.undeleteFailed == "pvpTeams") then
+				StaticPopup_Show("UNDELETE_PVP_TEAMS_VIOLATION");
 			else
 				StaticPopup_Show("UNDELETE_FAILED");
 			end
@@ -549,6 +551,8 @@ function CharacterSelectFrameMixin:OnEvent(event, ...)
 				self.undeleteFailed = "regionalname";
 			elseif ( result == LE_CHARACTER_UNDELETE_RESULT_ERROR_DRACTHYR_LEVEL_REQUIREMENT ) then
 				self.undeleteFailed = "dracthyr";
+			elseif ( result == LE_CHARACTER_UNDELETE_RESULT_ERROR_PVP_TEAMS_VIOLATION ) then
+				self.undeleteFailed = "pvpTeams";
 			else
 				self.undeleteFailed = "other";
 			end
@@ -2422,6 +2426,12 @@ StaticPopupDialogs["UNDELETE_NAME_TAKEN_REGIONAL"] = {
 
 StaticPopupDialogs["UNDELETE_DRACTHYR_LEVEL_REQUIREMENT"] = {
 	text = UNDELETE_DRACTHYR_LEVEL_REQUIREMENT,
+	button1 = OKAY,
+	escapeHides = true,
+}
+
+StaticPopupDialogs["UNDELETE_PVP_TEAMS_VIOLATION"] = {
+	text = UNDELETE_PVP_TEAMS_VIOLATION,
 	button1 = OKAY,
 	escapeHides = true,
 }

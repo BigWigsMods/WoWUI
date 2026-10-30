@@ -149,6 +149,9 @@
 					</Anchors>
 				</Texture>
 			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="EmptyBagIcon" setAllPoints="true" hidden="true"/>
+			</Layer>
 		</Layers>
 		<Frames>
 			<Cooldown name="$parentCooldown" parentKey="Cooldown" inherits="CooldownFrameTemplate"/>
@@ -313,7 +316,11 @@
 			<KeyValue key="layoutType" value="HeldBagLayout" type="string"/>
 		</KeyValues>
 		<Frames>
-			<DropdownButton name="$parentPortraitButton" parentKey="PortraitButton" inherits="ContainerFramePortraitButtonTemplate"/>
+			<DropdownButton name="$parentPortraitButton" parentKey="PortraitButton" inherits="ContainerFramePortraitButtonTemplate">
+				<KeyValues>
+					<KeyValue key="smartNavigationIgnoreGrid" value="true" type="boolean"/>
+				</KeyValues>
+			</DropdownButton>
 			<Button inherits="ContainerFramePortraitButtonRouterTemplate"/>
 			<Frame parentKey="MoneyFrame" inherits="ContainerMoneyFrameTemplate"/>
 			<Frame parentKey="CountContainer" frameStrata="HIGH">

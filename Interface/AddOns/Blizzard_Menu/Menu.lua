@@ -1751,6 +1751,8 @@ do
 end
 
 function MenuProxyMixin:OnLoad()
+	self.isMenuProxy = true;
+
 	self.ScrollBox = CreateFrame("Frame", nil, self, "WowScrollBoxList");
 
 	self.ScrollBar = CreateFrame("EventFrame", nil, self, "MinimalScrollBar");
@@ -2755,5 +2757,9 @@ do
 
 	function Menu.PrintOpenMenuTags()
 		print(table.concat(Menu.GetOpenMenuTags(), LIST_DELIMITER));
+	end
+
+	function Menu.IsMenuProxy(frame)
+		return frame.isMenuProxy == true;
 	end
 end

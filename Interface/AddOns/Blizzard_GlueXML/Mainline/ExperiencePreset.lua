@@ -4,6 +4,8 @@ function ExperiencePresetMixin:OnLoad()
 	SetLoginScreenModel(self);
 	self:SetNarrationName(self.Title:GetText());
 	self:SetNarrationDescription(self.Description:GetText());
+
+	self:RegisterForTransitions();
 end
 
 function ExperiencePresetMixin:OnShow()
@@ -15,6 +17,49 @@ end
 
 function ExperiencePresetMixin:NarrationShouldIgnoreFocus()
 	return true;
+end
+
+function ExperiencePresetMixin:FocusGamepad()
+	self.frameFooter:ShowAndActivateBindings();
+	SmartNavigation:SetTargetButtonForFrame(self, ClassicExperienceButton);
+end
+
+function ExperiencePresetMixin:UnfocusGamepad()
+	self.frameFooter:HideAndDeactivateBindings();
+end
+
+function ExperiencePresetMixin:SetupGamepad()
+	local select = GamepadSharedUtility.CreatePromptedBinding(GAMEPAD_FACE_BOTTOM, function()
+		SelectButton:OnClick();
+	end, ACTION_LABEL_SELECT);
+
+	local back = GamepadSharedUtility.CreatePromptedBinding(GAMEPAD_FACE_RIGHT, function()
+		CancelButton:OnClick();
+	end, FRAME_ACTION_BACK);
+
+	self.frameFooter = GamepadSharedUtility.CreatePromptedBindingFooter(self, "ExperiencePresetFooter");
+	self.frameFooter:AddPromptedBinding(select);
+	self.frameFooter:AddPromptedBinding(back);
+	self.frameFooter:Finalize();
+	self.frameFooter.inputLegend:ClearAllPoints();
+	self.frameFooter.inputLegend:SetPoint("BOTTOM", self, "BOTTOM", 0, 10);
+end
+
+function ExperiencePresetMixin:InitializeGamepad()
+	SelectButton:Hide();
+	CancelButton:Hide();
+end
+
+function ExperiencePresetMixin:UninitializeGamepad()
+	SelectButton:Show();
+	CancelButton:Show();
+end
+
+function ExperiencePresetMixin:RegisterForTransitions()
+	InputUtil.RegisterForInterfaceTransitions(self, nil);
+	InputUtil.RegisterGamepadSetup(self, GenerateClosure(self.SetupGamepad, self));
+	InputUtil.RegisterGamepadInit(self, GenerateClosure(self.InitializeGamepad, self));
+	InputUtil.RegisterGamepadUninit(self, GenerateClosure(self.UninitializeGamepad, self));
 end
 
 ExperiencePresetButtonMixin = CreateFromMixins(NarrationStaticNameMixin, NarrationStaticDescriptionMixin);
@@ -65,6 +110,10 @@ function ExperiencePresetButtonMixin:OnLoad()
 		self.BulletPoint6.BulletText:GetText()
 	);
 	self:SetNarrationDescription(NarrationUtil.MakeNarrationString(self.Description:GetText(), self.StartingSettings:GetText(), bulletNarration));
+end
+
+function ExperiencePresetButtonMixin:OnSmartNavSelect()
+	self:OnClick();
 end
 
 function ExperiencePresetButtonMixin:OnShow()

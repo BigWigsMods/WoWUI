@@ -990,8 +990,17 @@ function ContainerFrameMixin:GetInitialItemAnchor()
 end
 
 do
+	local function GetSortBagID(item)
+		local bagID = item:GetBagID();
+		if bagID == KEYRING_CONTAINER and InputUtil.IsGamepadUIEnabled() then
+			return NUM_TOTAL_BAG_FRAMES + 1;
+		end
+
+		return bagID;
+	end
+
 	local function SortItems(item1, item2)
-		local bag1, bag2 = item1:GetBagID(), item2:GetBagID();
+		local bag1, bag2 = GetSortBagID(item1), GetSortBagID(item2);
 		if bag1 ~= bag2 then
 			return bag1 > bag2;
 		end
@@ -1653,7 +1662,19 @@ function ContainerFrameItemButtonMixin:OnLoad()
 	self:SetItemLocationCallback(GetItemLocationCallback);
 
 	if InputUtil.IsGamepadUIEnabled() then
+		self.Highlight:SetAtlas("ItemSlotState_Focused");
+		self.Highlight:SetAllPoints(self);
 		self.Highlight:Show();
+
+		self:SetNormalAtlas("ItemSlotFrame_Default");
+		self:SetPushedAtlas("ItemSlotFrame_Pressed");
+		self:SetDisabledAtlas("ItemSlotFrame_Disabled");
+		self:SetHighlightAtlas("ItemSlotFrame_Hover");
+
+		self.BagIndicator:SetAtlas("ItemSlotState_Focused");
+		self.BagIndicator:SetAllPoints(self);
+
+		self.NormalTexture:SetAllPoints(self);
 	else
 		self.Highlight:Hide();
 	end
@@ -1911,52 +1932,27 @@ function ContainerFrameItemButtonMixin:GetBagIcon()
 	return bagTexture;
 end
 
-function ContainerFrameItemButtonMixin:ApplyEmptySlotAppearanceToTexture(texture, asset)
-	texture:SetTexture(asset);
-	texture:SetAllPoints(self);
-	texture:SetVertexColor(EMPTY_BAG_SLOT_EFFECT_COLOR:GetRGBA());
-	texture:SetDesaturation(1);
-end
-
-function ContainerFrameItemButtonMixin:ApplyRegularSlotAppearanceToTexture(texture, asset)
-	texture:SetTexture(asset);
-	texture:SetVertexColor(1, 1, 1, 1);
-	texture:SetDesaturation(0);
-end
-
 function ContainerFrameItemButtonMixin:ShouldUseBagIconForEmptySlot()
 	-- Default behavior, override as necessary
 	return false;
 end
 
 function ContainerFrameItemButtonMixin:SetAppearanceToEmptyBagSlot()
-	if self:ShouldUseBagIconForEmptySlot() then
-		local bagIcon = self:GetBagIcon();
-		self:ApplyEmptySlotAppearanceToTexture(self:GetNormalTexture(), bagIcon);
-		self:ApplyEmptySlotAppearanceToTexture(self:GetPushedTexture(), bagIcon);
-	else
-		self:SetAppearanceToRegularBagSlot();
+	local useBagIcon = self:ShouldUseBagIconForEmptySlot();
+	self.EmptyBagIcon:SetShown(useBagIcon);
+	if useBagIcon then
+		self.EmptyBagIcon:SetTexture(self:GetBagIcon());
+		self.EmptyBagIcon:SetVertexColor(EMPTY_BAG_SLOT_EFFECT_COLOR:GetRGBA());
+		self.EmptyBagIcon:SetDesaturation(1);
 	end
 
 	self:SetItemButtonTexture(nil);
 end
 
-function ContainerFrameItemButtonMixin:SetAppearanceToRegularBagSlot()
-	local normalTexture = self:GetNormalTexture();
-	self:ApplyRegularSlotAppearanceToTexture(normalTexture, [[Interface\Buttons\UI-Quickslot2]]);
-	normalTexture:ClearAllPoints();
-	normalTexture:SetPoint("CENTER", 0, -1);
-	normalTexture:SetSize(64, 64);
-
-	local pushedTexture = self:GetPushedTexture();
-	self:ApplyRegularSlotAppearanceToTexture(pushedTexture, [[Interface\Buttons\UI-Quickslot-Depress]]);
-	pushedTexture:SetAllPoints();
-end
-
 local backgroundTextureIsAtlas = true;
 function ContainerFrameItemButtonMixin:GetItemButtonBackgroundTexture()
 	-- this is an override
-	if self:IsCombined() then
+	if self:ShouldUseBagIconForEmptySlot() then
 		return "bags-item-slot-blank", backgroundTextureIsAtlas;
 	end
 
@@ -1965,7 +1961,7 @@ end
 
 function ContainerFrameItemButtonMixin:SyncAppearanceWithHasItem()
 	if self:HasItem() then
-		self:SetAppearanceToRegularBagSlot();
+		self.EmptyBagIcon:Hide();
 	else
 		self:SetAppearanceToEmptyBagSlot();
 	end
@@ -2543,6 +2539,9 @@ function ContainerFrameSettingsManager:OnBagClosed(bagID, container)
 			self:AddCheckReopenBag(bagID);
 		end
 
+		if bagID ~= Enum.BagIndex.Backpack and IsBagOpen(Enum.BagIndex.Backpack) then
+			self:AddCheckReopenBag(Enum.BagIndex.Backpack);
+		end
 		CloseBag(bagID);
 	end
 end
@@ -2868,6 +2867,7 @@ function ContainerFrameCombinedBagsMixin:OnShow()
 		RunNextFrame(function()
 			if self:IsShown() then
 				SmartNavigation:RefreshButtonGroups(self); -- Do it one frame later to avoid race conditions when opened another panel's show.
+				self:ApplySmartNavOverrideForLeftmostButton();
 			end
 		end);
 	end
@@ -2991,6 +2991,10 @@ function ContainerFrameCombinedBagsMixin:GetPaddingWidth()
 end
 
 function ContainerFrameCombinedBagsMixin:GetPaddingHeight()
+	if InputUtil.IsGamepadUIEnabled() then
+		return 63;
+	end
+
 	return 75;
 end
 
@@ -3040,7 +3044,7 @@ end
 function ContainerFrameCombinedBagsMixin:SetSearchBoxPoint(searchBox)
 	searchBox:SetPoint("TOPLEFT", self, "TOPLEFT", 62, -37);
 	if InputUtil.IsGamepadUIEnabled() then
-		searchBox:SetWidth(150);
+		searchBox:SetPoint("TOPRIGHT", self, "TOPRIGHT", -12, -37);
 	else
 		searchBox:SetWidth(330);
 	end
@@ -3138,7 +3142,17 @@ local function Gamepad_IsItemUseBlocked()
 end
 
 local function Gamepad_IsOpenBagDropdownContextActionValid()
-	return not CursorHasItem() and not Gamepad_IsItemUseBlocked();
+	local button = SmartNavigation:GetCurrentButton();
+	if not button or CursorHasItem() or Gamepad_IsItemUseBlocked() then
+		return false;
+	end
+
+	return button.HasBag and button:HasBag() or button == ContainerFrameCombinedBags.PortraitButton;
+end
+
+local function Gamepad_IsCollapseBagActionValid()
+	local button = SmartNavigation:GetCurrentButton();
+	return button ~= nil and button.HasBag ~= nil and button:HasBag();
 end
 
 local function Gamepad_IsClickContextActionValid()
@@ -3332,6 +3346,9 @@ end
 local function Gamepad_ToggleCollapseBag(containerFrame)
 	local bagButton = SmartNavigation:GetCurrentButton();
 	bagButton.isCollapsed = not bagButton.isCollapsed;
+	if bagButton.UpdateBorderAtlases then
+		bagButton:UpdateBorderAtlases();
+	end
 	if containerFrame:IsVisible() then
 		ContainerFrame_GenerateFrame(containerFrame, 0, 0);
 	end
@@ -3406,7 +3423,7 @@ function ContainerFrameCombinedBagsMixin:SetUpSearchGamepad()
 		GamepadMode.FrameControlsManager:UnsuspendFrame();
 	end
 
-	BagItemSearchBox.clearButton.smartNavigationIgnored = true;
+	SmartNavigation_MarkFrameIgnored(BagItemSearchBox.clearButton);
 	BagItemSearchBox:HookScript("OnEditFocusGained", OnSearchBoxFocusGained);
 	BagItemSearchBox:HookScript("OnEditFocusLost", OnSearchBoxFocusLost);
 end
@@ -3483,6 +3500,7 @@ function ContainerFrameCombinedBagsMixin:SetupGamepad()
 	collapseBagAction:SetVisibilityType(PromptedBindingMixin.VISIBILITY_TYPE.ONLY_IF_USABLE);
 	collapseBagAction:AddButtonContext("ButtonContext_OpenBagDropdownSettings");
 	collapseBagAction:AddCondition(Gamepad_IsOpenBagDropdownContextActionValid);
+	collapseBagAction:AddCondition(Gamepad_IsCollapseBagActionValid);
 
 	local enterSearchBox = GamepadSharedUtility.CreatePromptedBinding(GAMEPAD_MENU_LEFT, function() BagItemSearchBox:SetFocus(); end, nil);
 	enterSearchBox:SetCustomPromptFrame(self.SearchBoxIcon);
@@ -3538,10 +3556,44 @@ function ContainerFrameCombinedBagsMixin:SetupGamepad()
 	self.gamepadFooter:Finalize();
 end
 
+function ContainerFrameCombinedBagsMixin:ApplySmartNavOverrideForLeftmostButton()
+	local gamepadBagButton = GamepadBagBar and GamepadBagBar:GetBagButton(BACKPACK_CONTAINER);
+	if not gamepadBagButton then
+		return;
+	end
+
+	local leftmostButton = self.Items[1];
+	if not leftmostButton then
+		return
+	end
+
+	local buttonX, buttonY = leftmostButton:GetCenter();
+	for _, button in ipairs(self.Items) do
+		local testX, testY = button:GetCenter();
+		if testX ~= nil and buttonX ~= nil then
+			if testX < buttonX then
+				leftmostButton = button;
+				buttonX = testX;
+				buttonY = testY;
+			elseif testX == buttonX then
+				if testY > buttonY then
+					leftmostButton = button;
+					buttonX = testX;
+					buttonY = testY;
+				end
+			end
+		end
+	end
+	if leftmostButton ~= gamepadBagButton then
+		SmartNavigation_AddJumpNavigationOverride(leftmostButton, SMART_NAV_INPUT_DIRECTION.UP, self.PortraitButton);
+	end
+end
+
 function ContainerFrameCombinedBagsMixin:SmartNavPanelInfoAdded(panelInfo)
 	assert(InputUtil.IsGamepadUIEnabled(), "FindTopLeftButton called outside gamepad mode!");
 	SmartNavigation:SetUseGridNavigation(self, true);
 	SmartNavigation:SetWrapping(self, true);
+	SmartNavigation:SetGridHeightCompensation(self, true);
 
 	local gamepadBagButton = GamepadBagBar and GamepadBagBar:GetBagButton(BACKPACK_CONTAINER);
 	SmartNavigation:SetTargetButtonForFrame(self, gamepadBagButton);
